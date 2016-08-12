@@ -3,6 +3,7 @@
 from .Event import Event
 import importlib
 import logging
+import time
 
 
 def create_api_object(apiname):
@@ -61,6 +62,16 @@ class APIBase(object):
 
     def detach(self):
         raise NotImplementedError
+
+    def iterate(self):
+        """The main loop.
+        
+        Will sleep for 1 second by default.
+        It will be called like
+        while True:
+            apiobj.iterate()
+        """
+        time.sleep(1)
 
     def version(self):
         raise NotImplementedError

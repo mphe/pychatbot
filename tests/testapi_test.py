@@ -26,7 +26,7 @@ class Test(object):
 
         while self._running:
             logging.info("Waiting for test message...")
-            time.sleep(1)
+            self._test.iterate()
 
         self._test.unregister_event_handler(api.APIEvents.Received, self._on_receive)
         logging.info("Detaching...")
