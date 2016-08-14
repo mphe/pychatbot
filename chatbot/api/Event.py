@@ -11,12 +11,15 @@ class Event(object):
 
     def del_handler(self, callback):
         """Remove a previously registered callback."""
-        try:
-            self._handlers.remove(callback)
-        except ValueError:
-            pass
+        self._handlers.remove(callback)
+
+    def clear(self):
+        self._handlers = []
 
     def trigger(self, *args):
         """Calls every registered event handler with the given arguments."""
         for i in self._handlers:
             i(*args)
+
+    def __len__(self):
+        return len(self._handlers)
