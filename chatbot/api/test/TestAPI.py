@@ -25,7 +25,7 @@ class TestAPI(api.APIBase):
     def _timer_func(self):
         self._start_timer()
         msg = TestingMessage("TestAPI", "Test message")
-        self._events[api.APIEvents.Received].trigger(msg)
+        self._trigger(api.APIEvents.Message, msg)
 
     def _start_timer(self):
         self._timer = Timer(1, self._timer_func)

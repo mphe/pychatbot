@@ -19,7 +19,7 @@ class Test(object):
         logging.info("Creating api object")
         self._test = api.create_api_object("test")
         logging.info(str(self._test))
-        self._test.register_event_handler(api.APIEvents.Received, self._on_receive)
+        self._test.register_event_handler(api.APIEvents.Message, self._on_receive)
 
         logging.info("Attaching...")
         self._test.attach()
@@ -28,7 +28,7 @@ class Test(object):
             logging.info("Waiting for test message...")
             self._test.iterate()
 
-        self._test.unregister_event_handler(api.APIEvents.Received, self._on_receive)
+        self._test.unregister_event_handler(api.APIEvents.Message, self._on_receive)
         logging.info("Detaching...")
         self._test.detach()
         logging.info("Done")

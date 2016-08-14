@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from .Event import Event
+from .APIEvents import *
 import importlib
 import logging
 import time
@@ -11,13 +12,6 @@ def create_api_object(apiname):
     m = importlib.import_module("." + apiname, "chatbot.api")
     logging.info("Loaded API " + str(m))
     return m.API()
-
-
-class APIEvents(object):
-    """A set of common events."""
-    Filetrans = "Filetransfer"
-    Received = "Received"
-    Sent = "Sent"
 
 
 class APIBase(object):
@@ -43,19 +37,10 @@ class APIBase(object):
     \"API\", e.g. by using
         from ircapi import IRCAPI as API
     or by directly renaming IRCAPI to API.
-
-    APIBase has a dictionary called self._events that stores an Event.Event
-    object for each event defined in APIEvents.
-    The (un)register_event_handler functions access the given event by using
-    the self._events member. Therefore it's recommended that the implementation
-    adds its own events to the self._events dictionary, too.
     """
+
     def __init__(self):
-        self._events = {
-            APIEvents.Filetrans : Event(),
-            APIEvents.Received  : Event(),
-            APIEvents.Sent      : Event(),
-        }
+        self._events = {}
 
     def attach(self):
         raise NotImplementedError
@@ -85,6 +70,8 @@ class APIBase(object):
         Available events can be found in the APIEvents class.
         The actual API implementation might offer additional events.
         """
+        if not self._events.has_key(event):
+            self._events[event] = Event()
         self._events[event].add_handler(callback)
         logging.debug("Added event handler for {}-Event".format(event))
 
@@ -95,6 +82,16 @@ class APIBase(object):
         """
         self._events[event].del_handler(callback)
         logging.debug("Removed event handler for {}-Event".format(event))
+
+    def _trigger(self, event, *args):
+        """Triggers the given event with the given arguments.
+        
+        Should be used instead of accessing self._events directly.
+        """
+        if self._events.has_key(event) and len(self._events[event]) > 0:
+            self._events[event].trigger(*args)
+        else:
+            logging.debug("Unhandled event: " + str(event))
 
     def __str__(self):
         return "API: {}, version {}".format(self.api_name(), self.version())
