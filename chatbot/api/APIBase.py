@@ -72,7 +72,7 @@ class APIBase(object):
         """
         if not self._events.has_key(event):
             self._events[event] = Event()
-        self._events[event].add_handler(callback)
+        return self._events[event].add_handler(callback)
         logging.debug("Added event handler for {}-Event".format(event))
 
     def unregister_event_handler(self, event, callback):
