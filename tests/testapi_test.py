@@ -3,7 +3,6 @@
 
 from context import *
 api = chatbot.api
-import logging
 import time
 
 class Test(object):
@@ -33,6 +32,4 @@ class Test(object):
         self._test.detach()
         logging.info("Done")
 
-
-logging.basicConfig(level=logging.DEBUG)
 Test().run()
