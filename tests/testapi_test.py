@@ -15,8 +15,8 @@ class Test(object):
         logging.info("Received message:\n\t" + str(msg))
 
     def run(self):
-        logging.info("Creating api object")
-        self._test = api.create_api_object("test")
+        logging.info("Creating API object")
+        self._test = api.create_api_object("test", msg="custom message text")
         logging.info(str(self._test))
         h = self._test.register_event_handler(api.APIEvents.Message, self._on_receive)
 

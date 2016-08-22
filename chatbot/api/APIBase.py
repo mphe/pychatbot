@@ -2,23 +2,15 @@
 
 from .Event import Event
 from .APIEvents import *
-import importlib
 import logging
 import time
-
-
-def create_api_object(apiname):
-    """Loads the API module <apiname> and returns an API object."""
-    m = importlib.import_module("." + apiname, "chatbot.api")
-    logging.info("Loaded API " + str(m))
-    return m.API()
 
 
 class APIBase(object):
     """Base class for API objects.
 
     See also the \"test\" API for an example.
-    
+
     When creating an API, the class should be derived from APIBase.
     The custom API class must have the name \"API\"
     For example:
@@ -63,6 +55,11 @@ class APIBase(object):
 
     def api_name(self):
         raise NotImplementedError
+
+    @staticmethod
+    def get_default_options():
+        """Return a dictionary with options and their default values for this API."""
+        return {}
 
     def register_event_handler(self, event, callback):
         """Add an event handler to the given event.
