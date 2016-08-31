@@ -12,7 +12,7 @@ class APIBase(object):
     See also the \"test\" API for an example.
 
     When creating an API, the class should be derived from APIBase.
-    The custom API class must have the name \"API\"
+    The custom API class must have the name \"API\".
     For example:
     api
     |- skype
@@ -22,9 +22,7 @@ class APIBase(object):
     |  |- __init__.py
     |  |- ircapi.py
 
-    If ircapi.py contains the class IRCAPI, which is the, as the name says, the
-    API to access IRC.
-    IRCAPI should be derived from APIBase.
+    ircapi.py contains the class IRCAPI that is derived from APIBase.
     To work properly, IRCAPI must be imported in __init__,py and renamed to
     \"API\", e.g. by using
         from ircapi import IRCAPI as API
