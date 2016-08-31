@@ -13,8 +13,8 @@ class ExitCode(object):
 
 
 class Bot(object):
-    def __init__(self, apiname):
-        self._api = api.create_api_object(apiname)
+    def __init__(self, apiname, **kwargs):
+        self._api = api.create_api_object(apiname, **kwargs)
         self._handlers = []
         self._running = False
         self._exit = ExitCode.Normal
@@ -24,7 +24,10 @@ class Bot(object):
         try:
             logging.info("Initializing...")
             logging.info("Registering event handlers...")
-            self._api.register_event_handler(api.APIEvents.Message, self._on_msg_receive)
+            self._api.register_event_handler(api.APIEvents.Message,
+                                             self._on_msg_receive)
+            self._api.register_event_handler(api.APIEvents.FriendRequest,
+                                             self._on_friend_request)
 
             logging.info("Attaching API...")
             self._api.attach()
@@ -66,3 +69,6 @@ class Bot(object):
 
     def _on_msg_receive(self, msg):
         logging.info("Message received")
+
+    def _on_friend_request(self, req):
+        logging.info("Friend request received from " + req.get_username())
