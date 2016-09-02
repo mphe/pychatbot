@@ -53,6 +53,10 @@ class APIBase(object):
     def api_name(self):
         raise NotImplementedError
 
+    def username(self):
+        """Return the username of the logged in user."""
+        raise NotImplementedError
+
     @staticmethod
     def get_default_options():
         """Return a dictionary with options and their default values for this API."""

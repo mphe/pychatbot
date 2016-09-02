@@ -23,6 +23,9 @@ class TestAPI(api.APIBase):
     def api_name(self):
         return "Test API"
 
+    def username(self):
+        return "testuser"
+
     @staticmethod
     def get_default_options():
         return {
