@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from .Event import Event
 from .APIEvents import *
 import logging
 import time
@@ -62,27 +61,33 @@ class APIBase(object):
     def register_event_handler(self, event, callback):
         """Add an event handler to the given event.
         
-        Available events can be found in the APIEvents class.
+        Only one callback can be registered per event. If you need more, you
+        have to write your own dispatch functionality.
+        To unregister an event simply pass None as callback or use
+        unregister_event_handler, which is a simple wrapper around this.
+        
+        A list of available events can be found in the APIEvents class.
         The actual API implementation might offer additional events.
         """
-        if not self._events.has_key(event):
-            self._events[event] = Event()
-        return self._events[event].add_handler(callback)
+        if callback is None:
+            del self._events[event]
+        else:
+            self._events[event] = callback
 
-    def unregister_event_handler(self, event, callback):
-        """Remove an event handler from the given event.
+    def unregister_event_handler(self, event):
+        """Remove the event handler from the given event.
         
         See also register_event_handler().
         """
-        self._events[event].del_handler(callback)
+        self.register_event_handler(event, None)
 
     def _trigger(self, event, *args):
         """Triggers the given event with the given arguments.
         
         Should be used instead of accessing self._events directly.
         """
-        if self._events.has_key(event) and len(self._events[event]) > 0:
-            self._events[event].trigger(*args)
+        if self._events.has_key(event):
+            self._events[event](*args)
         else:
             logging.debug("Unhandled event: " + str(event))
 

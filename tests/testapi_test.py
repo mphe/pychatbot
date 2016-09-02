@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 from context import *
-api = chatbot.api
 import time
 
 class Test(object):
@@ -18,7 +17,7 @@ class Test(object):
         logging.info("Creating API object")
         self._test = api.create_api_object("test", msg="custom message text")
         logging.info(str(self._test))
-        h = self._test.register_event_handler(api.APIEvents.Message, self._on_receive)
+        self._test.register_event_handler(api.APIEvents.Message, self._on_receive)
 
         logging.info("Attaching...")
         self._test.attach()
@@ -27,7 +26,7 @@ class Test(object):
             logging.info("Waiting for test message...")
             self._test.iterate()
 
-        h.unregister()
+        self._test.unregister_event_handler(api.APIEvents.Message)
         logging.info("Detaching...")
         self._test.detach()
         logging.info("Done")
