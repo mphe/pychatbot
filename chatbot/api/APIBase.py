@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from .APIEvents import *
+from APIEvents import *
 import logging
 import time
 

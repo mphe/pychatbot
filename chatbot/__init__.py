@@ -1,2 +1,2 @@
-import api
-import bot
+from . import api
+from . import bot

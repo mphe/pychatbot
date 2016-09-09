@@ -4,6 +4,6 @@ import logging
 
 sys.path.insert(0, os.path.abspath('..'))
 
-import chatbot.api as api
+from chatbot import *
 
 logging.basicConfig(level=logging.DEBUG)

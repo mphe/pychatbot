@@ -8,6 +8,10 @@ class APIEvents(object):
     Filetrans       = "FiletransferReceived"
     FriendRequest   = "FriendRequest"
 
+def iterevents():
+    """Returns a generator to iterate over the values in APIEvents."""
+    return ( v for k,v in APIEvents.__dict__.iteritems() if not k.startswith("_") )
+
 
 # The following functions are solely for documentation.
 
