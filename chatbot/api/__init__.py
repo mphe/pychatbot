@@ -2,6 +2,7 @@ from .APIBase import APIBase
 from .APIEvents import APIEvents
 from .ChatMessage import ChatMessage
 from .FriendRequest import FriendRequest
+from .Chat import *
 import importlib
 import logging
 
