@@ -17,6 +17,8 @@ class Chat(object):
     It can be persistent across multiple sessions but doesn't have to.
     The ID can be of any type (string, int, ...).
 
+    TODO: Consider removing the following specification.
+
     Messages or other objects that origin from the same chat must also
     reference the same Chat object, e.g.:
 

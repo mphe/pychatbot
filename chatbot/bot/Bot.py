@@ -15,7 +15,6 @@ class ExitCode(object):
 
 
 class Bot(object):
-
     def __init__(self, apiname, **kwargs):
         self._api = api.create_api_object(apiname, **kwargs)
         self._events = {}
