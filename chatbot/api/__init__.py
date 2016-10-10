@@ -16,4 +16,6 @@ def create_api_object(apiname, **kwargs):
     """
     m = importlib.import_module("." + apiname, "chatbot.api")
     logging.info("Loaded API " + str(m))
-    return m.API(**kwargs)
+    api = m.API(**kwargs)
+    api._api_id = apiname
+    return api

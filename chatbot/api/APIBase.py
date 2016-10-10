@@ -31,6 +31,10 @@ class APIBase(object):
     def __init__(self):
         self._events = {}
 
+        # This is set by the create_api_object() function and contains the
+        # module name.
+        self._api_id = ""
+
     def attach(self):
         raise NotImplementedError
 
@@ -51,7 +55,18 @@ class APIBase(object):
         raise NotImplementedError
 
     def api_name(self):
+        """Returns the name of the API.
+        
+        Note: for a unique identifier use api_id() instead."""
         raise NotImplementedError
+
+    def api_id(self):
+        """Returns the API's unique module name.
+        
+        This can be used to check if a certain API is used.
+        API implementations must not override this method!
+        """
+        return self._api_id
 
     def username(self):
         """Return the username of the logged in user."""

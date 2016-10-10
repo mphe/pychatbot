@@ -16,7 +16,6 @@ def print_message(msg, prefix):
 class Test(object):
     def __init__(self):
         self._running = True
-        self._api = None
         self._msg = None # stores the received message
 
     def _on_receive(self, msg):
@@ -34,26 +33,26 @@ class Test(object):
 
     def run(self):
         logging.info("Creating API object")
-        self._api = api.create_api_object("test", message="custom message text")
-        logging.info(str(self._api))
+        apiobj = api.create_api_object("test", message="custom message text")
+        logging.info(str(apiobj))
 
-        self._api.register_event_handler(api.APIEvents.Message,
+        apiobj.register_event_handler(api.APIEvents.Message,
                                          self._on_receive)
-        self._api.register_event_handler(api.APIEvents.MessageSent,
+        apiobj.register_event_handler(api.APIEvents.MessageSent,
                                          self._on_sent)
 
         logging.info("Attaching...")
-        self._api.attach()
+        apiobj.attach()
 
         while self._running:
             logging.info("Waiting for test message...")
-            self._api.iterate()
+            apiobj.iterate()
 
-        self._api.unregister_event_handler(api.APIEvents.Message)
-        self._api.unregister_event_handler(api.APIEvents.MessageSent)
+        apiobj.unregister_event_handler(api.APIEvents.Message)
+        apiobj.unregister_event_handler(api.APIEvents.MessageSent)
 
         logging.info("Detaching...")
-        self._api.detach()
+        apiobj.detach()
         logging.info("Done")
 
 Test().run()
