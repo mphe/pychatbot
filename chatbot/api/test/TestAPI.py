@@ -24,7 +24,7 @@ class TestAPI(api.APIBase):
     def api_name(self):
         return "Test API"
 
-    def username(self):
+    def user_handle(self):
         return "testuser"
 
     @staticmethod
@@ -53,7 +53,7 @@ class TestingMessage(api.ChatMessage):
     def get_text(self):
         return self._text
 
-    def get_author(self):
+    def author_handle(self):
         return self._author
 
     def get_chat(self):
@@ -76,7 +76,7 @@ class TestChat(api.Chat):
         return self._id
 
     def send_message(self, text):
-        msg = TestingMessage(self._api.username(), text, self)
+        msg = TestingMessage(self._api.user_handle(), text, self)
         self._api._trigger(api.APIEvents.MessageSent, msg)
 
     def type(self):

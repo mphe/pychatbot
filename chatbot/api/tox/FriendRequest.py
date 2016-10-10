@@ -9,12 +9,11 @@ class FriendRequest(api.FriendRequest):
         self._msg = msg
         self._tox = tox
 
-    def get_username(self):
+    def author_handle(self):
         """Returns the sender's public key."""
         return self._key
 
     def get_text(self):
-        """Returns the message sent with the friend request."""
         return self._msg
 
     def accept(self):

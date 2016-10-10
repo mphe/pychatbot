@@ -3,11 +3,9 @@
 
 class FriendRequest(object):
     """Represents a friend request."""
-    def __init__(self):
-        pass
 
-    def get_username(self):
-        """Returns the sender's username."""
+    def author_handle(self):
+        """Returns the sender's user handle."""
         raise NotImplementedError
 
     def get_text(self):

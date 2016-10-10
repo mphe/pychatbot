@@ -14,7 +14,7 @@ def print_message(msg, prefix):
 
 
 def on_friend_request(req):
-    logging.info("Received friend request from " + req.get_username())
+    logging.info("Received friend request from " + req.author_handle())
     req.accept()
     logging.info("Accepted.")
 

@@ -27,8 +27,6 @@ class Chat(object):
         if msg1.get_chat() is not msg2.get_chat():
             raise Exception("Must never happen!")
     """
-    def __init__(self):
-        super(Chat, self).__init__()
 
     def id(self):
         """Returns the chat's unique ID."""

@@ -5,7 +5,8 @@ class ChatMessage(object):
     def get_text(self):
         raise NotImplementedError
 
-    def get_author(self):
+    def author_handle(self):
+        """Returns the sender's user handle"""
         raise NotImplementedError
 
     def get_chat(self):
@@ -19,4 +20,4 @@ class ChatMessage(object):
         raise NotImplementedError
 
     def __str__(self):
-        return "{}: {}".format(self.get_author(), self.get_text())
+        return "{}: {}".format(self.author_handle(), self.get_text())

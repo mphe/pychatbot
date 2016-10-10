@@ -64,7 +64,7 @@ class ToxAPI(api.APIBase, ToxCore):
     def api_name(self):
         return "Tox"
 
-    def username(self):
+    def user_handle(self):
         return self.tox_self_get_address()
 
     @staticmethod
@@ -104,7 +104,7 @@ class ToxAPI(api.APIBase, ToxCore):
                 ToxCore.TOX_MESSAGE_TYPE_NORMAL,
                 segment
             )
-            self._queue[id] = Message(self.username(),
+            self._queue[id] = Message(self.user_handle(),
                                       segment,
                                       self._find_chat(friend_number))
 

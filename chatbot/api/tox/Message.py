@@ -13,7 +13,7 @@ class Message(api.ChatMessage):
     def get_text(self):
         return self._text
 
-    def get_author(self):
+    def author_handle(self):
         return self._author
 
     def get_chat(self):

@@ -27,12 +27,10 @@ class Bot(object):
             logging.info("Initializing...")
             logging.info("{} version {}".format(self._api.api_name(),
                                                 self._api.version()))
-            logging.info("Username: " + self._api.username())
+            logging.info("Username: " + self._api.user_handle())
 
             logging.info("Registering event handlers...")
-            self._api.register_event_handler(api.APIEvents.Message,
-                                             self._on_msg_receive)
-            self._events[api.APIEvents.Message] = Event()
+            self._setup_dispatch(api.APIEvents.Message, self._on_msg_receive)
 
             logging.info("Attaching API...")
             self._api.attach()
@@ -63,6 +61,16 @@ class Bot(object):
         logging.info("Exited with code " + str(self._exit))
         return self._exit
 
+    def register_event_handler(self, event, callback):
+        if not self._events.has_key(event):
+            self._setup_dispatch(event, partial(self._dispatch_event, event))
+        return self._events[event].add_handler(callback)
+
+    def unregister_event_handler(self, event, callback):
+        self._events[event].del_handler(callback)
+
+
+    # Utility functions
     def _cleanup(self):
         """Performs actual cleanup after exiting the main loop."""
         logging.info("Detaching API...")
@@ -73,16 +81,9 @@ class Bot(object):
             self._api.unregister_event_handler(i)
         self._events = {}
 
-    # Event functions
-    def register_event_handler(self, event, callback):
-        if not self._events.has_key(event):
-            self._events[event] = Event()
-            self._api.register_event_handler(
-                    event, partial(self._dispatch_event, event))
-        return self._events[event].add_handler(callback)
-
-    def unregister_event_handler(self, event, callback):
-        self._events[event].del_handler(callback)
+    def _setup_dispatch(self, event, callback):
+        self._api.register_event_handler(event, callback)
+        self._events[event] = Event()
 
     def _dispatch_event(self, event, *args):
         """Generic function to dispatch an event to all registered callbacks."""
@@ -99,6 +100,8 @@ class Bot(object):
             # Trigger without anything registered (as it should have been)
             self._api._trigger(event, *args)
 
+
     # Events
     def _on_msg_receive(self, msg):
         self._events[api.APIEvents.Message].trigger(msg)
+        # TODO: Check for commands

@@ -68,8 +68,13 @@ class APIBase(object):
         """
         return self._api_id
 
-    def username(self):
-        """Return the username of the logged in user."""
+    def user_handle(self):
+        """Return the handle of the logged in user.
+        
+        The return value depends on the chat system.
+        For example, in Skype it would return the username. In Tox it would
+        return the user's Tox ID.
+        """
         raise NotImplementedError
 
     @staticmethod
