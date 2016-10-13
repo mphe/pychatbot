@@ -4,7 +4,7 @@ import time
 import logging
 from functools import partial
 from .. import api
-from .Event import Event
+from ..util import Event
 
 
 class ExitCode(object):
@@ -83,7 +83,7 @@ class Bot(object):
 
     def _setup_dispatch(self, event, callback):
         self._api.register_event_handler(event, callback)
-        self._events[event] = Event()
+        self._events[event] = Event.Event()
 
     def _dispatch_event(self, event, *args):
         """Generic function to dispatch an event to all registered callbacks."""

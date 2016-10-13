@@ -1,2 +1,3 @@
-from . import api
-from . import bot
+import api
+import bot
+import util

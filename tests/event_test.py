@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 
-from context import chatbot
+from context import *
 
 def foobar(e):
     e.del_handler(foobar)
@@ -22,7 +22,7 @@ def foobar5(e):
 
 x = 0
 y = 0
-ev = chatbot.api.Event()
+ev = util.Event.Event()
 ev.add_handler(foobar)
 ev.add_handler(foobar)
 ev.add_handler(foobar2)
@@ -50,3 +50,5 @@ ev.del_handler(foobar4)
 ev.trigger(ev)
 
 assert y == 5
+
+print("Test passed.")
