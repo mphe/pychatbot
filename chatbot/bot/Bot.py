@@ -4,7 +4,7 @@ import time
 import logging
 from functools import partial
 from .. import api
-from ..util import *
+from ..util import event
 
 
 class ExitCode(object):
@@ -17,7 +17,7 @@ class ExitCode(object):
 class Bot(object):
     def __init__(self, apiname, **kwargs):
         self._api = api.create_api_object(apiname, **kwargs)
-        self._dispatcher = APIEventDispatcher(self._api)
+        self._dispatcher = event.APIEventDispatcher(self._api)
         self._running = False
         self._exit = ExitCode.Normal
 
@@ -27,11 +27,11 @@ class Bot(object):
             logging.info("Initializing...")
             logging.info("{} version {}".format(self._api.api_name(),
                                                 self._api.version()))
-            logging.info("Username: " + self._api.user_handle())
+            logging.info("User handle: " + self._api.user_handle())
 
             logging.info("Registering event handlers...")
-            self._dispatcher.register_event_handler(api.APIEvents.Message,
-                                                    self._on_msg_receive)
+            self._dispatcher.register(api.APIEvents.Message,
+                                      self._on_msg_receive)
 
             logging.info("Attaching API...")
             self._api.attach()
@@ -63,11 +63,19 @@ class Bot(object):
         return self._exit
 
 
-    def register_event_handler(self, event, callback):
-        return self._dispatcher.register_event_handler(event, callback)
+    def register_event_handler(self, event, callback, htype=event.HOOK_NORMAL):
+        """Register an event handler and returns an Event.Handle to it.
+        
+        See util.event.APIEventDispatcher for further information.
+        """
+        return self._dispatcher.register(event, callback, htype)
 
-    def unregister_event_handler(self, event, callback):
-        self._dispatcher.unregister_event_handler(event, callback)
+    def unregister_event_handler(self, event, callback, htype=event.HOOK_NORMAL):
+        """Unregister an event handler.
+
+        See util.event.APIEventDispatcher for further information.
+        """
+        self._dispatcher.unregister(event, callback, htype)
 
 
     # Utility functions

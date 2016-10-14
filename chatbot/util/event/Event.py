@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# TODO: use weakrefs
+# TODO: Consider using weakrefs
 
 # Return values for callbacks to determine if event execution should be
 # continued or stopped.
@@ -18,6 +18,8 @@ class Handle(object):
         if not self._remove:
             self._remove = True
             self._event._dirty += 1
+            # Remove the callback to avoid preventing garbage collection
+            self._callback = None
 
     def __call__(self, *args, **kwargs):
         if not self._remove:

@@ -1,2 +1,1 @@
-import Event
-from APIEventDispatcher import APIEventDispatcher
+import event
