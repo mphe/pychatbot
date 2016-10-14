@@ -5,8 +5,8 @@ from threading import Timer
 
 
 class TestAPI(api.APIBase):
-    def __init__(self, message="", **kwargs):
-        super(TestAPI, self).__init__()
+    def __init__(self, api_id, stub, message="", **kwargs):
+        super(TestAPI, self).__init__(api_id, stub)
         # Fires a message received event every second
         self._timer = None
         self._msg = message if message else self.get_default_options()["message"]

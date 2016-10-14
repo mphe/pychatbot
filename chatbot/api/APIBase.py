@@ -28,12 +28,20 @@ class APIBase(object):
     or by directly renaming IRCAPI to API.
     """
 
-    def __init__(self):
-        self._events = {}
+    def __init__(self, api_id, stub=True):
+        """Must be called by API implementations.
+        
+        The arguments for this function are usually passed to the
+        create_api_object() function and should _not_ be altered.
+        The API should simply forward these values to this constructor.
 
-        # This is set by the create_api_object() function and contains the
-        # module name.
-        self._api_id = ""
+        api_id contains a unique string to identify this API (usually the
+        module name).
+        stub determines whether to print stub messages on unhandled events.
+        """
+        self._events = {}
+        self._api_id = api_id
+        self._stub = stub
 
     def attach(self):
         raise NotImplementedError
@@ -112,7 +120,7 @@ class APIBase(object):
         """
         if self._events.has_key(event):
             self._events[event](*args)
-        else:
+        elif self._stub:
             logging.debug("Unhandled event: " + str(event))
 
     def __str__(self):

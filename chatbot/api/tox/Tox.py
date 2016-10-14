@@ -11,7 +11,7 @@ from Message import *
 from Chat import *
 
 class ToxAPI(api.APIBase, ToxCore):
-    def __init__(self, **kwargs):
+    def __init__(self, api_id, stub, **kwargs):
         self._bootstrap_timer = None
         self._opts = self.get_default_options()
         self._chats = {}
@@ -25,7 +25,7 @@ class ToxAPI(api.APIBase, ToxCore):
             with open(self._opts["savefile"], "rb") as f:
                 self._opts["savedata_data"] = f.read()
 
-        api.APIBase.__init__(self)
+        api.APIBase.__init__(self, api_id, stub)
         ToxCore.__init__(self, self._opts)
 
         self.tox_self_set_name("Tox Bot")
