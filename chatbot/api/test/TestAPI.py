@@ -1,22 +1,35 @@
 # -*- coding: utf-8 -*-
 
+import time
 import chatbot.api as api
 from threading import Timer
 
 
 class TestAPI(api.APIBase):
-    def __init__(self, api_id, stub, message="", **kwargs):
+    def __init__(self, api_id, stub, message="", interactive=False, **kwargs):
         super(TestAPI, self).__init__(api_id, stub)
         # Fires a message received event every second
         self._timer = None
+        self._interactive = interactive
         self._msg = message if message else self.get_default_options()["message"]
         self._chat = TestChat(self)
 
     def attach(self):
-        self._start_timer()
+        if not self._interactive:
+            self._start_timer()
 
     def detach(self):
-        self._timer.cancel()
+        if not self._interactive:
+            self._timer.cancel()
+
+    def iterate(self):
+        if self._interactive:
+            text = raw_input("Enter message: ").strip()
+            if text:
+                self._recv_message(text)
+        else:
+            time.sleep(1)
+
 
     def version(self):
         return "42.0"
@@ -30,13 +43,17 @@ class TestAPI(api.APIBase):
     @staticmethod
     def get_default_options():
         return {
-            "message": "Test message"
+            "message": "Test message",
+            "interactive": False
         }
+
+    def _recv_message(self, text):
+        msg = TestingMessage("TestAPI", text, self._chat)
+        self._trigger(api.APIEvents.Message, msg)
 
     def _timer_func(self):
         self._start_timer()
-        msg = TestingMessage("TestAPI", self._msg, self._chat)
-        self._trigger(api.APIEvents.Message, msg)
+        self._recv_message(self._msg)
 
     def _start_timer(self):
         self._timer = Timer(1, self._timer_func)
