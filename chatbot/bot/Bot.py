@@ -4,7 +4,7 @@ import time
 import logging
 from functools import partial
 from .. import api
-from ..util import event
+from ..util import event, command
 
 
 class ExitCode(object):
@@ -15,9 +15,11 @@ class ExitCode(object):
 
 
 class Bot(object):
-    def __init__(self, apiname, **kwargs):
-        self._api = api.create_api_object(apiname, **kwargs)
+    def __init__(self, apiname, stub=False, **kwargs):
+        self._api = api.create_api_object(apiname, stub, **kwargs)
         self._dispatcher = event.APIEventDispatcher(self._api)
+        self._cmdhandler = command.CommandHandler()
+        self._cmdhandler.attach(self._dispatcher)
         self._running = False
         self._exit = ExitCode.Normal
 
@@ -28,10 +30,6 @@ class Bot(object):
             logging.info("{} version {}".format(self._api.api_name(),
                                                 self._api.version()))
             logging.info("User handle: " + self._api.user_handle())
-
-            logging.info("Registering event handlers...")
-            self._dispatcher.register(api.APIEvents.Message,
-                                      self._on_msg_receive)
 
             logging.info("Attaching API...")
             self._api.attach()
@@ -63,6 +61,9 @@ class Bot(object):
         return self._exit
 
 
+    # Wrappers
+    # TODO: Consider using some hacks to set the docstrings to the wrapped
+    #       functions' docstring.
     def register_event_handler(self, event, callback, htype=event.HOOK_NORMAL):
         """Register an event handler and returns an Event.Handle to it.
         
@@ -77,18 +78,27 @@ class Bot(object):
         """
         self._dispatcher.unregister(event, callback, htype)
 
+    def register_command(self, name, callback, argc=1, flags=0):
+        """Register a command.
+        
+        See util.command.CommandHandler for further information.
+        """
+        self._cmdhandler.register(name, callback, argc, flags)
+
+    def unregister_command(self, name):
+        """Unregister a command.
+        
+        See util.command.CommandHandler for further information.
+        """
+        self._cmdhandler.unregister(name)
+
 
     # Utility functions
     def _cleanup(self):
         """Performs actual cleanup after exiting the main loop."""
-        logging.info("Detaching API...")
-        self._api.detach()
-
         logging.info("Unregistering event handlers...")
+        self._cmdhandler.detach()
         self._dispatcher.clear()
 
-
-    # Events
-    def _on_msg_receive(self, msg):
-        # TODO: Check for commands
-        pass
+        logging.info("Detaching API...")
+        self._api.detach()
