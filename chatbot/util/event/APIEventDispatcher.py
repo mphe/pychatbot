@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from functools import partial
-import Event
+from Event import Event
 
 HOOK_PRE = 0
 HOOK_NORMAL = 1
@@ -47,7 +47,7 @@ class APIEventDispatcher(object):
     def _setup_dispatch(self, event):
         self._api.register_event_handler(
             event, partial(self._dispatch_event, event))
-        self._events[event] = [ Event.Event(), Event.Event(), Event.Event() ]
+        self._events[event] = [ Event(), Event(), Event() ]
 
     def _dispatch_event(self, event, *args, **kwargs):
         """Generic function to dispatch an event to all registered callbacks."""

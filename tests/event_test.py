@@ -22,7 +22,7 @@ def foobar5(e):
 
 x = 0
 y = 0
-ev = util.Event.Event()
+ev = util.event.Event()
 ev.add_handler(foobar)
 ev.add_handler(foobar)
 ev.add_handler(foobar2)
