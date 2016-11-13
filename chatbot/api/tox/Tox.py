@@ -9,6 +9,7 @@ from pytoxcore import ToxCore
 from FriendRequest import *
 from Message import *
 from Chat import *
+from User import *
 
 class ToxAPI(api.APIBase, ToxCore):
     def __init__(self, api_id, stub, **kwargs):
@@ -22,6 +23,7 @@ class ToxAPI(api.APIBase, ToxCore):
             self._opts[i] = kwargs[i]
 
         if os.path.isfile(self._opts["savefile"]):
+            self._opts["savedata_type"] = ToxCore.TOX_SAVEDATA_TYPE_TOX_SAVE
             with open(self._opts["savefile"], "rb") as f:
                 self._opts["savedata_data"] = f.read()
 
@@ -29,6 +31,7 @@ class ToxAPI(api.APIBase, ToxCore):
         ToxCore.__init__(self, self._opts)
 
         self.tox_self_set_name("Tox Bot")
+        self._user = create_user(self, -1)
 
         self.tox_add_tcp_relay(self._opts["bootstrap_host"],
                                self._opts["bootstrap_port"],
@@ -57,6 +60,7 @@ class ToxAPI(api.APIBase, ToxCore):
         time.sleep(self.tox_iteration_interval() / 1000.0)
 
     def version(self):
+        # For some reason this is always 0.0.0
         return "{}.{}.{}".format(self.tox_version_major(),
                                  self.tox_version_minor(),
                                  self.tox_version_patch())
@@ -64,8 +68,8 @@ class ToxAPI(api.APIBase, ToxCore):
     def api_name(self):
         return "Tox"
 
-    def user_handle(self):
-        return self.tox_self_get_address()
+    def get_user(self):
+        return self._user
 
     @staticmethod
     def get_default_options():
@@ -73,7 +77,7 @@ class ToxAPI(api.APIBase, ToxCore):
         # The default bootstrap node is hosted in Germany.
         opts = ToxCore.tox_options_default()
         opts["savefile"] = ""
-        opts["savedata_type"] = ToxCore.TOX_SAVEDATA_TYPE_TOX_SAVE
+        # opts["savedata_type"] = ToxCore.TOX_SAVEDATA_TYPE_TOX_SAVE
         opts["bootstrap_host"] = "130.133.110.14"
         opts["bootstrap_port"] = 33445
         opts["bootstrap_key"] = "461FA3776EF0FA655F1A05477DF1B3B614F7D6B124F7DB1DD4FE3C08B03B640F"
@@ -104,7 +108,7 @@ class ToxAPI(api.APIBase, ToxCore):
                 ToxCore.TOX_MESSAGE_TYPE_NORMAL,
                 segment
             )
-            self._queue[id] = Message(self.user_handle(),
+            self._queue[id] = Message(self._user
                                       segment,
                                       self._find_chat(friend_number))
 
@@ -125,7 +129,7 @@ class ToxAPI(api.APIBase, ToxCore):
         self._save()
 
     def tox_friend_message_cb(self, friend_number, text):
-        msg = Message(self.tox_friend_get_public_key(friend_number),
+        msg = Message(create_user(self, friend_number),
                       text,
                       self._find_chat(friend_number))
         self._trigger(api.APIEvents.Message, msg)

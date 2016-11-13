@@ -1,8 +1,9 @@
-from .APIBase import APIBase
-from .APIEvents import APIEvents
-from .ChatMessage import ChatMessage
-from .FriendRequest import FriendRequest
-from .Chat import *
+from APIBase import APIBase
+from APIEvents import APIEvents
+from ChatMessage import ChatMessage
+from FriendRequest import FriendRequest
+from User import User
+from Chat import *
 import importlib
 import logging
 

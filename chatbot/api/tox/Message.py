@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import chatbot.api as api
-from pytoxcore import ToxCore
+import User
 
 
 class Message(api.ChatMessage):
@@ -13,7 +13,7 @@ class Message(api.ChatMessage):
     def get_text(self):
         return self._text
 
-    def author_handle(self):
+    def get_author(self):
         return self._author
 
     def get_chat(self):

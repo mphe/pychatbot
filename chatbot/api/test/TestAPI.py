@@ -13,6 +13,8 @@ class TestAPI(api.APIBase):
         self._interactive = interactive
         self._msg = message if message else self.get_default_options()["message"]
         self._chat = TestChat(self)
+        self._user = User("testuser", "Test User")
+        self._otheruser = User("testapiuser", "Test API User")
 
     def attach(self):
         if not self._interactive:
@@ -30,15 +32,14 @@ class TestAPI(api.APIBase):
         else:
             time.sleep(1)
 
-
     def version(self):
         return "42.0"
 
     def api_name(self):
         return "Test API"
 
-    def user_handle(self):
-        return "testuser"
+    def get_user(self):
+        return self._user
 
     @staticmethod
     def get_default_options():
@@ -48,7 +49,7 @@ class TestAPI(api.APIBase):
         }
 
     def _recv_message(self, text):
-        msg = TestingMessage("TestAPI", text, self._chat)
+        msg = TestingMessage(self._otheruser, text, self._chat)
         self._trigger(api.APIEvents.Message, msg)
 
     def _timer_func(self):
@@ -60,7 +61,6 @@ class TestAPI(api.APIBase):
         self._timer.start()
 
 
-
 class TestingMessage(api.ChatMessage):
     def __init__(self, author, text, chat):
         self._text = text
@@ -70,7 +70,7 @@ class TestingMessage(api.ChatMessage):
     def get_text(self):
         return self._text
 
-    def author_handle(self):
+    def get_author(self):
         return self._author
 
     def get_chat(self):
@@ -93,8 +93,20 @@ class TestChat(api.Chat):
         return self._id
 
     def send_message(self, text):
-        msg = TestingMessage(self._api.user_handle(), text, self)
+        msg = TestingMessage(self._api.get_user(), text, self)
         self._api._trigger(api.APIEvents.MessageSent, msg)
 
     def type(self):
         return api.ChatType.Normal
+
+
+class User(api.User):
+    def __init__(self, handle, name):
+        self._handle = handle
+        self._name = name
+
+    def handle(self):
+        return self._handle
+
+    def display_name(self):
+        return self._name

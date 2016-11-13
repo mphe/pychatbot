@@ -4,8 +4,8 @@
 class FriendRequest(object):
     """Represents a friend request."""
 
-    def author_handle(self):
-        """Returns the sender's user handle."""
+    def get_author(self):
+        """Returns a User object of the sender."""
         raise NotImplementedError
 
     def get_text(self):
