@@ -51,6 +51,9 @@ class PluginManager(object):
         the module using imp.load_source() and creates an instance
         of module.Plugin. Therefore the plugin class needs to be named
         "Plugin", otherwise it can't be loaded.
+
+        If an exception occurs during the loading process, the plugin is
+        guaranteed to be removed from the system.
         """
         if name in self._plugins:
             handle = self._plugins[name]
@@ -90,6 +93,8 @@ class PluginManager(object):
         or re-raise it: True -> caught, False -> re-raise.
         If exception_handler is None, exceptions will be re-raised
         immediately.
+        No matter if the exception was caught or re-raised, the responsible
+        plugin will be skipped.
         """
         for i in os.listdir(self._searchpath):
             if not os.path.isdir(i) and i.endswith(".py"):
