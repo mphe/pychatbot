@@ -1,2 +1,2 @@
-from Event import *
-from APIEventDispatcher import *
+from .Event import *
+from .APIEventDispatcher import APIEventDispatcher

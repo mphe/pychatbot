@@ -1,3 +1,3 @@
 import api
-import bot
+# import bot
 import util

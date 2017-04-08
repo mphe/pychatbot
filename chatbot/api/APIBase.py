@@ -108,13 +108,13 @@ class APIBase(object):
         """
         self.register_event_handler(event, None)
 
-    def _trigger(self, event, *args):
+    def _trigger(self, event, *args, **kwargs):
         """Triggers the given event with the given arguments.
         
         Should be used instead of accessing self._events directly.
         """
         if self._events.has_key(event):
-            self._events[event](*args)
+            self._events[event](*args, **kwargs)
         elif self._stub:
             logging.debug("Unhandled event: " + str(event))
 

@@ -1,43 +1,53 @@
 # -*- coding: utf-8 -*-
 
-# TODO: Consider using weakrefs
+# Requires sortedcontainers module
+from sortedcontainers import SortedList
 
 # Return values for callbacks to determine if event execution should be
 # continued or stopped.
 EVENT_CONTINUE = 0  # continue
-EVENT_HANDLED = 1   # stop
+EVENT_HANDLED  = 1  # stop
+
+# Predefined nice-values, not necessary but makes things cleaner
+EVENT_PRE    = -1000
+EVENT_NORMAL = 0
+EVENT_POST   = 1000
 
 
 class Handle(object):
-    def __init__(self, event, callback):
+    def __init__(self, event, callback, nice):
         self._event = event
         self._callback = callback
         self._remove = False
+        self._nice = nice
 
     def unregister(self):
         if not self._remove:
             self._remove = True
             self._event._dirty += 1
-            # Remove the callback to avoid preventing garbage collection
+            # Avoid preventing garbage collection
             self._callback = None
+            self._event = None
 
     def __call__(self, *args, **kwargs):
-        if not self._remove:
-            self._callback(*args, **kwargs)
+        return self._callback(*args, **kwargs)
 
     def __nonzero__(self):
         return not self._remove
 
+    def __str__(self):
+        return repr(self._callback)
+
     def __repr__(self):
-        return "Handle({}, {})".format(repr(self._event),
-                                       repr(self._callback))
+        return "Handle({}, {}, {})".format(
+            repr(self._event), repr(self._callback), repr(self._nice))
 
 
 class Event(object):
     """Contains a list of callbacks and calls them when the event is trigger()ed.
     
     It's safe to remove/unregister a callback during the trigger() loop
-    (unregistering a callback inside the callback).
+    (unregistering a callback inside a callback).
 
     Callbacks can return a value to determine whether the event execution
     should be continued or stopped. This might be useful when certain events
@@ -50,75 +60,91 @@ class Event(object):
     """
 
     def __init__(self):
-        self._handlers = []
+        self._handlers = SortedList(key=lambda x: x._nice)
+        self._waiting = []  # Callbacks waiting to get inserted
         self._dirty = 0     # counts how many handlers need to be removed
+        self._running = False   # Whether or not trigger() is currently executed
 
-    def add_handler(self, callback):
+    def register(self, callback, nice = EVENT_NORMAL):
         """Adds a callback that will be called when the event is triggered.
-        
+
         Returns a handle that can be used to unregister.
 
-        The callback function can return EVENT_HANDLED to abort the event
-        execution early.
-        See also the class docstring.
-        """
-        self._handlers.append(Handle(self, callback))
-        return self._handlers[-1]
+        nice determines the priority. Lower priorities are called first,
+        higher ones later. For simplicity and readability there are some
+        predefined constants for common priorities:
+            EVENT_PRE    = -1000
+            EVENT_NORMAL = 0
+            EVENT_POST   = 1000
+        If nice is not specified, EVENT_NORMAL is used.
 
-    def del_handler(self, callback):
+        The callback may return EVENT_HANDLED to abort the event
+        execution early. (See also class docstring)
+        """
+        hnd = Handle(self, callback, nice)
+        if not self._running:
+            self._handlers.add(hnd)
+        else:
+            # Event handlers that have been registered inside another
+            # callback must not be called inside the same trigger()-loop
+            # (e.g. reloading could cause an infinite loop).
+            # Therefore they need to be buffered.
+            self._waiting.append(hnd)
+        return hnd
+
+    def unregister(self, handle):
         """Removes a previously registered callback.
-        
-        The same behaviour can also be achieved by storing the handle
-        returned from add_handler() and calling its unregister() method.
-        Since there's no need to search for the entry, this method is
-        faster than using del_handler().
 
-        To prevent interference with the loop inside trigger() the callback
-        won't be removed immediately (but also won't be called anymore).
-        The actual removal is done at the end of every trigger() call or
-        by running clean().
-        The len() function will report a size not including inactive
-        handlers.
+        Same as calling Handle.unregister() directly.
         """
-        next(i for i in self._handlers if i and i._callback == callback).unregister()
+        # To prevent interference with the loop inside trigger(), the
+        # callback won't be removed immediately (but also won't be called
+        # anymore). The actual removal is done at the end of every trigger()
+        # call.
+        # The len() function will report a size not including inactive handlers.
+        handle.unregister()
 
     def clear(self):
         """Remove all event handlers."""
-        self._handlers = []
-        self._dirty = 0
-
-    def clean(self):
-        """Remove every handler that was marked for removal.
-
-        MUST NOT BE CALLED INSIDE trigger()
-        See del_handler() for further information.
-        """
-        if self._dirty > 0:
-            self._handlers = filter(lambda i: i, self._handlers)
-            self._dirty = 0
+        for i in self._handlers:
+            i.unregister()
 
     def trigger(self, *args, **kwargs):
         """Calls every registered event handler with the given arguments.
         
         The loop will stop if EVENT_HANDLED is returned by a callback or an
-        Exception is thrown.
+        Exception is thrown. In case of an exception, it won't be handled.
         """
-        # Event handlers that have been registered during this loop must not
-        # be called (e.g. reloading could cause an infinite loop).
-        # Therefore we need to store the length of the handler list and
-        # access the individual callbacks by index.
-        for i in range(len(self._handlers)):
-            if self._handlers[i]:
-                if self._handlers[i](*args, **kwargs) == EVENT_HANDLED:
+        self._running = True
+        for i in self._handlers:
+            if i:
+                if i(*args, **kwargs) == EVENT_HANDLED:
                     break
-        self.clean()
+        self._running = False
+        self._update()
 
     def trigger_all(self, *args, **kwargs):
         """The same as trigger() but calls every handler, regardless of return values."""
-        for i in range(len(self._handlers)):
-            if self._handlers[i]:
-                self._handlers[i](*args, **kwargs)
-        self.clean()
+        self._running = True
+        for i in self._handlers:
+            if i:
+                i(*args, **kwargs)
+        self._running = False
+        self._update()
+
+    def _update(self):
+        if not self._running:
+            # Remove every handler that was marked for removal.
+            if self._dirty > 0:
+                self._handlers = SortedList([ i for i in self._handlers if i ],
+                                            key=lambda x: x._nice)
+                self._waiting = [ i for i in self._waiting if i ]
+                self._dirty = 0
+
+            # Insert pending callbacks
+            if len(self._waiting) > 0:
+                self._handlers.update(self._waiting)
+                self._waiting = []
 
     def __len__(self):
-        return len(self._handlers) - self._dirty
+        return len(self._handlers) + len(self._waiting) - self._dirty

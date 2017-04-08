@@ -13,8 +13,8 @@ class TestAPI(api.APIBase):
         self._interactive = interactive
         self._msg = message if message else self.get_default_options()["message"]
         self._chat = TestChat(self)
-        self._user = User("testuser", "Test User")
-        self._otheruser = User("testapiuser", "Test API User")
+        self._user = User("testuser", "Test API User")
+        self._otheruser = User("testfriend", "Test Friend")
 
     def attach(self):
         if not self._interactive:
@@ -28,7 +28,7 @@ class TestAPI(api.APIBase):
         if self._interactive:
             text = raw_input("Enter message: ").strip()
             if text:
-                self._recv_message(text)
+                self.trigger_receive(text)
         else:
             time.sleep(1)
 
@@ -48,13 +48,17 @@ class TestAPI(api.APIBase):
             "interactive": False
         }
 
-    def _recv_message(self, text):
+    # Testing functions
+    def trigger_receive(self, text):
         msg = TestingMessage(self._otheruser, text, self._chat)
         self._trigger(api.APIEvents.Message, msg)
 
+    def trigger_sent(self, text):
+        self._chat.send_message(text)
+
     def _timer_func(self):
         self._start_timer()
-        self._recv_message(self._msg)
+        self.trigger_receive(self._msg)
 
     def _start_timer(self):
         self._timer = Timer(1, self._timer_func)
