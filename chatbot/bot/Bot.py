@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 
-import time
+import traceback
 import logging
-from functools import partial
 from .. import api
-from ..util import event, command
+from ..util import event, command, plugin
 
 
 class ExitCode(object):
@@ -16,12 +15,15 @@ class ExitCode(object):
 
 class Bot(object):
     def __init__(self, apiname, stub=False, **kwargs):
-        self._api = api.create_api_object(apiname, stub, **kwargs)
-        self._dispatcher = event.APIEventDispatcher(self._api)
-        self._cmdhandler = command.CommandHandler()
-        self._cmdhandler.attach(self._dispatcher)
         self._running = False
         self._exit = ExitCode.Normal
+
+        self._api = api.create_api_object(apiname, stub, **kwargs)
+        self._dispatcher = event.APIEventDispatcher(self._api)
+        self._cmdhandler = command.CommandHandler(
+            prefix=["!bot","@bot", "!"])
+        self._pluginmgr = plugin.PluginManager("plugins")
+        self._events = {}
 
     def init(self):
         """Initialize (attach API, register event handlers, ...)."""
@@ -29,10 +31,14 @@ class Bot(object):
             logging.info("Initializing...")
             logging.info("{} version {}".format(self._api.api_name(),
                                                 self._api.version()))
-            logging.info("User handle: " + self._api.user_handle())
+            logging.info("User handle: " + self._api.get_user().handle())
 
             logging.info("Attaching API...")
             self._api.attach()
+
+            logging.info("Mounting plugins...")
+            self._pluginmgr.mount_all(self._handle_plugin_exc, self)
+
             logging.info("Done.")
         except:
             logging.error("Failed to initialize.")
@@ -40,9 +46,9 @@ class Bot(object):
 
     def quit(self, code=ExitCode.Normal):
         """Gives the signal to stop with the given exit code."""
+        logging.info("Shutting down...")
         self._running = False
         self._exit = code
-        logging.info("Shutting down...")
 
     def run(self):
         """Starts the main loop."""
@@ -64,30 +70,37 @@ class Bot(object):
     # Wrappers
     # TODO: Consider using some hacks to set the docstrings to the wrapped
     #       functions' docstring.
-    def register_event_handler(self, event, callback, htype=event.HOOK_NORMAL):
-        """Register an event handler and returns an Event.Handle to it.
+
+    # Plugins
+    def mount_plugin(self, name):
+        self._pluginmgr.mount_plugin(name, self)
+
+    def unmount_plugin(self, name):
+        self._pluginmgr.unmount_plugin(name)
+
+    def reload_plugin(self, name):
+        self._pluginmgr.reload_plugin(name)
+
+    # Events
+    def register_event_handler(self, event, callback, nice=event.EVENT_NORMAL):
+        """Register an event handler and return a handle to it.
         
+        To unregister call handle.unregister().
         See util.event.APIEventDispatcher for further information.
         """
-        return self._dispatcher.register(event, callback, htype)
+        return self._dispatcher.register(event, callback, nice)
 
-    def unregister_event_handler(self, event, callback, htype=event.HOOK_NORMAL):
-        """Unregister an event handler.
-
-        See util.event.APIEventDispatcher for further information.
-        """
-        self._dispatcher.unregister(event, callback, htype)
-
+    # Commands
     def register_command(self, name, callback, argc=1, flags=0):
         """Register a command.
-        
+
         See util.command.CommandHandler for further information.
         """
         self._cmdhandler.register(name, callback, argc, flags)
 
     def unregister_command(self, name):
         """Unregister a command.
-        
+
         See util.command.CommandHandler for further information.
         """
         self._cmdhandler.unregister(name)
@@ -96,9 +109,18 @@ class Bot(object):
     # Utility functions
     def _cleanup(self):
         """Performs actual cleanup after exiting the main loop."""
+        logging.info("Unregistering commands...")
+        self._cmdhandler.clear()
+
         logging.info("Unregistering event handlers...")
-        self._cmdhandler.detach()
         self._dispatcher.clear()
+
+        logging.info("Umounting plugins...")
+        self._pluginmgr.unmount_all(self._handle_plugin_exc)
 
         logging.info("Detaching API...")
         self._api.detach()
+
+    def _handle_plugin_exc(self, name, e):
+        logging.error(traceback.format_exc())
+        return True
