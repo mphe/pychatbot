@@ -2,7 +2,7 @@
 
 
 from functools import partial
-from ..event import *
+from chatbot.util import event as Event
 from chatbot.compat import *
 
 
@@ -13,7 +13,7 @@ class APIEventDispatcher(object):
         self._events = {}
         self._api = apiobj
 
-    def register(self, event, callback, nice=EVENT_NORMAL):
+    def register(self, event, callback, nice=Event.EVENT_NORMAL):
         """Register an event handler and return a Handle to it.
 
         See util.event.Event.register for further information.
@@ -40,7 +40,7 @@ class APIEventDispatcher(object):
     def _setup_dispatch(self, event):
         self._api.register_event_handler(
             event, partial(self._dispatch_event, event))
-        self._events[event] = Event()
+        self._events[event] = Event.Event()
 
     def _dispatch_event(self, event, *args, **kwargs):
         """Generic function to dispatch an event to all registered callbacks."""

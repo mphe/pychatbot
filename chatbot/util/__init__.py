@@ -1,2 +1,2 @@
 from .utils import *
-from . import event, command, plugin
+from . import event

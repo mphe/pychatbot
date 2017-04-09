@@ -3,6 +3,7 @@
 
 from context import logging, api
 from chatbot.util import event
+from chatbot.bot.subsystem.dispatcher import APIEventDispatcher
 from chatbot.compat import *
 
 
@@ -35,7 +36,7 @@ class Test(object):
     def run(self):
         logging.info("Creating API object")
         apiobj = api.create_api_object("test", message="custom message text")
-        dispatcher = event.APIEventDispatcher(apiobj)
+        dispatcher = APIEventDispatcher(apiobj)
         logging.info(str(apiobj))
 
         h1 = dispatcher.register(api.APIEvents.Message, self._on_receive_pre, event.EVENT_PRE)

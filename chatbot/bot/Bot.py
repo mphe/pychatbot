@@ -3,7 +3,8 @@
 import traceback
 import logging
 from chatbot import api
-from chatbot.util import event, command, plugin
+from chatbot.util import event
+from .subsystem import dispatcher, command, plugin
 from chatbot.compat import *
 
 
@@ -20,7 +21,7 @@ class Bot(object):
         self._exit = ExitCode.Normal
 
         self._api = api.create_api_object(apiname, stub, **kwargs)
-        self._dispatcher = event.APIEventDispatcher(self._api)
+        self._dispatcher = dispatcher.APIEventDispatcher(self._api)
         self._cmdhandler = command.CommandHandler(
             prefix=["!bot","@bot", "!"])
         self._pluginmgr = plugin.PluginManager("plugins")
@@ -87,7 +88,7 @@ class Bot(object):
         """Register an event handler and return a handle to it.
         
         To unregister call handle.unregister().
-        See util.event.APIEventDispatcher for further information.
+        See bot.subsystem.dispatcher.APIEventDispatcher for further information.
         """
         return self._dispatcher.register(event, callback, nice)
 
@@ -95,14 +96,14 @@ class Bot(object):
     def register_command(self, name, callback, argc=1, flags=0):
         """Register a command.
 
-        See util.command.CommandHandler for further information.
+        See bot.subsystem.command.CommandHandler for further information.
         """
         self._cmdhandler.register(name, callback, argc, flags)
 
     def unregister_command(self, name):
         """Unregister a command.
 
-        See util.command.CommandHandler for further information.
+        See bot.subsystem.command.CommandHandler for further information.
         """
         self._cmdhandler.unregister(name)
 

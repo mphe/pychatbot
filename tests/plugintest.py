@@ -13,7 +13,7 @@ def handle_exception(name, e):
         return False
 
 
-pm = util.plugin.PluginManager("./plugins")
+pm = bot.subsystem.plugin.PluginManager("./plugins")
 pm.mount_plugin("testplugin", 42)
 pm.reload_plugin("testplugin")
 pm.unmount_plugin("testplugin")

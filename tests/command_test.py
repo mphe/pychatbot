@@ -3,7 +3,7 @@
 
 from context import *
 from functools import partial
-from chatbot.util.command import *
+from chatbot.bot.subsystem.command import *
 from chatbot.compat import *
 
 

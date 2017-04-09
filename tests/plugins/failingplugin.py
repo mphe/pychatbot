@@ -3,5 +3,5 @@
 from context import *
 
 # Create error on purpose by not implementing any methods
-class Plugin(util.plugin.Plugin):
+class Plugin(bot.subsystem.plugin.Plugin):
     pass
