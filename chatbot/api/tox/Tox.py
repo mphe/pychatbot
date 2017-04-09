@@ -1,15 +1,14 @@
+# Requires python3
 # -*- coding: utf-8 -*-
 
-from threading import Timer
-import time
 import os
 import logging
-import chatbot.api as api
+import time
+from threading import Timer
 from pytoxcore import ToxCore
-from FriendRequest import *
-from Message import *
-from Chat import *
-from User import *
+from chatbot import api
+from chatbot.compat import *
+from . import FriendRequest, Message, Chat, User
 
 class ToxAPI(api.APIBase, ToxCore):
     def __init__(self, api_id, stub, **kwargs):
@@ -31,7 +30,7 @@ class ToxAPI(api.APIBase, ToxCore):
         ToxCore.__init__(self, self._opts)
 
         self.tox_self_set_name("Tox Bot")
-        self._user = create_user(self, -1)
+        self._user = User.create_user(self, -1)
 
         self.tox_add_tcp_relay(self._opts["bootstrap_host"],
                                self._opts["bootstrap_port"],
@@ -96,8 +95,8 @@ class ToxAPI(api.APIBase, ToxCore):
             self._bootstrap_timer.start()
 
     def _find_chat(self, chat_id):
-        if not self._chats.has_key(chat_id):
-            self._chats[chat_id] = Chat(chat_id, self)
+        if not chat_id in self._chats:
+            self._chats[chat_id] = Chat.Chat(chat_id, self)
         return self._chats[chat_id]
 
     def _send_message(self, text, friend_number):
@@ -108,7 +107,7 @@ class ToxAPI(api.APIBase, ToxCore):
                 ToxCore.TOX_MESSAGE_TYPE_NORMAL,
                 segment
             )
-            self._queue[id] = Message(self._user
+            self._queue[id] = Message.Message(self._user,
                                       segment,
                                       self._find_chat(friend_number))
 
@@ -122,14 +121,14 @@ class ToxAPI(api.APIBase, ToxCore):
 
     # Tox events
     def tox_friend_request_cb(self, pubkey, msg):
-        req = FriendRequest(self, pubkey, msg)
+        req = FriendRequest.FriendRequest(self, pubkey, msg)
         self._trigger(api.APIEvents.FriendRequest, req)
 
         # Let's save, just in case
         self._save()
 
     def tox_friend_message_cb(self, friend_number, text):
-        msg = Message(create_user(self, friend_number),
+        msg = Message.Message(User.create_user(self, friend_number),
                       text,
                       self._find_chat(friend_number))
         self._trigger(api.APIEvents.Message, msg)

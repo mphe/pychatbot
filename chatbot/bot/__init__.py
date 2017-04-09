@@ -1,1 +1,1 @@
-from Bot import *
+from .Bot import *

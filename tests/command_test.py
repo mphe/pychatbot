@@ -1,9 +1,10 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 from context import *
 from functools import partial
 from chatbot.util.command import *
+from chatbot.compat import *
 
 
 class Test(object):

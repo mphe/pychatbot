@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-from APIEvents import *
 import logging
 import time
+from chatbot.compat import *
 
 
 class APIBase(object):
@@ -113,7 +113,7 @@ class APIBase(object):
         
         Should be used instead of accessing self._events directly.
         """
-        if self._events.has_key(event):
+        if event in self._events:
             self._events[event](*args, **kwargs)
         elif self._stub:
             logging.debug("Unhandled event: " + str(event))

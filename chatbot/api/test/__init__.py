@@ -1,1 +1,1 @@
-from TestAPI import TestAPI as API
+from .TestAPI import TestAPI as API

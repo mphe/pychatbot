@@ -3,6 +3,7 @@
 
 from functools import partial
 from ..event import *
+from chatbot.compat import *
 
 
 class APIEventDispatcher(object):
@@ -17,7 +18,7 @@ class APIEventDispatcher(object):
 
         See util.event.Event.register for further information.
         """
-        if not self._events.has_key(event):
+        if not event in self._events:
             self._setup_dispatch(event)
         return self._events[event].register(callback, nice)
 
@@ -30,7 +31,7 @@ class APIEventDispatcher(object):
         handle.unregister()
 
     def clear(self):
-        for i in self._events.iterkeys():
+        for i in self._events:
             self._api.unregister_event_handler(i)
         self._events = {}
 

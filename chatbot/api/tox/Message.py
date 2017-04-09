@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import chatbot.api as api
-import User
+from . import User
 
 
 class Message(api.ChatMessage):

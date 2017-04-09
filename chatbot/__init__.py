@@ -1,3 +1,1 @@
-import api
-# import bot
-import util
+from . import api, bot, util, compat

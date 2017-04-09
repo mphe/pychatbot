@@ -1,1 +1,1 @@
-from Tox import ToxAPI as API
+from .Tox import ToxAPI as API

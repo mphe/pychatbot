@@ -2,8 +2,9 @@
 
 import traceback
 import logging
-from .. import api
-from ..util import event, command, plugin
+from chatbot import api
+from chatbot.util import event, command, plugin
+from chatbot.compat import *
 
 
 class ExitCode(object):

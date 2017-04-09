@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 
 import time
-import chatbot.api as api
 from threading import Timer
+from chatbot import api
+from chatbot.compat import *
 
 
 class TestAPI(api.APIBase):

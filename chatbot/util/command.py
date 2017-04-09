@@ -2,6 +2,7 @@
 
 import logging
 import shlex
+from chatbot.compat import *
 
 
 # Command flags
@@ -145,14 +146,14 @@ class CommandHandler(object):
         passing the command name manually.
         """
         group = self._missing_cmds if flags & CMDFLAG_MISSING else self._cmds
-        if group.has_key(name):
+        if name in group:
             logging.warn("Overwriting existing command: " + name)
         group[name] = Command(callback, argc, flags)
 
     def unregister(self, name):
-        if self._cmds.has_key(name):
+        if name in self._cmds:
             del self._cmds[name]
-        elif self._missing_cmds.has_key(name):
+        elif name in self._missing_cmds:
             del self._missing_cmds[name]
         else:
             logging.warn("Trying to unregister non-existing command: " + name)
@@ -178,7 +179,7 @@ class CommandHandler(object):
                 break
 
         if argv:
-            if self._cmds.has_key(argv[0]):
+            if argv[0] in self._cmds:
                 try:
                     self._exec_command(msg, self._cmds[argv[0]], argv)
                     return
@@ -190,7 +191,7 @@ class CommandHandler(object):
             # Missing handlers
             # It's important to make a copy of the list to avoid
             # "dictionary changed size while iterating" errors
-            for i in list(v for v in self._missing_cmds.itervalues()):
+            for i in list(v for v in self._missing_cmds.values()):
                 try:
                     self._exec_command(msg, i, argv)
                     return
@@ -229,7 +230,7 @@ class CommandHandler(object):
         if len(argv) == 1:
             argv.append(argv[0]) # Show own help
 
-        if not self._cmds.has_key(argv[1]):
+        if not argv[1] in self._cmds:
             # Use COMMAND_ERR rather than COMMAND_ERR_NOTFOUND to avoid
             # calling not-found-handlers.
             raise CommandError(COMMAND_ERR, msg="Command not found")

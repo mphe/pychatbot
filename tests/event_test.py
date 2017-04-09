@@ -1,7 +1,8 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 from context import util
+from chatbot.compat import *
 
 class Foobar(object):
     def __init__(self, ev):
@@ -80,5 +81,3 @@ ev.unregister(hnd_foobar4)
 ev.trigger(ev)
 
 assert y == 5
-
-print("Test passed.")

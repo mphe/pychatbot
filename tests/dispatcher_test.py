@@ -1,8 +1,9 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 from context import logging, api
 from chatbot.util import event
+from chatbot.compat import *
 
 
 def print_message(msg, prefix):

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 
-def create_user(tox, friend_number)
+def create_user(tox, friend_number):
     """Creates a User object from a friend number.
     
     If friend_number is -1, the logged in user is used.

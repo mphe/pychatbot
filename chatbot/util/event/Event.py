@@ -2,6 +2,7 @@
 
 # Requires sortedcontainers module
 from sortedcontainers import SortedList
+from chatbot.compat import *
 
 # Return values for callbacks to determine if event execution should be
 # continued or stopped.
@@ -32,7 +33,7 @@ class Handle(object):
     def __call__(self, *args, **kwargs):
         return self._callback(*args, **kwargs)
 
-    def __nonzero__(self):
+    def __bool__(self):
         return not self._remove
 
     def __str__(self):
@@ -117,9 +118,8 @@ class Event(object):
         """
         self._running = True
         for i in self._handlers:
-            if i:
-                if i(*args, **kwargs) == EVENT_HANDLED:
-                    break
+            if i and i(*args, **kwargs) == EVENT_HANDLED:
+                break
         self._running = False
         self._update()
 
