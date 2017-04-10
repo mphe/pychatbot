@@ -10,14 +10,14 @@ from chatbot.compat import *
 class Plugin(object):
     """Base class for plugins."""
 
-    def init(self, oldme, *argv, **kwargs):
+    def __init__(self, oldme, *argv, **kwargs):
         """Will be called to initialize the plugin after it was loaded.
         
         If the plugin was remounted, then oldme is the old instance of this
         plugin. Otherwise None. This is useful to exchange data from the old
         instance to the new one before it gets deleted.
         """
-        raise NotImplementedError
+        pass
 
     def reload(self):
         """Reload the plugin's config."""
@@ -98,7 +98,8 @@ class PluginManager(object):
         plugin will be skipped.
         """
         for i in os.listdir(self._searchpath):
-            if not os.path.isdir(i) and i.endswith(".py"):
+            if not os.path.isdir(i) and i.endswith(".py")   \
+                    and os.path.basename(i) != "__init__.py":
                 name = i[:-3]
                 try:
                     self.mount_plugin(name, *argv, **kwargs)
@@ -159,8 +160,7 @@ class PluginManager(object):
     def _init_plugin(self, handle, *argv, **kwargs):
         try:
             oldinst = handle.plugin
-            handle.plugin = handle.module.Plugin()
-            handle.plugin.init(oldinst, *argv, **kwargs)
+            handle.plugin = handle.module.Plugin(oldinst, *argv, **kwargs)
         except:
             handle.plugin = None
             raise
