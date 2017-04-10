@@ -19,7 +19,16 @@ def create_api_object(apiname, stub=True, **kwargs):
     For example:
     test = api.create_api_object("test", message="Custom message text")
     """
+    return _import_api(apiname).API(apiname, stub, **kwargs)
+
+def get_api_class(apiname):
+    """Loads the API module <apiname> and returns the API class
+    
+    Note that this does not create an object but only returns the class.
+    """
+    return _import_api(apiname).API
+
+def _import_api(apiname):
     m = importlib.import_module("." + apiname, "chatbot.api")
-    logging.info("Loaded API " + str(m))
-    api = m.API(apiname, stub, **kwargs)
-    return api
+    logging.debug("Loaded API module " + str(m))
+    return m

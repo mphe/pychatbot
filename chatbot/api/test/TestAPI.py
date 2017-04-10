@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import logging
 import time
 from threading import Timer
 from chatbot import api
@@ -27,7 +28,7 @@ class TestAPI(api.APIBase):
 
     def iterate(self):
         if self._interactive:
-            text = raw_input("Enter message: ").strip()
+            text = input("Enter message: ").strip()
             if text:
                 self.trigger_receive(text)
         else:
@@ -52,6 +53,7 @@ class TestAPI(api.APIBase):
     # Testing functions
     def trigger_receive(self, text):
         msg = TestingMessage(self._otheruser, text, self._chat)
+        logging.info(str(msg))
         self._trigger(api.APIEvents.Message, msg)
 
     def trigger_sent(self, text):
@@ -99,6 +101,7 @@ class TestChat(api.Chat):
 
     def send_message(self, text):
         msg = TestingMessage(self._api.get_user(), text, self)
+        logging.info(str(msg))
         self._api._trigger(api.APIEvents.MessageSent, msg)
 
     def type(self):

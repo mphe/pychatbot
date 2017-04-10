@@ -3,8 +3,9 @@
 import traceback
 import logging
 from chatbot import api
-from chatbot.util import event
-from .subsystem import dispatcher, command, plugin
+from chatbot.api import APIEvents
+from chatbot.util import event, merge_dicts
+from .subsystem import APIEventDispatcher, command, plugin, ConfigManager
 from chatbot.compat import *
 
 
@@ -16,35 +17,16 @@ class ExitCode(object):
 
 
 class Bot(object):
-    def __init__(self, apiname, stub=False, **kwargs):
+    def __init__(self, configdir="config"):
         self._running = False
         self._exit = ExitCode.Normal
 
-        self._api = api.create_api_object(apiname, stub, **kwargs)
-        self._dispatcher = dispatcher.APIEventDispatcher(self._api)
-        self._cmdhandler = command.CommandHandler(
-            prefix=["!bot","@bot", "!"])
-        self._pluginmgr = plugin.PluginManager("plugins")
-        self._events = {}
-
-    def init(self):
-        """Initialize (attach API, register event handlers, ...)."""
-        try:
-            logging.info("Initializing...")
-            logging.info("{} version {}".format(self._api.api_name(),
-                                                self._api.version()))
-            logging.info("User handle: " + self._api.get_user().handle())
-
-            logging.info("Attaching API...")
-            self._api.attach()
-
-            logging.info("Mounting plugins...")
-            self._pluginmgr.mount_all(self._handle_plugin_exc, self)
-
-            logging.info("Done.")
-        except:
-            logging.error("Failed to initialize.")
-            raise
+        self._config = {}
+        self._cfgmgr = ConfigManager(configdir)
+        self._api = None
+        self._dispatcher = None
+        self._cmdhandler = None
+        self._pluginmgr = None
 
     def quit(self, code=ExitCode.Normal):
         """Gives the signal to stop with the given exit code."""
@@ -52,8 +34,22 @@ class Bot(object):
         self._running = False
         self._exit = code
 
-    def run(self):
-        """Starts the main loop."""
+    def run(self, profile="", apiname="", **kwargs):
+        """Initialize and start the main loop.
+        
+        profile: a profile config to load
+        apiname: an API to load
+        kwargs: arguments passed to the API
+
+        If neither profile nor apiname is specified, the initialization fails.
+        """
+
+        try:
+            self._init(profile, apiname, **kwargs)
+        except:
+            logging.error("Failed to initialize.")
+            raise
+
         self._running = True
         # TODO: handle SIGTERM
         try:
@@ -88,7 +84,7 @@ class Bot(object):
         """Register an event handler and return a handle to it.
         
         To unregister call handle.unregister().
-        See bot.subsystem.dispatcher.APIEventDispatcher for further information.
+        See bot.subsystem.APIEventDispatcher for further information.
         """
         return self._dispatcher.register(event, callback, nice)
 
@@ -108,7 +104,73 @@ class Bot(object):
         self._cmdhandler.unregister(name)
 
 
+    # Echobot functions
+    def _echo(self, msg):
+        msg.get_chat().send_message(msg.get_text())
+
+    def _autoaccept(self, request):
+        request.accept()
+
     # Utility functions
+    def _load_config(self, profile="", apiname="", **kwargs):
+        if not apiname and not profile:
+            raise ValueError("No API and no profile specified")
+
+        # Load default or existing config
+        cfg = self._get_default_config()
+        if profile:
+            cfg = self._cfgmgr.load(profile, cfg)
+
+        # Apply custom settings and overwrite existing
+        if apiname:
+            cfg["api"] = apiname
+        elif not cfg["api"]:
+            raise ValueError("No API specified")
+
+        merge_dicts(cfg["api_config"],
+                    api.get_api_class(cfg["api"]).get_default_options())
+        if kwargs:
+            merge_dicts(cfg["api_config"], kwargs, True)
+
+        # Create the profile if it doesn't exist yet
+        if profile:
+            self._cfgmgr.create(profile, cfg)
+        return cfg
+
+
+    def _init(self, profile="", apiname="", **kwargs):
+        logging.info("Initializing...")
+        logging.info("Loading configs")
+        self._config = self._load_config(profile, apiname, **kwargs)
+
+        self._cmdhandler = command.CommandHandler(self._config["prefix"])
+        self._pluginmgr = plugin.PluginManager(self._config["plugin_path"])
+
+        logging.info("Mounting plugins...")
+        self._pluginmgr.mount_all(self._handle_plugin_exc, self)
+
+        logging.info("Loading API...")
+        self._api = api.create_api_object(self._config["api"],
+                                          **self._config["api_config"])
+        self._dispatcher = APIEventDispatcher(self._api)
+
+        if self._config["echo"]:
+            self._dispatcher.register(APIEvents.Message, self._echo)
+        if self._config["autoaccept_friend"]:
+            self._dispatcher.register(APIEvents.FriendRequest, self._autoaccept)
+
+        logging.info("Attaching API...")
+        self._api.attach()
+
+        if self._config["display_name"]:
+            pass
+
+        logging.info(str(self._api))
+        logging.info("User handle: " + self._api.get_user().handle())
+        logging.info("Display name: " + self._api.get_user().display_name())
+
+        logging.info("Done")
+
     def _cleanup(self):
         """Performs actual cleanup after exiting the main loop."""
         logging.info("Unregistering commands...")
@@ -126,3 +188,18 @@ class Bot(object):
     def _handle_plugin_exc(self, name, e):
         logging.error(traceback.format_exc())
         return True
+
+    @staticmethod
+    def _get_default_config():
+        return {
+            "api": "",
+            "api_config": {
+                "stub": False,
+            },
+            "plugin_path": "plugins",
+            "prefix": [ "!bot","@bot", "!" ],
+            "display_name": "Bot",
+            "echo": True,
+            "autoaccept_friend": True,
+        }
+

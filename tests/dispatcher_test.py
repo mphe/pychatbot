@@ -3,7 +3,7 @@
 
 from context import logging, api
 from chatbot.util import event
-from chatbot.bot.subsystem.dispatcher import APIEventDispatcher
+from chatbot.bot.subsystem import APIEventDispatcher
 from chatbot.compat import *
 
 

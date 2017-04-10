@@ -29,7 +29,7 @@ class ToxAPI(api.APIBase, ToxCore):
         api.APIBase.__init__(self, api_id, stub)
         ToxCore.__init__(self, self._opts)
 
-        self.tox_self_set_name("Tox Bot")
+        # self.tox_self_set_name("Tox Bot")
         self._user = User.create_user(self, -1)
 
         self.tox_add_tcp_relay(self._opts["bootstrap_host"],

@@ -3,22 +3,40 @@
 
 import sys
 import logging
+import argparse
 import chatbot
+from chatbot.util import rreload
 
 def main():
-    if len(sys.argv) == 1:
-        print("Usage: main.py <api>")
-        return
+    parser = argparse.ArgumentParser(
+        description="Run the bot using a given profile and/or a given API.",
+        epilog="At least one of -p/--profile or -a/--api has to be specified."
+    )
+    parser.add_argument("-p", "--profile",   help="Profile name", default="")
+    parser.add_argument("-a", "--api",       help="API name",     default="")
+    parser.add_argument("-c", "--configdir", help="Config directory")
+    parser.add_argument("-d", "--debug",     help="Show debug output",
+                        action="store_true")
+    args = parser.parse_args()
+
+    if not args.profile and not args.api:
+        parser.error("an API and/or a profile has to specified.")
+        return 1
+
+    logging.basicConfig(level=(logging.DEBUG if args.debug else logging.INFO),
+                        format="%(levelname)s:%(message)s")
 
     while True:
-        bot = chatbot.bot.Bot(sys.argv[1])
-        bot.init()
-        err = bot.run()
+        if args.configdir:
+            bot = chatbot.bot.Bot(args.configdir)
+        else:
+            bot = chatbot.bot.Bot()
+
+        err = bot.run(profile=args.profile, apiname=args.api)
         if err == chatbot.bot.ExitCode.Restart:
-            reload(chatbot.bot)
+            rreload(chatbot)
             continue
         return err
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.DEBUG)
-    main()
+    sys.exit(main())
