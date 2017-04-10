@@ -8,15 +8,15 @@ from chatbot.compat import *
 
 
 class TestAPI(api.APIBase):
-    def __init__(self, api_id, stub, message="", interactive=False, **kwargs):
+    def __init__(self, api_id, stub, message="", interactive=True, **kwargs):
         super(TestAPI, self).__init__(api_id, stub)
         # Fires a message received event every second
         self._timer = None
         self._interactive = interactive
         self._msg = message if message else self.get_default_options()["message"]
         self._chat = TestChat(self)
-        self._user = User("testuser", "Test API User")
-        self._otheruser = User("testfriend", "Test Friend")
+        self._user = User("testuser", "Test User")
+        self._otheruser = User("testfriend", "You")
 
     def attach(self):
         if not self._interactive:
@@ -43,11 +43,14 @@ class TestAPI(api.APIBase):
     def get_user(self):
         return self._user
 
+    def set_display_name(self, name):
+        self._user._name = name
+
     @staticmethod
     def get_default_options():
         return {
             "message": "Test message",
-            "interactive": False
+            "interactive": True
         }
 
     # Testing functions

@@ -25,7 +25,7 @@ class Test(object):
                           flags=CMDFLAG_MISSING)
 
         # Import the module. We don't need the API object.
-        api.create_api_object("test")
+        api.create_api_object("test", interactive=False)
 
     def run(self):
         try:

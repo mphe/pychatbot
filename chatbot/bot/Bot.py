@@ -79,7 +79,6 @@ class Bot(object):
     def reload_plugin(self, name):
         self._pluginmgr.reload_plugin(name)
 
-    # Events
     def register_event_handler(self, event, callback, nice=event.EVENT_NORMAL):
         """Register an event handler and return a handle to it.
         
@@ -88,7 +87,6 @@ class Bot(object):
         """
         return self._dispatcher.register(event, callback, nice)
 
-    # Commands
     def register_command(self, name, callback, argc=1, flags=0):
         """Register a command.
 
@@ -104,12 +102,13 @@ class Bot(object):
         self._cmdhandler.unregister(name)
 
 
-    # Echobot functions
+    # Callbacks
     def _echo(self, msg):
-        msg.get_chat().send_message(msg.get_text())
+        msg.get_chat().send_message("Echo: " + msg.get_text())
 
     def _autoaccept(self, request):
         request.accept()
+
 
     # Utility functions
     def _load_config(self, profile="", apiname="", **kwargs):
@@ -137,7 +136,6 @@ class Bot(object):
             self._cfgmgr.create(profile, cfg)
         return cfg
 
-
     def _init(self, profile="", apiname="", **kwargs):
         logging.info("Initializing...")
         logging.info("Loading configs")
@@ -163,7 +161,7 @@ class Bot(object):
         self._api.attach()
 
         if self._config["display_name"]:
-            pass
+            self._api.set_display_name(self._config["display_name"])
 
         logging.info(str(self._api))
         logging.info("User handle: " + self._api.get_user().handle())

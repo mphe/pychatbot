@@ -76,8 +76,12 @@ class APIBase(object):
         """
         return self._api_id
 
-    def get_user():
-        """Returns a User object of the currently logged in user"""
+    def get_user(self):
+        """Returns a User object of the currently logged in user."""
+        raise NotImplementedError
+
+    def set_display_name(self, name):
+        """Set the logged in user's display name."""
         raise NotImplementedError
 
     @staticmethod
