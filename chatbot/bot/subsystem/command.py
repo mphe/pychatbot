@@ -166,7 +166,11 @@ class CommandHandler(object):
         self.register("list", self._list, argc=0)
 
     def execute(self, msg):
-        """Execute a command from a message."""
+        """Execute a command from a message.
+        
+        Returns True if the message was a command, otherwise False.
+        Exceptions may be raised and have to be handled by the calling scope.
+        """
         argv = []
 
         command = msg.get_text()
@@ -178,29 +182,31 @@ class CommandHandler(object):
                     argv = shlex.split(command[len(i):])
                 break
 
-        if argv:
-            if argv[0] in self._cmds:
-                try:
-                    self._exec_command(msg, self._cmds[argv[0]], argv)
-                    return
-                except CommandError as e:
-                    if e.code != COMMAND_ERR_NOTFOUND:
-                        e.command = argv[0]
-                        raise
+        if not argv:
+            return False
 
-            # Missing handlers
-            # It's important to make a copy of the list to avoid
-            # "dictionary changed size while iterating" errors
-            for i in list(v for v in self._missing_cmds.values()):
-                try:
-                    self._exec_command(msg, i, argv)
-                    return
-                except CommandError as e:
-                    if e.code not in (COMMAND_ERR_NOTFOUND, COMMAND_ERR_ARGC):
-                        e.command = argv[0]
-                        raise
+        if argv[0] in self._cmds:
+            try:
+                self._exec_command(msg, self._cmds[argv[0]], argv)
+                return True
+            except CommandError as e:
+                if e.code != COMMAND_ERR_NOTFOUND:
+                    e.command = argv[0]
+                    raise
 
-            raise CommandError(COMMAND_ERR_NOTFOUND, argv[0])
+        # Missing handlers
+        # It's important to make a copy of the list to avoid
+        # "dictionary changed size while iterating" errors
+        for i in list(v for v in self._missing_cmds.values()):
+            try:
+                self._exec_command(msg, i, argv)
+                return True
+            except CommandError as e:
+                if e.code not in (COMMAND_ERR_NOTFOUND, COMMAND_ERR_ARGC):
+                    e.command = argv[0]
+                    raise
+
+        raise CommandError(COMMAND_ERR_NOTFOUND, argv[0])
 
     def _exec_command(self, msg, cmd, argv):
         if not cmd:
@@ -224,7 +230,7 @@ class CommandHandler(object):
         """Syntax: help [command]
 
         Shows the documentation of the given command.
-        Use ´commands list´ to display a list of all available commands.
+        Use ´list´ to display a list of all available commands.
         """
 
         if len(argv) == 1:

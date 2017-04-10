@@ -103,8 +103,12 @@ class Bot(object):
 
 
     # Callbacks
-    def _echo(self, msg):
-        msg.get_chat().send_message("Echo: " + msg.get_text())
+    def _handle_command(self, msg):
+        try:
+            if not self._cmdhandler.execute(msg) and self._config["echo"]:
+                msg.get_chat().send_message("Echo: " + msg.get_text())
+        except Exception as e:
+            msg.get_chat().send_message("Error: " + str(e))
 
     def _autoaccept(self, request):
         request.accept()
@@ -150,10 +154,9 @@ class Bot(object):
         logging.info("Loading API...")
         self._api = api.create_api_object(self._config["api"],
                                           **self._config["api_config"])
-        self._dispatcher = APIEventDispatcher(self._api)
 
-        if self._config["echo"]:
-            self._dispatcher.register(APIEvents.Message, self._echo)
+        self._dispatcher = APIEventDispatcher(self._api)
+        self._dispatcher.register(APIEvents.Message, self._handle_command)
         if self._config["autoaccept_friend"]:
             self._dispatcher.register(APIEvents.FriendRequest, self._autoaccept)
 
