@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import chatbot.api as api
-from . import User
 
 
 class Message(api.ChatMessage):

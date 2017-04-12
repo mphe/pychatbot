@@ -1,27 +1,28 @@
 # -*- coding: utf-8 -*-
 
-
-def create_user(tox, friend_number):
-    """Creates a User object from a friend number.
-    
-    If friend_number is -1, the logged in user is used.
-    """
-    if friend_number == -1:
-        return User(tox.tox_self_get_address(),
-                    tox.tox_self_get_name())
-    else:
-        return User(tox.tox_friend_get_public_key(friend_number),
-                    tox.tox_friend_get_name(friend_number))
+import chatbot.api as api
 
 
-class User(object):
-    def __init__(self, toxid, name):
-        self._toxid = toxid
-        self._name = name
+class SelfUser(api.User):
+    """Represents the logged in user."""
+    def __init__(self, tox):
+        self._tox = tox
 
     def handle(self):
-        """Returns the user's Tox ID"""
-        return self._toxid
+        return self._tox.tox_self_get_address()
 
     def display_name(self):
-        return self._name
+        return self._tox.tox_self_get_name()
+
+
+class Friend(api.User):
+    """Represents a friend."""
+    def __init__(self, tox, friend_number):
+        self._tox = tox
+        self._number = friend_number
+
+    def handle(self):
+        return self._tox.tox_friend_get_public_key(self._number)
+
+    def display_name(self):
+        return self._tox.tox_friend_get_name(self._number)

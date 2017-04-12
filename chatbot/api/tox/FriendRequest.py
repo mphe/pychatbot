@@ -6,7 +6,7 @@ from . import User
 
 class FriendRequest(api.FriendRequest):
     def __init__(self, tox, pubkey, msg):
-        self._author = User.User(pubkey, "Unknown")
+        self._author = api.GenericUser(pubkey)
         self._msg = msg
         self._tox = tox
 
@@ -17,7 +17,7 @@ class FriendRequest(api.FriendRequest):
         return self._msg
 
     def accept(self):
-        self._tox.tox_friend_add_norequest(self._key)
+        self._tox.tox_friend_add_norequest(self._author.handle())
 
     def decline(self):
         # Simply ignore the request to decline it

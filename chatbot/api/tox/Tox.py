@@ -29,7 +29,7 @@ class ToxAPI(api.APIBase, ToxCore):
         api.APIBase.__init__(self, api_id, stub)
         ToxCore.__init__(self, self._opts)
 
-        self._user = User.create_user(self, -1)
+        self._user = User.SelfUser(self)
 
         self.tox_add_tcp_relay(self._opts["bootstrap_host"],
                                self._opts["bootstrap_port"],
@@ -130,9 +130,9 @@ class ToxAPI(api.APIBase, ToxCore):
         self._save()
 
     def tox_friend_message_cb(self, friend_number, text):
-        msg = Message.Message(User.create_user(self, friend_number),
-                      text,
-                      self._find_chat(friend_number))
+        msg = Message.Message(User.Friend(self, friend_number),
+                              text,
+                              self._find_chat(friend_number))
         self._trigger(api.APIEvents.Message, msg)
 
     def tox_friend_read_receipt_cb(self, friend_number, message_id):

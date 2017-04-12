@@ -23,3 +23,17 @@ class User(object):
     # def send_message(self, text):
     #     """Send a message to this user"""
     #     raise NotImplementedError
+
+
+class GenericUser(User):
+    """Generic user with a handle and a name."""
+
+    def __init__(self, handle, name="Unknown"):
+        self._handle = handle
+        self._name = name
+
+    def handle(self):
+        return self._handle
+
+    def display_name(self):
+        return self._name

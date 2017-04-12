@@ -137,6 +137,9 @@ class Bot(object):
 
     def _autoaccept(self, request):
         request.accept()
+        logging.info("Accepted friend request from \"{}\" ({})".format(
+            request.get_author().display_name(),
+            request.get_author().handle()))
 
 
     # Utility functions

@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import chatbot.api as api
-from pytoxcore import ToxCore
 
 
 class Chat(api.Chat):
