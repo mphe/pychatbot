@@ -3,7 +3,7 @@
 from context import *
 import logging
 
-class Plugin(bot.subsystem.plugin.Plugin):
+class Plugin(bot.subsystem.plugin.BasePlugin):
     def __init__(self, oldme, x):
         logging.info("Received parameter x=" + str(x))
 

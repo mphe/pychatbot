@@ -19,6 +19,10 @@ class ChatMessage(object):
     def edit(self, newstr):
         raise NotImplementedError
 
+    def reply(self, text):
+        """Same as ChatMessage.get_chat().send_message(text)."""
+        self.get_chat().send_message(text)
+
     def __str__(self):
         return "{}: {}".format(self.get_author().display_name(),
                                self.get_text())

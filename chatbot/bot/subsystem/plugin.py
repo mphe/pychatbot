@@ -7,7 +7,7 @@ from chatbot.util import mkdir_p
 from chatbot.compat import *
 
 
-class Plugin(object):
+class BasePlugin(object):
     """Base class for plugins."""
 
     def __init__(self, oldme, *argv, **kwargs):
@@ -141,7 +141,7 @@ class PluginManager(object):
         Yields a tuple (name, plugin), where name is a string and plugin
         the plugin object.
         """
-        for k,v in self._plugins.iteritems():
+        for k,v in self._plugins.items():
             yield (k, v.plugin)
 
     def plugin_exists(self, name):

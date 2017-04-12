@@ -1,2 +1,2 @@
-from .Bot import ExitCode, Bot
-from . import subsystem
+from .Bot import Bot, ExitCode
+from . import subsystem, plugins

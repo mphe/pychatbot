@@ -37,13 +37,3 @@ def merge_dicts_copy(srcdict, mergedict, overwrite=False):
     ndict = dict(srcdict)
     merge_dicts(ndict, mergedict, overwrite)
     return ndict
-
-
-# http://stackoverflow.com/questions/15506971/recursive-version-of-reload
-def rreload(module):
-    """Recursively reload modules."""
-    reload(module)
-    for attribute_name in dir(module):
-        attribute = getattr(module, attribute_name)
-        if type(attribute) is ModuleType:
-            rreload(attribute)

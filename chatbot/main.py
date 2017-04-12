@@ -4,8 +4,7 @@
 import sys
 import logging
 import argparse
-import chatbot
-from chatbot.util import rreload
+import chatbot.bot
 
 def main():
     parser = argparse.ArgumentParser(
@@ -26,17 +25,13 @@ def main():
     logging.basicConfig(level=(logging.DEBUG if args.debug else logging.INFO),
                         format="%(levelname)s:%(message)s")
 
-    while True:
-        if args.configdir:
-            bot = chatbot.bot.Bot(args.configdir)
-        else:
-            bot = chatbot.bot.Bot()
+    if args.configdir:
+        bot = chatbot.bot.Bot(args.configdir)
+    else:
+        bot = chatbot.bot.Bot()
 
-        err = bot.run(profile=args.profile, apiname=args.api)
-        if err == chatbot.bot.ExitCode.Restart:
-            rreload(chatbot)
-            continue
-        return err
+    return bot.run(profile=args.profile, apiname=args.api)
+
 
 if __name__ == "__main__":
     sys.exit(main())

@@ -77,7 +77,13 @@ class Command(object):
 
 
 class CommandHandler(object):
-    def __init__(self, prefix=[ "!" ], admins=[]):
+    def __init__(self, prefix=["!"], admins=[]):
+        """Takes a list of command prefixes and admins.
+        
+        Both lists are stored without being copied or modified. It's safe
+        to modify them outside of CommandHandler to dynamically add more
+        admins or prefixes.
+        """
         self._prefix = prefix
         self._admins = admins
         self._cmds = {}
@@ -230,7 +236,11 @@ class CommandHandler(object):
         """Syntax: help [command]
 
         Shows the documentation of the given command.
-        Use ´list´ to display a list of all available commands.
+        Use `list` to display a list of all available commands.
+
+        Parameters in <angular brackets> are required, those in
+        [square brackets] are optional. | means "or", A|B means "A or B".
+        Commands are noted in `backticks`.
         """
 
         if len(argv) == 1:
@@ -249,4 +259,7 @@ class CommandHandler(object):
 
         List available commands.
         """
-        msg.get_chat().send_message(", ".join(self._cmds.keys()))
+        msg.reply("User commands: {}\nAdmin commands: {}".format(
+            ", ".join([ k for k,v in self._cmds.items() if not (v.flags & CMDFLAG_ADMIN) ]),
+            ", ".join([ k for k,v in self._cmds.items() if v.flags & CMDFLAG_ADMIN ])
+        ))
