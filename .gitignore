@@ -1,5 +1,4 @@
 *.pyc
 tests/profile.tox
 tmp/
-plugins
 config
