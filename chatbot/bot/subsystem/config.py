@@ -17,6 +17,9 @@ class ConfigManager(object):
     def set_searchpath(self, searchpath):
         self._searchpath = searchpath
 
+    def exists(self, fname):
+        return os.path.exists(self._get_fname(fname))
+
     def load_create(self, fname, default=None, validate=True):
         return self.load(fname, default, validate, False, True)
 

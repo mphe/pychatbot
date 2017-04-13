@@ -147,10 +147,15 @@ class Bot(object):
         if not apiname and not profile:
             raise ValueError("No API and no profile specified")
 
+        newprofile = False
+
         # Load default or existing config
         cfg = self._get_default_config()
         if profile:
-            cfg = self._cfgmgr.load(profile, cfg)
+            if not self._cfgmgr.exists(profile):
+                newprofile = True
+            # Read config and update defaults
+            cfg = self._cfgmgr.load_update(profile, cfg)
 
         # Apply custom settings and overwrite existing
         if apiname:
@@ -163,9 +168,9 @@ class Bot(object):
         if kwargs:
             merge_dicts(cfg["api_config"], kwargs, True)
 
-        # Create the profile if it doesn't exist yet
-        if profile:
-            self._cfgmgr.create(profile, cfg)
+        # Update the profile (with applied settings)
+        if newprofile:
+            self._cfgmgr.write(profile, cfg)
         self._config = cfg
 
     def _init(self, profile="", apiname="", **kwargs):
