@@ -44,7 +44,7 @@ class Plugin(BasePlugin):
             f[argv[1]][0](argv[2])
             msg.reply(f[argv[1]][1])
         else:
-            raise commands.CommandError(argv[0], command.COMMAND_ERR_SYNTAX)
+            raise command.CommandError(argv[0], command.COMMAND_ERR_SYNTAX)
 
     def _reload(self, msg, argv):
         """Syntax: reload
