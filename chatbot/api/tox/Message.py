@@ -18,5 +18,5 @@ class Message(api.ChatMessage):
     def get_chat(self):
         return self._chat
 
-    def is_editable():
+    def is_editable(self):
         return False

@@ -13,7 +13,7 @@ class ChatMessage(object):
         """Return a Chat object representing the chat this message was sent in."""
         raise NotImplementedError
 
-    def is_editable():
+    def is_editable(self):
         raise NotImplementedError
 
     def edit(self, newstr):
