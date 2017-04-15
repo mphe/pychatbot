@@ -240,7 +240,9 @@ class CommandHandler(object):
 
         Parameters in <angular brackets> are required, those in
         [square brackets] are optional. | means "or", A|B means "A or B".
-        Commands are noted in `backticks`.
+        Parameters followed by 3 dots (...) stand for 0 or more arguments.
+        Wrapping arguments in "quotation marks" allows strings to have spaces.
+        References to other commands are noted in `backticks`.
         """
 
         if len(argv) == 1:

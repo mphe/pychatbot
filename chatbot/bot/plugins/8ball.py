@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import random
-import logging
 from chatbot.bot.subsystem.plugin import BasePlugin
 from chatbot.bot.subsystem import command
 from chatbot.compat import *
