@@ -55,7 +55,7 @@ class CommandError(Exception):
         COMMAND_ERR_NOTFOUND    : "Command not found"
     }
 
-    def __init__(self, code, command="", msg=""):
+    def __init__(self, code, msg="", command=""):
         msg = msg if msg else CommandError._err_strings[code]
         super(CommandError, self).__init__(msg)
         self.code = code
@@ -259,7 +259,7 @@ class CommandHandler(object):
 
         List available commands.
         """
-        msg.reply("User commands: {}\nAdmin commands: {}".format(
+        msg.reply("User commands: {}\n\nAdmin commands: {}".format(
             ", ".join([ k for k,v in self._cmds.items() if not (v.flags & CMDFLAG_ADMIN) ]),
             ", ".join([ k for k,v in self._cmds.items() if v.flags & CMDFLAG_ADMIN ])
         ))

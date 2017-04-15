@@ -2,7 +2,6 @@
 
 import os
 import errno
-from types import ModuleType
 from chatbot.compat import *
 
 
@@ -37,3 +36,10 @@ def merge_dicts_copy(srcdict, mergedict, overwrite=False):
     ndict = dict(srcdict)
     merge_dicts(ndict, mergedict, overwrite)
     return ndict
+
+
+def edit_or_reply(msg, text):
+    if msg.is_editable():
+        msg.edit(text)
+    else:
+        msg.reply(text)
