@@ -201,7 +201,8 @@ class Bot(object):
         self._api = api.create_api_object(self._config["api"],
                                           **self._config["api_config"])
 
-        self._dispatcher = APIEventDispatcher(self._api)
+        self._dispatcher = APIEventDispatcher(self._api,
+                                              self._handle_event_exc)
         self._dispatcher.register(APIEvents.Message, self._handle_command)
         if self._config["autoaccept_friend"]:
             self._dispatcher.register(APIEvents.FriendRequest, self._autoaccept)
@@ -237,6 +238,10 @@ class Bot(object):
         self._api.detach()
 
     def _handle_plugin_exc(self, name, e):
+        logging.error(traceback.format_exc())
+        return True
+
+    def _handle_event_exc(self, event, e, *args, **kwargs):
         logging.error(traceback.format_exc())
         return True
 

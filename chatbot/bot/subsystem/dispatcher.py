@@ -9,9 +9,23 @@ from chatbot.compat import *
 class APIEventDispatcher(object):
     """Provides a dispatch system to allow multiple handlers per API event."""
 
-    def __init__(self, apiobj):
+    def __init__(self, apiobj, exc_handler=None):
+        """Constructor
+        
+        apiobj is an API objects instance.
+        exc_handler is an optional callback with the signature
+            (event, Exception, *args, **kwargs) -> bool
+        that will be called when an exception occurs during event execution.
+        The first argument is the event and second is the Exception object.
+        Any arguments passed to the event appear as *args or **kwargs.
+        The return value indicates whether to treat the exception as caught
+        or re-raise it: True -> caught, False -> re-raise.
+        If exception_handler is None, exceptions will be re-raised
+        immediately.
+        """
         self._events = {}
         self._api = apiobj
+        self._exc_handler = exc_handler
 
     def register(self, event, callback, nice=Event.EVENT_NORMAL):
         """Register an event handler and return a Handle to it.
@@ -46,7 +60,12 @@ class APIEventDispatcher(object):
         """Generic function to dispatch an event to all registered callbacks."""
         ev = self._events[event]
         if len(ev) > 0:
-            ev.trigger(*args, **kwargs)
+            try:
+                ev.trigger(*args, **kwargs)
+            except Exception as e:
+                if self._exc_handler:
+                    if not self._exc_handler(event, e, *args, **kwargs):
+                        raise
         else:
             # Unregister if there are no callbacks left, so that debug stub
             # messages on unhandled events still come through.
