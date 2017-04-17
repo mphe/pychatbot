@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import re
 import math
 import random
 from multiprocessing import Process, Array
@@ -47,13 +48,13 @@ class Plugin(BasePlugin):
         """Syntax: calc <expression>
 
         Evaluates the given mathematical expression.
-        The expression must not contain '_', '"', or \"'\".
+        The expression must only contain the following characters:
+        a-z A-Z 0-9 . + - * / ( ) or whitespace.
         """
         expr = " ".join(argv[1:])
-        for i in "_'\"":
-            if i in expr:
-                raise command.CommandError(
-                    command.COMMAND_ERR_SYNTAX, 'Char "{}" is not permitted.'.format(i))
+        if not re.match(r"^[ a-zA-Z0-9\.\+\-\*/\(\)]*$", expr):
+            raise command.CommandError(
+                command.COMMAND_ERR_SYNTAX, 'Expression contains invalid characters')
 
         result = Array("c", 256)
         p = Process(target=self._async_eval, args=(result, expr))
@@ -64,7 +65,7 @@ class Plugin(BasePlugin):
             p.join()
             msg.reply("Expression took to long to evaluate.")
         else:
-            msg.reply(result.value)
+            msg.reply(result.value.decode("utf-8"))
 
     @staticmethod
     def _async_eval(result, expr):
