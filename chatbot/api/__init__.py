@@ -4,7 +4,8 @@ from .APIEvents import APIEvents
 from .ChatMessage import ChatMessage
 from .FriendRequest import FriendRequest
 from .User import User, GenericUser
-from .Chat import *
+from .Chat import GroupChat, Chat, ChatType
+from .GroupInvite import GroupInvite
 import importlib
 import logging
 

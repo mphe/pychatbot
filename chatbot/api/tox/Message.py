@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from pytoxcore import ToxCore
 import chatbot.api as api
 
 
@@ -20,3 +21,9 @@ class Message(api.ChatMessage):
 
     def is_editable(self):
         return False
+
+
+def split_text(text):
+    """Split the message in chunks of TOX_MAX_MESSAGE_LENGTH."""
+    for i in range(0, len(text), ToxCore.TOX_MAX_MESSAGE_LENGTH):
+        yield text[i:i + ToxCore.TOX_MAX_MESSAGE_LENGTH]

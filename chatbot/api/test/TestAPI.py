@@ -110,6 +110,9 @@ class TestChat(api.Chat):
     def type(self):
         return api.ChatType.Normal
 
+    def is_anonymous(self):
+        return False
+
 
 class User(api.User):
     def __init__(self, handle, name):

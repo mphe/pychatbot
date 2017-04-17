@@ -3,10 +3,12 @@
 
 class APIEvents(object):
     """An enum of API events."""
-    Message         = "MessageReceived"
-    MessageSent     = "MessageSent"
-    Filetrans       = "FiletransferReceived"
-    FriendRequest   = "FriendRequest"
+    Message          = "MessageReceived"
+    MessageSent      = "MessageSent"
+    FriendRequest    = "FriendRequest"
+    GroupInvite      = "GroupInvite"
+    GroupMemberJoin  = "GroupMemberJoin"
+    GroupMemberLeave = "GroupMemberLeave"
 
 
 def iterevents():
@@ -32,18 +34,36 @@ def on_message_sent(msg):
     """
     pass
 
-def on_filetransfer_received(filetrans):
-    """Triggered when receiving a message.
-    
-    Parameters:
-        filetrans:      A filetransfer object
-    """
-    pass
-
 def on_friend_request_received(request):
     """Triggered when receiving a friend request.
     
     Parameters:
         request:        A FriendRequest object
+    """
+    pass
+
+def on_group_invite(invite):
+    """Triggered when receiving a groupchat invite.
+    
+    Parameters:
+        invite:         A GroupInvite object
+    """
+    pass
+
+def on_group_member_join(chat, user):
+    """Triggered when a user joins a groupchat.
+    
+    Parameters:
+        chat:           A Chat object representing the groupchat
+        user:           A User object of the joined user
+    """
+    pass
+
+def on_group_member_leave(chat, user):
+    """Triggered when a user leaves a groupchat.
+    
+    Parameters:
+        chat:           A Chat object representing the groupchat
+        user:           A User object of the left user
     """
     pass

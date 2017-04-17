@@ -141,6 +141,18 @@ class Bot(object):
             request.get_author().display_name(),
             request.get_author().handle()))
 
+    def _autojoin(self, invite):
+        invite.accept()
+        logging.info("Accepted group invite from \"{}\" ({})".format(
+            invite.get_author().display_name(),
+            invite.get_author().handle()))
+
+    def _autoleave(self, chat, user):
+        logging.info("{} users left".format(str(chat.size())))
+        if chat.size() == 1:
+            logging.info("Leaving group after last user left ({})".format(chat.id()))
+            chat.leave()
+
 
     # Utility functions
     def _load_config(self, profile="", apiname="", **kwargs):
@@ -193,6 +205,10 @@ class Bot(object):
         self._dispatcher.register(APIEvents.Message, self._handle_command)
         if self._config["autoaccept_friend"]:
             self._dispatcher.register(APIEvents.FriendRequest, self._autoaccept)
+        if self._config["autoaccept_invite"]:
+            self._dispatcher.register(APIEvents.GroupInvite, self._autojoin)
+        if self._config["autoleave"]:
+            self._dispatcher.register(APIEvents.GroupMemberLeave, self._autoleave)
 
         logging.info("Attaching API...")
         self._api.attach()
@@ -237,5 +253,7 @@ class Bot(object):
             "display_name": "Bot",
             "echo": True,
             "autoaccept_friend": True,
+            "autoaccept_invite": True,
+            "autoleave": True
         }
 

@@ -8,16 +8,17 @@ from threading import Timer
 from pytoxcore import ToxCore
 from chatbot import api
 from chatbot.compat import *
-from . import FriendRequest, Message, Chat, User
+from . import FriendRequest, Message, Chat, User, GroupInvite
+
 
 class ToxAPI(api.APIBase, ToxCore):
     def __init__(self, api_id, stub, **kwargs):
         self._bootstrap_timer = None
         self._opts = self.get_default_options()
         self._chats = {}
-        self._queue = {}    # Stores unsent messages
+        self._groupchats = {}
 
-        # Merge passed arguments with default options
+        # Merge arguments with default options
         for i in kwargs:
             self._opts[i] = kwargs[i]
 
@@ -96,22 +97,17 @@ class ToxAPI(api.APIBase, ToxCore):
             self._bootstrap_timer = Timer(10, self.attach)
             self._bootstrap_timer.start()
 
-    def _find_chat(self, chat_id):
-        if not chat_id in self._chats:
-            self._chats[chat_id] = Chat.Chat(chat_id, self)
-        return self._chats[chat_id]
+    def _find_chat(self, chat_id, conference=False):
+        chats = self._groupchats if conference else self._chats
+        if not chat_id in chats:
+            if conference:
+                chats[chat_id] = Chat.GroupChat(chat_id, self)
+            else:
+                chats[chat_id] = Chat.Chat(chat_id, self)
+        return chats[chat_id]
 
-    def _send_message(self, text, friend_number):
-        for i in range(0, len(text), ToxCore.TOX_MAX_MESSAGE_LENGTH):
-            segment = text[i:i + ToxCore.TOX_MAX_MESSAGE_LENGTH]
-            id = self.tox_friend_send_message(
-                friend_number,
-                ToxCore.TOX_MESSAGE_TYPE_NORMAL,
-                segment
-            )
-            self._queue[id] = Message.Message(self._user,
-                                      segment,
-                                      self._find_chat(friend_number))
+    def _purge_conference(self, chat_id):
+        del self._groupchats[chat_id]
 
     def _save(self):
         if self._opts["savefile"]:
@@ -125,16 +121,27 @@ class ToxAPI(api.APIBase, ToxCore):
     def tox_friend_request_cb(self, pubkey, msg):
         req = FriendRequest.FriendRequest(self, pubkey, msg)
         self._trigger(api.APIEvents.FriendRequest, req)
-
-        # Let's save, just in case
         self._save()
 
-    def tox_friend_message_cb(self, friend_number, text):
-        msg = Message.Message(User.Friend(self, friend_number),
-                              text,
-                              self._find_chat(friend_number))
-        self._trigger(api.APIEvents.Message, msg)
+    def tox_conference_invite_cb(self, friend_number, conftype, cookie):
+        if conftype == ToxCore.TOX_CONFERENCE_TYPE_AV:
+            logging.warn("Received AV conferences invite, but AV conferences are not supported")
+            self._find_chat(friend_number).send_message("Can't join this chat, AV chats are not supported.")
+            return
+        req = GroupInvite.GroupInvite(self, friend_number, cookie)
+        self._trigger(api.APIEvents.GroupInvite, req)
+
+    def tox_friend_message_cb(self, friend_number, msgtype, text):
+        self._find_chat(friend_number)._message_received(msgtype, text)
 
     def tox_friend_read_receipt_cb(self, friend_number, message_id):
-        self._trigger(api.APIEvents.MessageSent, self._queue[message_id])
-        del self._queue[message_id]
+        self._find_chat(friend_number)._read_receipt(message_id)
+
+    def tox_conference_message_cb(self, conf_number, peer_number, msgtype, text):
+        self._find_chat(conf_number, conference=True)._message_received(
+            peer_number, msgtype, text)
+
+    def tox_conference_namelist_cb(self, conf_number, peer_number, change):
+        self._find_chat(conf_number, conference=True)._namelist_change(
+            peer_number, change)
+

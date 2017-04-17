@@ -8,6 +8,7 @@ class User(object):
         The return value depends on the chat system.
         For example, in Skype it would return the username, in Tox it would
         return the user's Tox ID, etc.
+        In anonymous groups the handle has to be unique inside this chat.
         """
         raise NotImplementedError
 
@@ -18,6 +19,9 @@ class User(object):
         most (not all) chat systems offer.
         """
         raise NotImplementedError
+
+    def __str__(self):
+        return "{} ({})".format(self.display_name(), self.handle())
 
     # TODO: Consider adding this
     # def send_message(self, text):

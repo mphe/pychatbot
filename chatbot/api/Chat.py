@@ -40,8 +40,32 @@ class Chat(object):
         """Returns the chat type. See ChatType for available types."""
         raise NotImplementedError
 
+    def size(self):
+        """Returns the number of chat members (including the current user).
+        
+        In a normal chat this is 2. Groupchats should override this."""
+        return 2
+
+    def is_anonymous(self):
+        """Returns whether or not this is an anonymous chat.
+        
+        In anonymous groups you can't access other chat member's handles.
+        That means users in an anonymous chat can't be uniquely identified.
+        """
+        raise NotImplementedError
+
     def __str__(self):
         if self.type() == ChatType.Normal:
             return "Chat {}".format(repr(self.id()))
         else:
             return "Groupchat {}".format(repr(self.id()))
+
+
+class GroupChat(Chat):
+    """Represents a group chat.
+    
+    Basically the same as a normal chat but with some extra functions.
+    """
+    def leave(self):
+        """Leave a group chat."""
+        raise NotImplementedError
