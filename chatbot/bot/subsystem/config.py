@@ -14,14 +14,14 @@ class ConfigManager(object):
         self._searchpath = searchpath
         mkdir_p(searchpath)
 
-    def set_searchpath(self, searchpath):
-        self._searchpath = searchpath
+    # def set_searchpath(self, searchpath):
+    #     self._searchpath = searchpath
 
     def exists(self, fname):
         return os.path.exists(self._get_fname(fname))
 
-    def load_create(self, fname, default=None, validate=True):
-        return self.load(fname, default, validate, False, True)
+    # def load_create(self, fname, default=None, validate=True):
+    #     return self.load(fname, default, validate, False, True)
 
     def load_update(self, fname, default=None, validate=True):
         return self.load(fname, default, validate, True, False)
@@ -59,7 +59,7 @@ class ConfigManager(object):
 
     def create(self, fname, data):
         """Write config only if the file does not yet exist."""
-        if not os.path.isfile(self._get_fname(fname)):
+        if not self.exists(fname):
             self.write(fname, data)
 
     def write(self, fname, data):

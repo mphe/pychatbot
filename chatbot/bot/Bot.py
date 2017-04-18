@@ -81,6 +81,19 @@ class Bot(object):
     # TODO: Consider using some hacks to set the docstrings to the wrapped
     #       functions' docstring.
 
+    def get_configmgr(self):
+        return self._cfgmgr
+
+
+    def register_event_handler(self, event, callback, nice=event.EVENT_NORMAL):
+        """Register an event handler and return a handle to it.
+        
+        To unregister call handle.unregister().
+        See bot.subsystem.APIEventDispatcher for further information.
+        """
+        return self._dispatcher.register(event, callback, nice)
+
+
     def mount_plugin(self, name):
         self._pluginmgr.mount_plugin(name, self)
 
@@ -92,15 +105,6 @@ class Bot(object):
 
     def iter_plugins(self):
         return self._pluginmgr.iter_plugins()
-
-
-    def register_event_handler(self, event, callback, nice=event.EVENT_NORMAL):
-        """Register an event handler and return a handle to it.
-        
-        To unregister call handle.unregister().
-        See bot.subsystem.APIEventDispatcher for further information.
-        """
-        return self._dispatcher.register(event, callback, nice)
 
 
     def register_command(self, name, callback, argc=1, flags=0):
