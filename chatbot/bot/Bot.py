@@ -205,10 +205,7 @@ class Bot(object):
             whitelist=self._config["plugins"]["whitelist"],
             blacklist=self._config["plugins"]["blacklist"])
 
-        logging.info("Mounting plugins...")
-        self._pluginmgr.mount_all(self._handle_plugin_exc, self)
-
-        logging.info("Loading API...")
+        logging.info("Preparing API...")
         self._api = api.create_api_object(self._config["api"],
                                           **self._config["api_config"])
 
@@ -221,6 +218,9 @@ class Bot(object):
             self._dispatcher.register(APIEvents.GroupInvite, self._autojoin)
         if self._config["autoleave"]:
             self._dispatcher.register(APIEvents.GroupMemberLeave, self._autoleave)
+
+        logging.info("Mounting plugins...")
+        self._pluginmgr.mount_all(self._handle_plugin_exc, self)
 
         logging.info("Attaching API...")
         self._api.attach()
