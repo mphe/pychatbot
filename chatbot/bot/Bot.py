@@ -162,12 +162,16 @@ class Bot(object):
         newprofile = False
 
         # Load default or existing config
-        cfg = self._get_default_config()
+        defcfg = self._get_default_config()
         if profile:
             if not self._cfgmgr.exists(profile):
                 newprofile = True
             # Read config and update defaults
-            cfg = self._cfgmgr.load_update(profile, cfg)
+            # TODO: Maybe implement recursive merging into ConfigManager
+            cfg = self._cfgmgr.load(profile, defcfg)
+            merge_dicts(cfg["plugins"], defcfg["plugins"])
+            merge_dicts(cfg["api_config"], defcfg["api_config"])
+            self._cfgmgr.write(profile, cfg)
 
         # Apply custom settings and overwrite existing
         if apiname:
@@ -192,7 +196,10 @@ class Bot(object):
 
         self._cmdhandler = command.CommandHandler(
             self._config["prefix"], self._config["admins"])
-        self._pluginmgr = plugin.PluginManager(self._config["plugin_path"])
+        self._pluginmgr = plugin.PluginManager(
+            os.path.dirname(chatbot.bot.plugins.__file__),
+            whitelist=self._config["plugins"]["whitelist"],
+            blacklist=self._config["plugins"]["blacklist"])
 
         logging.info("Mounting plugins...")
         self._pluginmgr.mount_all(self._handle_plugin_exc, self)
@@ -252,13 +259,17 @@ class Bot(object):
             "api_config": {
                 "stub": False,
             },
-            "plugin_path": os.path.dirname(chatbot.bot.plugins.__file__),
+            "plugins": {
+                # "searchpath": os.path.dirname(chatbot.bot.plugins.__file__),
+                "whitelist": [],
+                "blacklist": [],
+            },
             "prefix": [ "!bot","@bot", "!" ],
             "admins": [],
             "display_name": "Bot",
             "echo": True,
             "autoaccept_friend": True,
             "autoaccept_invite": True,
-            "autoleave": True
+            "autoleave": True,
         }
 

@@ -35,9 +35,21 @@ class PluginHandle(object):
 
 
 class PluginManager(object):
-    def __init__(self, searchpath):
-        """searchpath is the directory where plugins are stored."""
+    def __init__(self, searchpath, blacklist=[], whitelist=[]):
+        """Constructor.
+        
+        searchpath is the directory where plugins are stored.
+        blacklist can be used to exclude certain plugins from autoloading.
+        whitelist disables autoloading for everything but the specified
+        plugins.
+        If neither blacklist nor whitelist contains entries, none of them
+        have effect and all plugins will be autoloaded.
+        If both blacklist and whitelist contain entries, whitelist has
+        precedence.
+        """
         self._searchpath = searchpath
+        self._blacklist = blacklist
+        self._whitelist = whitelist
         self._plugins = {}
         mkdir_p(searchpath)
 
@@ -83,7 +95,7 @@ class PluginManager(object):
                 logging.info("Plugin unmounted: " + name)
 
     def mount_all(self, exception_handler, *argv, **kwargs):
-        """Mount all plugins in the search path.
+        """Mount all plugins in the search path while regarding black/whitelists.
         
         exception_handler is a callback with the signature
             (str, Exception) -> bool
@@ -101,6 +113,16 @@ class PluginManager(object):
             if not os.path.isdir(i) and i.endswith(".py")   \
                     and os.path.basename(i) != "__init__.py":
                 name = i[:-3]
+
+                if self._whitelist:
+                    if not name in self._whitelist:
+                        logging.debug("Plugin not whitelisted, skipping: " + name)
+                        continue
+                elif self._blacklist:
+                    if name in self._blacklist:
+                        logging.debug("Plugin blacklisted, skipping: " + name)
+                        continue
+
                 try:
                     self.mount_plugin(name, *argv, **kwargs)
                 except Exception as e:
