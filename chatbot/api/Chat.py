@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from .ChatMessage import MessageType
+
 
 class ChatType(object):
     """An enum defining group types."""
@@ -34,6 +36,10 @@ class Chat(object):
 
     def send_message(self, text):
         """Sends a message with the given text to this chatroom."""
+        raise NotImplementedError
+
+    def send_action(self, text):
+        """Sends an action (/me ...) with the given text to this chatroom."""
         raise NotImplementedError
 
     def type(self):

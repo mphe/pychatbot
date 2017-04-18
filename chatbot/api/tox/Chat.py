@@ -6,6 +6,19 @@ from .Message import Message, split_text
 from .User import GroupPeer, Friend
 
 
+def translate_type(msgtype):
+    if msgtype == api.MessageType.Normal:
+        return ToxCore.TOX_MESSAGE_TYPE_NORMAL
+    else:
+        return ToxCore.TOX_MESSAGE_TYPE_ACTION
+
+def translate_type_tox(msgtype):
+    if msgtype == ToxCore.TOX_MESSAGE_TYPE_NORMAL:
+        return api.MessageType.Normal
+    else:
+        return api.MessageType.Action
+
+
 class Chat(api.Chat):
     def __init__(self, friend_number, tox):
         self._tox = tox
@@ -15,11 +28,14 @@ class Chat(api.Chat):
     def id(self):
         return self._friend.handle()
 
-    def send_message(self, text):
+    def send_message(self, text, msgtype=api.MessageType.Normal):
         for seg in split_text(text):
             msgid = self._tox.tox_friend_send_message(
-                self._friend.number(), ToxCore.TOX_MESSAGE_TYPE_NORMAL, seg)
-            self._queue[msgid] = Message(self._tox.get_user(), seg, self)
+                self._friend.number(), translate_type(msgtype), seg)
+            self._queue[msgid] = Message(self._tox.get_user(), seg, self, msgtype)
+
+    def send_action(self, text):
+        self.send_message(text, msgtype=api.MessageType.Action)
 
     def type(self):
         return api.ChatType.Normal
@@ -34,8 +50,8 @@ class Chat(api.Chat):
             del self._queue[msgid]
 
     def _message_received(self, msgtype, text):
-        self._tox._trigger(api.APIEvents.Message,
-                           Message(self._friend, text, self))
+        self._tox._trigger(api.APIEvents.Message, Message(
+            self._friend, text, self, translate_type_tox(msgtype)))
 
 
 class GroupChat(api.Chat):
@@ -47,12 +63,15 @@ class GroupChat(api.Chat):
     def id(self):
         return "g" + str(self._id)
 
-    def send_message(self, text):
+    def send_message(self, text, msgtype=api.MessageType.Normal):
         for segment in split_text(text):
             self._tox.tox_conference_send_message(
-                self._id, ToxCore.TOX_MESSAGE_TYPE_NORMAL, segment)
+                self._id, translate_type(msgtype), segment)
             self._tox._trigger(api.APIEvents.MessageSent,
-                               Message(self._tox.get_user(), segment, self))
+                               Message(self._tox.get_user(), segment, self, msgtype))
+
+    def send_action(self, text):
+        self.send_message(text, api.MessageType.Action)
 
     def type(self):
         return api.ChatType.Group
@@ -76,8 +95,8 @@ class GroupChat(api.Chat):
     def _message_received(self, peer_number, msgtype, text):
         if self._tox.tox_conference_peer_number_is_ours(self._id, peer_number):
             return
-        self._tox._trigger(api.APIEvents.Message,
-                           Message(self._find_peer(peer_number), text, self))
+        self._tox._trigger(api.APIEvents.Message, Message(
+            self._find_peer(peer_number), text, self, translate_type_tox(msgtype)))
 
     def _namelist_change(self, peer_number, change):
         peer = self._find_peer(peer_number)

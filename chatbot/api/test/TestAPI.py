@@ -30,7 +30,10 @@ class TestAPI(api.APIBase):
         if self._interactive:
             text = input("Enter message: ").strip()
             if text:
-                self.trigger_receive(text)
+                if text.startswith("/me "):
+                    self.trigger_receive(text[4:], api.MessageType.Action)
+                else:
+                    self.trigger_receive(text)
         else:
             time.sleep(1)
 
@@ -54,8 +57,8 @@ class TestAPI(api.APIBase):
         }
 
     # Testing functions
-    def trigger_receive(self, text):
-        msg = TestingMessage(self._otheruser, text, self._chat)
+    def trigger_receive(self, text, msgtype=api.MessageType.Normal):
+        msg = TestingMessage(self._otheruser, text, self._chat, msgtype)
         logging.info(str(msg))
         self._trigger(api.APIEvents.Message, msg)
 
@@ -72,10 +75,11 @@ class TestAPI(api.APIBase):
 
 
 class TestingMessage(api.ChatMessage):
-    def __init__(self, author, text, chat):
+    def __init__(self, author, text, chat, msgtype=api.MessageType.Normal):
         self._text = text
         self._author = author
         self._chat = chat
+        self._type = msgtype
 
     def get_text(self):
         return self._text
@@ -85,6 +89,9 @@ class TestingMessage(api.ChatMessage):
 
     def get_chat(self):
         return self._chat
+
+    def get_type(self):
+        return self._type
 
     def is_editable(self):
         return False
@@ -102,10 +109,13 @@ class TestChat(api.Chat):
     def id(self):
         return self._id
 
-    def send_message(self, text):
-        msg = TestingMessage(self._api.get_user(), text, self)
+    def send_message(self, text, msgtype=api.MessageType.Normal):
+        msg = TestingMessage(self._api.get_user(), text, self, msgtype)
         logging.info(str(msg))
         self._api._trigger(api.APIEvents.MessageSent, msg)
+
+    def send_action(self, text):
+        self.send_message(text, api.MessageType.Action)
 
     def type(self):
         return api.ChatType.Normal

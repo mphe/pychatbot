@@ -3,6 +3,7 @@
 import logging
 import shlex
 from chatbot.compat import *
+from chatbot.api import MessageType
 
 
 # Command flags
@@ -177,6 +178,9 @@ class CommandHandler(object):
         Returns True if the message was a command, otherwise False.
         Exceptions may be raised and have to be handled by the calling scope.
         """
+        if msg.get_type() != MessageType.Normal:
+            return False
+
         argv = []
 
         command = msg.get_text()

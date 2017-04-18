@@ -22,6 +22,8 @@ class Plugin(BasePlugin):
         bot.register_command("random", self._random)
         bot.register_command("blockspam", self._blockspam, argc=2)
         bot.register_command("stretch", self._stretch, argc=2)
+        bot.register_command("slap", self._slap)
+        bot.register_command("schlag", self._slap_german)
 
         # API lacks implementation
         # bot.register_admin_command("mute", self._mute)
@@ -35,7 +37,7 @@ class Plugin(BasePlugin):
     def quit(self):
         self._bot.unregister_command(
             "clear", "calc", "hex", "binary", "choose", "random",
-            "blockspam", "stretch")
+            "blockspam", "stretch", "slap", "schlag")
 
     def _clear(self, msg, argv):
         """Syntax: clear
@@ -130,3 +132,14 @@ class Plugin(BasePlugin):
         out = argv[1][:off] + "".join([strength * i for i in argv[1][off:]])
         util.edit_or_reply(msg, out)
 
+    def _slap(self, msg, argv):
+        if len(argv) > 2:
+            msg.get_chat().send_action("slaps " + " ".join(argv[1:]))
+        else:
+            msg.get_chat().send_action("slaps {} with a fish".format(argv[1]))
+
+    def _slap_german(self, msg, argv):
+        if len(argv) > 2:
+            msg.get_chat().send_action("schlägt " + " ".join(argv[1:]))
+        else:
+            msg.get_chat().send_action("schlägt {} mit einem Fisch".format(argv[1]))

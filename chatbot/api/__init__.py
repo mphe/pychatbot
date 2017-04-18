@@ -1,7 +1,7 @@
 from chatbot.compat import *
 from .APIBase import APIBase
 from .APIEvents import APIEvents
-from .ChatMessage import ChatMessage
+from .ChatMessage import ChatMessage, MessageType
 from .FriendRequest import FriendRequest
 from .User import User, GenericUser
 from .Chat import GroupChat, Chat, ChatType

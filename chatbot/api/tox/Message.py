@@ -5,10 +5,11 @@ import chatbot.api as api
 
 
 class Message(api.ChatMessage):
-    def __init__(self, author, text, chat):
+    def __init__(self, author, text, chat, msgtype):
         self._author = author
         self._text = text
         self._chat = chat
+        self._type = msgtype
 
     def get_text(self):
         return self._text
@@ -18,6 +19,9 @@ class Message(api.ChatMessage):
 
     def get_chat(self):
         return self._chat
+
+    def get_type(self):
+        return self._type
 
     def is_editable(self):
         return False

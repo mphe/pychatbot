@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
 
 
+class MessageType(object):
+    Normal, Action = range(2)
+
+
 class ChatMessage(object):
     def get_text(self):
         raise NotImplementedError
@@ -10,7 +14,11 @@ class ChatMessage(object):
         raise NotImplementedError
 
     def get_chat(self):
-        """Return a Chat object representing the chat this message was sent in."""
+        """Returns a Chat object representing the chat this message was sent in."""
+        raise NotImplementedError
+
+    def get_type(self):
+        """Returns the message type."""
         raise NotImplementedError
 
     def is_editable(self):
@@ -24,5 +32,5 @@ class ChatMessage(object):
         self.get_chat().send_message(text)
 
     def __str__(self):
-        return "{}: {}".format(self.get_author().display_name(),
-                               self.get_text())
+        f = "{}: {}" if self.get_type() == MessageType.Normal else "*** {} {} ***"
+        return f.format(self.get_author().display_name(), self.get_text())
