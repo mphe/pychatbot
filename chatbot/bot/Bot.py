@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+# Requires appdirs module
+import appdirs
 import traceback
 import logging
 import os
@@ -19,16 +21,21 @@ class ExitCode(object):
 
 
 class Bot(object):
-    def __init__(self, configdir="config"):
+    def __init__(self, profiledir=""):
         self._running = False
         self._exit = ExitCode.Normal
-
         self._config = {}
-        self._cfgmgr = ConfigManager(configdir)
         self._api = None
         self._dispatcher = None
         self._cmdhandler = None
         self._pluginmgr = None
+
+        if profiledir:
+            self._cfgmgr = ConfigManager(profiledir)
+            logging.info("Using custom profile directory: " + profiledir)
+        else:
+            self._cfgmgr = ConfigManager(appdirs.user_config_dir("pychatbot"))
+            logging.info("Using default profile directory: " + appdirs.user_config_dir("pychatbot"))
 
     def quit(self, code=ExitCode.Normal):
         """Gives the signal to stop with the given exit code."""
@@ -36,7 +43,7 @@ class Bot(object):
         self._running = False
         self._exit = code
 
-    def run(self, profile="", apiname="", **kwargs):
+    def run(self, profile="", apiname="", configdir="", **kwargs):
         """Initialize and start the main loop.
         
         profile: a profile config to load
@@ -47,7 +54,7 @@ class Bot(object):
         """
 
         try:
-            self._init(profile, apiname, **kwargs)
+            self._init(profile, apiname, configdir, **kwargs)
         except:
             logging.error("Failed to initialize.")
             raise
@@ -159,7 +166,7 @@ class Bot(object):
 
 
     # Utility functions
-    def _load_config(self, profile="", apiname="", **kwargs):
+    def _load_config(self, profile="", apiname="", configdir="", **kwargs):
         if not apiname and not profile:
             raise ValueError("No API and no profile specified")
 
@@ -175,7 +182,12 @@ class Bot(object):
             cfg = self._cfgmgr.load(profile, defcfg)
             merge_dicts(cfg["plugins"], defcfg["plugins"])
             merge_dicts(cfg["api_config"], defcfg["api_config"])
-            self._cfgmgr.write(profile, cfg)
+
+            if not newprofile:
+                self._cfgmgr.write(profile, cfg)
+
+        if configdir:
+            cfg["configdir"] = configdir
 
         # Apply custom settings and overwrite existing
         if apiname:
@@ -191,12 +203,17 @@ class Bot(object):
         # Update the profile (with applied settings)
         if newprofile:
             self._cfgmgr.write(profile, cfg)
+
+        if cfg["configdir"]:
+            self._cfgmgr.set_searchpath(cfg["configdir"])
+            logging.info("Using custom config directory: " + cfg["configdir"])
+
         self._config = cfg
 
-    def _init(self, profile="", apiname="", **kwargs):
+    def _init(self, profile="", apiname="", configdir="", **kwargs):
         logging.info("Initializing...")
         logging.info("Loading configs")
-        self._load_config(profile, apiname, **kwargs)
+        self._load_config(profile, apiname, configdir, **kwargs)
 
         self._cmdhandler = command.CommandHandler(
             self._config["prefix"], self._config["admins"])
@@ -268,6 +285,7 @@ class Bot(object):
                 "whitelist": [],
                 "blacklist": [],
             },
+            "configdir": "",
             "prefix": [ "!bot","@bot", "!" ],
             "admins": [],
             "display_name": "Bot",

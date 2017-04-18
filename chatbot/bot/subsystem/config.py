@@ -14,8 +14,8 @@ class ConfigManager(object):
         self._searchpath = searchpath
         mkdir_p(searchpath)
 
-    # def set_searchpath(self, searchpath):
-    #     self._searchpath = searchpath
+    def set_searchpath(self, searchpath):
+        self._searchpath = searchpath
 
     def exists(self, fname):
         return os.path.exists(self._get_fname(fname))
