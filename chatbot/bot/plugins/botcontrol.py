@@ -37,14 +37,14 @@ class Plugin(BasePlugin):
         """
         f = {
             "reload":  (self._bot.reload_plugin,  "Plugin reloaded"),
-            "mount":   (self._bot.mount_plugin,   "Plugin mounted"),
+            "mount":   (self._bot.mount_plugin,   "Plugin (re)mounted"),
             "unmount": (self._bot.unmount_plugin, "Plugin unmounted"),
         }
         if argv[1] in f:
             f[argv[1]][0](argv[2])
             msg.reply(f[argv[1]][1])
         else:
-            raise command.CommandError(argv[0], command.COMMAND_ERR_SYNTAX)
+            raise command.CommandError(command.COMMAND_ERR_SYNTAX, command=argv[0])
 
     def _reload(self, msg, argv):
         """Syntax: reload

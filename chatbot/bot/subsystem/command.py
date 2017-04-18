@@ -212,7 +212,7 @@ class CommandHandler(object):
                     e.command = argv[0]
                     raise
 
-        raise CommandError(COMMAND_ERR_NOTFOUND, argv[0])
+        raise CommandError(COMMAND_ERR_NOTFOUND, command=argv[0])
 
     def _exec_command(self, msg, cmd, argv):
         if not cmd:
