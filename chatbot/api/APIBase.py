@@ -84,6 +84,14 @@ class APIBase(object):
         """Set the logged in user's display name."""
         raise NotImplementedError
 
+    def create_group(self, users=[]):
+        """Create a new groupchat with the given Users.
+        
+        Returns a Chat object representing the group.
+        The users parameter should be optional.
+        """
+        raise NotImplementedError
+
     @staticmethod
     def get_default_options():
         """Return a dictionary with options and their default values for this API."""

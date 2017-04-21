@@ -60,6 +60,9 @@ class Chat(object):
         """
         raise NotImplementedError
 
+    def __len__(self):
+        return self.size()
+
     def __str__(self):
         if self.type() == ChatType.Normal:
             return "Chat {}".format(repr(self.id()))
@@ -73,5 +76,12 @@ class GroupChat(Chat):
     Basically the same as a normal chat but with some extra functions.
     """
     def leave(self):
-        """Leave a group chat."""
+        """Leave a group chat.
+        
+        After calling leave(), the size() function should return 0.
+        """
+        raise NotImplementedError
+
+    def invite(self, user):
+        """Invite the given User to the groupchat."""
         raise NotImplementedError

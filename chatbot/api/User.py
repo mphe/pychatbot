@@ -8,7 +8,7 @@ class User(object):
         The return value depends on the chat system.
         For example, in Skype it would return the username, in Tox it would
         return the user's Tox ID, etc.
-        In anonymous groups the handle has to be unique inside this chat.
+        In anonymous groups the handle may have random values.
         """
         raise NotImplementedError
 

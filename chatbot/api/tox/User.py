@@ -35,20 +35,12 @@ class Friend(api.User):
 # Names need to be cached, so they are available when users leave the chat
 class GroupPeer(api.User):
     """Represents a group peer."""
-    def __init__(self, conf_number, peer_number):
+    def __init__(self, conf_number, peer_number, name):
         self._handle = str(conf_number) + str(peer_number)
-        self._name = None
+        self._name = name
 
     def handle(self):
         return self._handle
 
     def display_name(self):
         return self._name
-
-    # Special
-    def update_name(self, name):
-        """Returns true if this was the initial rename after a joining"""
-        init = self._name is None
-        self._name = name
-        return init
-

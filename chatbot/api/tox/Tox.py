@@ -73,6 +73,16 @@ class ToxAPI(api.APIBase, ToxCore):
     def set_display_name(self, name):
         self.tox_self_set_name(name)
 
+    def create_group(self, users=[]):
+        chatid = self.tox_conference_new()
+        chat = Chat.GroupChat(chatid, self)
+        self._groupchats[chatid] = chat
+        logging.debug("Created new chat: " + str(chat))
+        for i in users:
+            logging.debug("Inviting:" + str(i))
+            chat.invite(i)
+        return chat
+
     @staticmethod
     def get_default_options():
         # Bootstrap nodes: https://wiki.tox.chat/users/nodes
@@ -115,7 +125,7 @@ class ToxAPI(api.APIBase, ToxCore):
             with open(tmpfile, "wb") as f:
                 f.write(self.tox_get_savedata())
             os.rename(tmpfile, self._opts["savefile"])
-            logging.debug("Profile saved.")
+            logging.info("Profile saved.")
 
     # Tox events
     def tox_friend_request_cb(self, pubkey, msg):

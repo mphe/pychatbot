@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from pytoxcore import ToxCore
+import logging
+from pytoxcore import ToxCore, ToxCoreException
 import chatbot.api as api
 from .Message import Message, split_text
 from .User import GroupPeer, Friend
@@ -80,30 +81,63 @@ class GroupChat(api.Chat):
         return True
 
     def size(self):
-        return len(self._peers)
+        return 1 + len(self._peers) if self._id >= 0 else 0
 
     def leave(self):
         self._tox.tox_conference_delete(self._id)
         self._tox._purge_conference(self._id)
+        self._peers.clear()
+        self._id = -1
 
+    def invite(self, user):
+        self._tox.tox_conference_invite(user.number(), self._id)
 
-    def _find_peer(self, num):
-        if not num in self._peers:
-            self._peers[num] = GroupPeer(self._id, num)
-        return self._peers[num]
+    def _is_our_number(self, number):
+        try:
+            if self._tox.tox_conference_peer_number_is_ours(self._id, number):
+                return True
+        except SystemError as e:
+            pass
+        return False
+
+    def _update_peers(self):
+        self._peers.clear()
+        logging.debug("Updating peer list")
+        for i in range(self._tox.tox_conference_peer_count(self._id)):
+            if self._is_our_number(i):
+                continue
+            name = self._tox.tox_conference_peer_get_name(self._id, i)
+            self._peers[i] = GroupPeer(self._id, i, name)
+            logging.debug("\t" + str(self._peers[i]))
 
     def _message_received(self, peer_number, msgtype, text):
-        if self._tox.tox_conference_peer_number_is_ours(self._id, peer_number):
+        if self._is_our_number(peer_number):
             return
         self._tox._trigger(api.APIEvents.Message, Message(
-            self._find_peer(peer_number), text, self, translate_type_tox(msgtype)))
+            self._peers[peer_number], text, self, translate_type_tox(msgtype)))
 
     def _namelist_change(self, peer_number, change):
-        peer = self._find_peer(peer_number)
+        if change == ToxCore.TOX_CONFERENCE_STATE_CHANGE_PEER_JOIN:
+            return
+
         if change == ToxCore.TOX_CONFERENCE_STATE_CHANGE_PEER_NAME_CHANGE:
+            if self._is_our_number(peer_number):
+                return
+
+            name = self._tox.tox_conference_peer_get_name(self._id, peer_number)
+
             # initial name change -> join
-            if peer.update_name(self._tox.tox_conference_peer_get_name(self._id, peer_number)):
+            if not peer_number in self._peers:
+                peer = GroupPeer(self._id, peer_number, name)
+                self._peers[peer_number] = peer
                 self._tox._trigger(api.APIEvents.GroupMemberJoin, self, peer)
+                logging.debug("User joined: " + str(peer))
+            else:
+                self._peers[peer_number]._name = name
+                logging.debug("User changed name: " + str(self._peers[peer_number]))
+
         elif change == ToxCore.TOX_CONFERENCE_STATE_CHANGE_PEER_EXIT:
-            del self._peers[peer_number]
+            peer = self._peers[peer_number]
+            logging.debug("User left: " + str(peer))
+            self._update_peers()
             self._tox._trigger(api.APIEvents.GroupMemberLeave, self, peer)
