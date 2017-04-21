@@ -83,6 +83,9 @@ class Bot(object):
         assert self._config["admins"] == self._cmdhandler._admins
         return self._config["admins"]
 
+    def get_API(self):
+        """Returns the API objects."""
+        return self._api
 
     # Wrappers
     # TODO: Consider using some hacks to set the docstrings to the wrapped
@@ -159,7 +162,6 @@ class Bot(object):
             invite.get_author().handle()))
 
     def _autoleave(self, chat, user):
-        logging.info("{} users left".format(str(chat.size())))
         if chat.size() == 1:
             logging.info("Leaving group after last user left ({})".format(chat.id()))
             chat.leave()
