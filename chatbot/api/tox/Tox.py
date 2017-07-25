@@ -12,15 +12,11 @@ from . import FriendRequest, Message, Chat, User, GroupInvite
 
 
 class ToxAPI(api.APIBase, ToxCore):
-    def __init__(self, api_id, stub, **kwargs):
+    def __init__(self, api_id, stub, opts):
         self._bootstrap_timer = None
-        self._opts = self.get_default_options()
+        self._opts = opts
         self._chats = {}
         self._groupchats = {}
-
-        # Merge arguments with default options
-        for i in kwargs:
-            self._opts[i] = kwargs[i]
 
         if os.path.isfile(self._opts["savefile"]):
             self._opts["savedata_type"] = ToxCore.TOX_SAVEDATA_TYPE_TOX_SAVE

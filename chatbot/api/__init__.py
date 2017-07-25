@@ -18,9 +18,19 @@ def create_api_object(apiname, stub=True, **kwargs):
 
     API specific options can be defined by using kwargs.
     For example:
-    test = api.create_api_object("test", message="Custom message text")
+        test = api.create_api_object("test", message="Custom message text")
+
+    Options supplied by kwargs are automatically merged into the API's
+    default options (overwriting existing default entries).
     """
-    return _import_api(apiname).API(apiname, stub, **kwargs)
+    API = get_api_class(apiname)
+
+    # Merge arguments with default options
+    opts = API.get_default_options()
+    for i in kwargs:
+        opts[i] = kwargs[i]
+
+    return API(apiname, stub, opts)
 
 def get_api_class(apiname):
     """Loads the API module <apiname> and returns the API class
