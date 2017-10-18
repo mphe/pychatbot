@@ -49,7 +49,8 @@ class Chat(object):
     def size(self):
         """Returns the number of chat members (including the current user).
         
-        In a normal chat this is 2. Groupchats should override this."""
+        In a normal chat this is 2. Groupchats should override this.
+        """
         return 2
 
     def is_anonymous(self):
@@ -84,4 +85,11 @@ class GroupChat(Chat):
 
     def invite(self, user):
         """Invite the given User to the groupchat."""
+        raise NotImplementedError
+
+    def size(self):
+        """Returns the number of chat members (including the current user).
+        
+        In a normal chat this is 2. Groupchats should override this.
+        """
         raise NotImplementedError

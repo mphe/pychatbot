@@ -2,7 +2,7 @@
 
 
 class MessageType(object):
-    Normal, Action = range(2)
+    Normal, Action, System = range(3)
 
 
 class ChatMessage(object):
