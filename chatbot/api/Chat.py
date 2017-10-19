@@ -18,16 +18,6 @@ class Chat(object):
     Every chat must have an unique ID that is persistent across the session.
     It can be persistent across multiple sessions but doesn't have to.
     The ID can be of any type (string, int, ...).
-
-    TODO: Consider removing the following specification.
-
-    Messages or other objects that origin from the same chat must also
-    reference the same Chat object, e.g.:
-
-        msg1 = chat.send_message("foobar")
-        msg2 = chat.send_message("foobar2")
-        if msg1.get_chat() is not msg2.get_chat():
-            raise Exception("Must never happen!")
     """
 
     def id(self):

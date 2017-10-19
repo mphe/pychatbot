@@ -25,10 +25,6 @@ class Test(object):
         msg.get_chat().send_message("Reply")
 
     def _on_sent(self, msg):
-        # Check chat requirements
-        if self._msg.get_chat() is not msg.get_chat():
-            raise Exception("Messages are not from the same chat object")
-
         print_message(msg, "Sent")
         self._running = False
 
