@@ -23,6 +23,7 @@ class TestAPI(api.APIBase):
         if not self._interactive:
             self._start_timer()
         self._running = True
+        self._trigger(api.APIEvents.Ready)
 
         while self._running:
             if self._interactive:

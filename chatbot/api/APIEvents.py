@@ -3,6 +3,7 @@
 
 class APIEvents(object):
     """An enum of API events."""
+    Ready            = "Ready"
     Message          = "MessageReceived"
     MessageSent      = "MessageSent"
     FriendRequest    = "FriendRequest"
@@ -17,6 +18,10 @@ def iterevents():
 
 
 # The following functions are solely for documentation.
+
+def on_ready():
+    """Triggered when the API is initialized and ready to be used"""
+    pass
 
 def on_message_received(msg):
     """Triggered when receiving a message.

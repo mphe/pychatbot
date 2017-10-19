@@ -72,13 +72,6 @@ class Bot(object):
         logging.info("Exited with code " + str(self._exit))
         return self._exit
 
-        # if self._config["display_name"]:
-        #     self._api.set_display_name(self._config["display_name"])
-
-        # logging.info(str(self._api))
-        # logging.info("User handle: " + str(self._api.get_user().handle()))
-        # logging.info("Display name: " + self._api.get_user().display_name())
-
     def reload(self):
         raise NotImplementedError
 
@@ -146,6 +139,14 @@ class Bot(object):
 
 
     # Callbacks
+    def _on_ready(self):
+        if self._config["display_name"]:
+            self._api.set_display_name(self._config["display_name"])
+
+        logging.info(str(self._api))
+        logging.info("User handle: " + str(self._api.get_user().handle()))
+        logging.info("Display name: " + self._api.get_user().display_name())
+
     def _handle_command(self, msg):
         try:
             if not self._cmdhandler.execute(msg) and self._config["echo"]:
@@ -236,6 +237,8 @@ class Bot(object):
 
         self._dispatcher = APIEventDispatcher(self._api, self._handle_event_exc)
         self._dispatcher.register(APIEvents.Message, self._handle_command)
+        self._dispatcher.register(APIEvents.Ready, self._on_ready)
+
         if self._config["autoaccept_friend"]:
             self._dispatcher.register(APIEvents.FriendRequest, self._autoaccept)
         if self._config["autoaccept_invite"]:
@@ -291,4 +294,3 @@ class Bot(object):
             "autoaccept_invite": True,
             "autoleave": True,
         }
-

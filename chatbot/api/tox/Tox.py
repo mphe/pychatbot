@@ -36,6 +36,7 @@ class ToxAPI(api.APIBase, ToxCore):
     def run(self):
         self._running = True
         self._attach()
+        self._trigger(api.APIEvents.Ready)
 
         while self._running:
             if self.tox_self_get_connection_status() == ToxCore.TOX_CONNECTION_NONE:
