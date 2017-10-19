@@ -40,6 +40,7 @@ class Chat(object):
         """Returns the number of chat members (including the current user).
         
         In a normal chat this is 2. Groupchats should override this.
+        After calling leave(), the size() function should return 0.
         """
         return 2
 
@@ -81,5 +82,6 @@ class GroupChat(Chat):
         """Returns the number of chat members (including the current user).
         
         In a normal chat this is 2. Groupchats should override this.
+        After calling leave(), the size() function should return 0.
         """
         raise NotImplementedError

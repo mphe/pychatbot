@@ -22,7 +22,6 @@ class ExitCode(object):
 
 class Bot(object):
     def __init__(self, profiledir=""):
-        self._running = False
         self._exit = ExitCode.Normal
         self._config = {}
         self._api = None
@@ -40,7 +39,7 @@ class Bot(object):
     def quit(self, code=ExitCode.Normal):
         """Gives the signal to stop with the given exit code."""
         logging.info("Shutting down...")
-        self._running = False
+        self._api.close()
         self._exit = code
 
     def run(self, profile="", apiname="", configdir="", **kwargs):
@@ -59,11 +58,11 @@ class Bot(object):
             logging.error("Failed to initialize.")
             raise
 
-        self._running = True
+        logging.info("Running API...")
+
         # TODO: handle SIGTERM
         try:
-            while self._running:
-                self._api.iterate()
+            self._api.run()
         except (KeyboardInterrupt, SystemExit) as e:
             logging.info(repr(e))
             self.quit()
@@ -72,6 +71,13 @@ class Bot(object):
 
         logging.info("Exited with code " + str(self._exit))
         return self._exit
+
+        # if self._config["display_name"]:
+        #     self._api.set_display_name(self._config["display_name"])
+
+        # logging.info(str(self._api))
+        # logging.info("User handle: " + str(self._api.get_user().handle()))
+        # logging.info("Display name: " + self._api.get_user().display_name())
 
     def reload(self):
         raise NotImplementedError
@@ -228,8 +234,7 @@ class Bot(object):
         self._api = api.create_api_object(self._config["api"],
                                           **self._config["api_config"])
 
-        self._dispatcher = APIEventDispatcher(self._api,
-                                              self._handle_event_exc)
+        self._dispatcher = APIEventDispatcher(self._api, self._handle_event_exc)
         self._dispatcher.register(APIEvents.Message, self._handle_command)
         if self._config["autoaccept_friend"]:
             self._dispatcher.register(APIEvents.FriendRequest, self._autoaccept)
@@ -240,16 +245,6 @@ class Bot(object):
 
         logging.info("Mounting plugins...")
         self._pluginmgr.mount_all(self._handle_plugin_exc, self)
-
-        logging.info("Attaching API...")
-        self._api.attach()
-
-        if self._config["display_name"]:
-            self._api.set_display_name(self._config["display_name"])
-
-        logging.info(str(self._api))
-        logging.info("User handle: " + self._api.get_user().handle())
-        logging.info("Display name: " + self._api.get_user().display_name())
 
         logging.info("Done")
 
@@ -264,8 +259,8 @@ class Bot(object):
         logging.info("Unregistering event handlers...")
         self._dispatcher.clear()
 
-        logging.info("Detaching API...")
-        self._api.detach()
+        logging.info("Unloading API...")
+        self._api.quit()
 
     def _handle_plugin_exc(self, name, e):
         logging.error(traceback.format_exc())

@@ -43,21 +43,19 @@ class APIBase(object):
         self._api_id = api_id
         self._stub = stub
 
-    def attach(self):
+    def run(self):
+        # TODO: maybe include cleanup (quit())
+        """Run the main loop including initialization."""
         raise NotImplementedError
 
-    def detach(self):
+    def quit(self):
+        """Unload the API and free resources"""
         raise NotImplementedError
 
-    def iterate(self):
-        """The main loop.
-        
-        Will sleep for 1 second by default.
-        It will be called like
-        while True:
-            apiobj.iterate()
-        """
-        time.sleep(1)
+    def close(self):
+        """Stop the main loop"""
+        raise NotImplementedError
+
 
     def version(self):
         raise NotImplementedError

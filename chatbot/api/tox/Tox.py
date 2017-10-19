@@ -17,6 +17,7 @@ class ToxAPI(api.APIBase, ToxCore):
         self._opts = opts
         self._chats = {}
         self._groupchats = {}
+        self._running = False
 
         if os.path.isfile(self._opts["savefile"]):
             self._opts["savedata_type"] = ToxCore.TOX_SAVEDATA_TYPE_TOX_SAVE
@@ -32,27 +33,28 @@ class ToxAPI(api.APIBase, ToxCore):
                                self._opts["bootstrap_port"],
                                self._opts["bootstrap_key"])
 
-    def attach(self):
-        self._bootstrap_timer = None
-        if self.tox_self_get_connection_status() == ToxCore.TOX_CONNECTION_NONE:
-            logging.info("(Re-)Connecting to bootstrap node...")
-            self.tox_bootstrap(self._opts["bootstrap_host"],
-                               self._opts["bootstrap_port"],
-                               self._opts["bootstrap_key"])
+    def run(self):
+        self._running = True
+        self._attach()
 
-    def detach(self):
-        # NOTE: the object needs to be reinstantiated to be able to attach again.
-        if self._bootstrap_timer is not None:
-            self._bootstrap_timer.cancel()
+        while self._running:
+            if self.tox_self_get_connection_status() == ToxCore.TOX_CONNECTION_NONE:
+                self._reattach()
+
+            self.tox_iterate()
+            time.sleep(self.tox_iteration_interval() / 1000.0)
+
+    def quit(self):
+        # NOTE: the object needs to be reinstantiated to be able to connect again.
+        self._bootstrap_timer = None
         self._save()
         self.tox_kill()
 
-    def iterate(self):
-        if self.tox_self_get_connection_status() == ToxCore.TOX_CONNECTION_NONE:
-            self._reattach()
+    def close(self):
+        self._running = False
+        if self._bootstrap_timer is not None:
+            self._bootstrap_timer.cancel()
 
-        self.tox_iterate()
-        time.sleep(self.tox_iteration_interval() / 1000.0)
 
     def version(self):
         # For some reason this is always 0.0.0
@@ -93,6 +95,14 @@ class ToxAPI(api.APIBase, ToxCore):
 
 
     # Utility functions
+    def _attach(self):
+        self._bootstrap_timer = None
+        if self.tox_self_get_connection_status() == ToxCore.TOX_CONNECTION_NONE:
+            logging.info("(Re-)Connecting to bootstrap node...")
+            self.tox_bootstrap(self._opts["bootstrap_host"],
+                               self._opts["bootstrap_port"],
+                               self._opts["bootstrap_key"])
+
     def _reattach(self):
         """Called to reconnect after the connection to the DHT node is lost.
         
@@ -100,7 +110,7 @@ class ToxAPI(api.APIBase, ToxCore):
         "may frequently change for short amounts of time."
         """
         if self._bootstrap_timer is None:
-            self._bootstrap_timer = Timer(10, self.attach)
+            self._bootstrap_timer = Timer(10, self._attach)
             self._bootstrap_timer.start()
 
     def _find_chat(self, chat_id, conference=False):

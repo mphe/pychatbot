@@ -16,8 +16,9 @@ def print_message(msg, prefix):
 
 class Test(object):
     def __init__(self):
-        self._running = True
         self._msg = None # stores the received message
+        self._api = None
+        self._sent = False
 
     def _on_receive(self, msg):
         print_message(msg, "Received")
@@ -26,31 +27,27 @@ class Test(object):
 
     def _on_sent(self, msg):
         print_message(msg, "Sent")
-        self._running = False
+        self._api.close()
+        self._sent = True
 
     def run(self):
         logging.info("Creating API object")
-        apiobj = api.create_api_object("test", message="custom message text",
-                                       interactive=False)
-        logging.info(str(apiobj))
+        self._api = api.create_api_object("test", message="custom message text",
+                                          interactive=False)
+        logging.info(str(self._api))
 
-        apiobj.register_event_handler(api.APIEvents.Message,
-                                         self._on_receive)
-        apiobj.register_event_handler(api.APIEvents.MessageSent,
-                                         self._on_sent)
+        self._api.register_event_handler(api.APIEvents.Message, self._on_receive)
+        self._api.register_event_handler(api.APIEvents.MessageSent, self._on_sent)
 
-        logging.info("Attaching...")
-        apiobj.attach()
+        logging.info("Running...")
+        self._api.run()
+        self._api.quit()
 
-        while self._running:
-            logging.info("Waiting for test message...")
-            apiobj.iterate()
+        assert self._sent
 
-        apiobj.unregister_event_handler(api.APIEvents.Message)
-        apiobj.unregister_event_handler(api.APIEvents.MessageSent)
+        self._api.unregister_event_handler(api.APIEvents.Message)
+        self._api.unregister_event_handler(api.APIEvents.MessageSent)
 
-        logging.info("Detaching...")
-        apiobj.detach()
         logging.info("Done")
 
 Test().run()

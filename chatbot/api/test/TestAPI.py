@@ -17,25 +17,31 @@ class TestAPI(api.APIBase):
         self._chat = TestChat(self)
         self._user = User("testuser", "Test User")
         self._otheruser = User("testfriend", "You")
+        self._running = False
 
-    def attach(self):
+    def run(self):
         if not self._interactive:
             self._start_timer()
+        self._running = True
 
-    def detach(self):
+        while self._running:
+            if self._interactive:
+                text = input("Enter message: ").strip()
+                if text:
+                    if text.startswith("/me "):
+                        self.trigger_receive(text[4:], api.MessageType.Action)
+                    else:
+                        self.trigger_receive(text)
+            else:
+                time.sleep(1)
+
+    def quit(self):
+        self._timer = None
+
+    def close(self):
         if not self._interactive:
             self._timer.cancel()
-
-    def iterate(self):
-        if self._interactive:
-            text = input("Enter message: ").strip()
-            if text:
-                if text.startswith("/me "):
-                    self.trigger_receive(text[4:], api.MessageType.Action)
-                else:
-                    self.trigger_receive(text)
-        else:
-            time.sleep(1)
+        self._running = False
 
     def version(self):
         return "42.0"
