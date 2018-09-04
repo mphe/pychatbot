@@ -34,7 +34,7 @@ class Chat(object):
 
     def type(self):
         """Returns the chat type. See ChatType for available types."""
-        raise NotImplementedError
+        return ChatType.Normal
 
     def size(self):
         """Returns the number of chat members (including the current user).
@@ -67,6 +67,9 @@ class GroupChat(Chat):
     
     Basically the same as a normal chat but with some extra functions.
     """
+    def type(self):
+        return ChatType.Group
+
     def leave(self):
         """Leave a group chat.
         
