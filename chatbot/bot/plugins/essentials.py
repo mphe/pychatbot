@@ -44,7 +44,7 @@ class Plugin(BasePlugin):
 
         Clear the screen.
         """
-        msg.reply("\n" * 35)
+        msg.reply("-" + "\n" * 50 + "-")
 
     def _calc(self, msg, argv):
         """Syntax: calc <expression>
