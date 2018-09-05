@@ -3,18 +3,14 @@
 from chatbot.compat import *
 import discord as discordapi
 import chatbot.api as api
-from .Chat import ServerChannel
+from .Chat import create_chat
 from .User import User
 
 class Message(api.ChatMessage):
     def __init__(self, client, msg, editable=False):
         self._msg = msg
         self._editable = editable
-
-        if self._msg.server:
-            self._chat = ServerChannel(client, self._msg.channel)
-        else:
-            raise NotImplementedError
+        self._chat = create_chat(client, msg.channel)
 
     def get_author(self):
         return User(self._msg.author)
