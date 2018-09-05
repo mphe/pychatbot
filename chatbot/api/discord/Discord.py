@@ -116,6 +116,8 @@ class DiscordClient(discordapi.Client):
                 await self.on_relationship_add(i)
 
     async def on_message(self, msg):
+        if not self.user.bot:
+            self._api.run_task(msg.ack())
         if msg.type == discordapi.MessageType.default:
             if msg.author == self.user:
                 self._api._trigger(api.APIEvents.MessageSent, Message(self._api, msg, True))
@@ -133,8 +135,8 @@ class DiscordClient(discordapi.Client):
         self._api._trigger(api.APIEvents.GroupMemberLeave, User(member))
 
     # private channel
-    async def on_group_join(self, channel, user):
+    async def on_group_join(self, channel, member):
         self._api._trigger(api.APIEvents.GroupMemberJoin, User(member))
 
-    async def on_group_remove(self, channel, user):
+    async def on_group_remove(self, channel, member):
         self._api._trigger(api.APIEvents.GroupMemberLeave, User(member))
