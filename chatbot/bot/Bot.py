@@ -146,6 +146,8 @@ class Bot(object):
         logging.info(str(self._api))
         logging.info("User handle: " + str(self._api.get_user().handle()))
         logging.info("Display name: " + self._api.get_user().display_name())
+        logging.info("Ready!")
+
 
     def _handle_command(self, msg):
         try:
