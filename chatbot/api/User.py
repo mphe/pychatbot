@@ -20,13 +20,12 @@ class User(object):
         """
         raise NotImplementedError
 
+    def get_chat(self):
+        """Returns a Chat object representing the chat with this user."""
+        raise NotImplementedError
+
     def __str__(self):
         return "{} ({})".format(self.display_name(), self.handle())
-
-    # TODO: Consider adding this
-    # def send_message(self, text):
-    #     """Send a message to this user"""
-    #     raise NotImplementedError
 
 
 class GenericUser(User):

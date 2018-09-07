@@ -43,6 +43,15 @@ class APIBase(object):
         self._api_id = api_id
         self._stub = stub
 
+    def api_id(self):
+        """Returns the API's unique module name.
+        
+        This can be used to check if a certain API is used.
+        API implementations must not override this method!
+        """
+        return self._api_id
+
+
     def run(self):
         # TODO: maybe include cleanup (quit())
         """Run the main loop including initialization."""
@@ -56,23 +65,15 @@ class APIBase(object):
         """Stop the main loop"""
         raise NotImplementedError
 
-
     def version(self):
         raise NotImplementedError
 
     def api_name(self):
         """Returns the name of the API.
         
-        Note: for a unique identifier use api_id() instead."""
-        raise NotImplementedError
-
-    def api_id(self):
-        """Returns the API's unique module name.
-        
-        This can be used to check if a certain API is used.
-        API implementations must not override this method!
+        Note: for a unique identifier use api_id() instead.
         """
-        return self._api_id
+        raise NotImplementedError
 
     def get_user(self):
         """Returns a User object of the currently logged in user."""
@@ -90,10 +91,19 @@ class APIBase(object):
         """
         raise NotImplementedError
 
+    def find_user(self, userid):
+        """Returns a User object for the user with the given ID."""
+        raise NotImplementedError
+
+    def find_chat(self, chatid):
+        """Returns a Chat object for the chat with the given ID."""
+        raise NotImplementedError
+
     @staticmethod
     def get_default_options():
         """Return a dictionary with options and their default values for this API."""
         return {}
+
 
     def register_event_handler(self, event, callback):
         """Add an event handler to the given event.
