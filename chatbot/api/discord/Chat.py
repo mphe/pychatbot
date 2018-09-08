@@ -7,12 +7,14 @@ import logging
 
 
 def create_chat(client, channel):
-    if type(channel) is discordapi.abc.GuildChannel:
-        return GroupChat(client, channel)
-    elif type(channel) is discordapi.DMChannel:
+    if isinstance(channel, discordapi.abc.GuildChannel):
+        return GuildChat(client, channel)
+    elif isinstance(channel, discordapi.DMChannel):
         return PrivateChat(client, channel)
-    else:
+    elif isinstance(channel, discordapi.GroupChannel):
         return PrivateGroup(client, channel)
+    else:
+        return None
 
 
 class DiscordChat(object):
@@ -22,6 +24,9 @@ class DiscordChat(object):
 
     def id(self):
         return self._chat.id
+
+    def is_id_unique(self):
+        return True
 
     def send_message(self, text):
         self._client.run_task(self._chat.send(content=text))
@@ -70,4 +75,4 @@ class PrivateGroup(DiscordChat, api.GroupChat):
         self._client.run_task(self._chat.add_recipients(user))
 
     def size(self):
-        return 0 if self._left else len(self._chat.recipients)
+        return 0 if self._left else len(self._chat.recipients) + 1

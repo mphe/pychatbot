@@ -11,12 +11,12 @@ from .FriendRequest import FriendRequest
 from .ChatMessage import Message
 from .Chat import create_chat
 
-
 class DiscordAPI(api.APIBase):
     def __init__(self, api_id, stub, opts):
         super(DiscordAPI, self).__init__(api_id, stub)
         self._opts = opts
         self._discord = DiscordClient(self)
+
 
     def run(self):
         self._discord.run(self._opts["token"], bot=self._opts["bot"])
@@ -35,7 +35,7 @@ class DiscordAPI(api.APIBase):
         return "Discord"
 
     def get_user(self):
-        return User(self._discord.user)
+        return User(self, self._discord.user)
 
     def set_display_name(self, name):
         if (name == self.get_user().display_name()):
@@ -54,6 +54,14 @@ class DiscordAPI(api.APIBase):
             return self.create_server(users)
         else:
             return self.create_dmgroup(users)
+
+    def find_user(self, userid):
+        user = self._discord.get_user(userid)
+        return User(self, user) if user else None
+
+    def find_chat(self, chatid):
+        return create_chat(self, self._discord.get_channel(chatid))
+
 
     @staticmethod
     def get_default_options():
@@ -109,7 +117,10 @@ class DiscordClient(discordapi.Client):
         logging.info("(Re-)Connected to Discord.")
         if self._firstready:
             self._firstready = False
-            logging.info("Invite link: " + self._api.get_invite_link())
+            if self.user.bot:
+                logging.info("Invite link: " + self._api.get_invite_link())
+            else:
+                logging.info("Username: " + self._api.get_user().username())
             self._api._trigger(api.APIEvents.Ready)
 
             for i in self.user.relationships:
@@ -122,21 +133,27 @@ class DiscordClient(discordapi.Client):
             if msg.author == self.user:
                 self._api._trigger(api.APIEvents.MessageSent, Message(self._api, msg, True))
             else:
+                # Preload private chat because it can't be created in a non-async
+                # function because the result isn't returned instantly.
+                if self.user.bot or msg.author.is_friend():
+                    await msg.author.create_dm()
+
                 self._api._trigger(api.APIEvents.Message, Message(self._api, msg, False))
+                # api.testing.test_message(Message(self._api, msg, False), self._api)
 
     async def on_relationship_add(self, relationship):
         if relationship.type == discordapi.RelationshipType.incoming_request:
             self._api._trigger(api.APIEvents.FriendRequest, FriendRequest(self._api, relationship))
 
     async def on_member_join(self, member):
-        self._api._trigger(api.APIEvents.GroupMemberJoin, User(member))
+        self._api._trigger(api.APIEvents.GroupMemberJoin, User(self._api, member))
 
     async def on_member_remove(self, member):
-        self._api._trigger(api.APIEvents.GroupMemberLeave, User(member))
+        self._api._trigger(api.APIEvents.GroupMemberLeave, User(self._api, member))
 
     # private channel
     async def on_group_join(self, channel, member):
-        self._api._trigger(api.APIEvents.GroupMemberJoin, User(member))
+        self._api._trigger(api.APIEvents.GroupMemberJoin, User(self._api, member))
 
     async def on_group_remove(self, channel, member):
-        self._api._trigger(api.APIEvents.GroupMemberLeave, User(member))
+        self._api._trigger(api.APIEvents.GroupMemberLeave, User(self._api, member))

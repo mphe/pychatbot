@@ -11,9 +11,10 @@ class Message(api.ChatMessage):
         self._msg = msg
         self._editable = editable
         self._chat = create_chat(client, msg.channel)
+        self._user = User(client, msg.author)
 
     def get_author(self):
-        return User(self._msg.author)
+        return self._user
 
     def get_chat(self):
         return self._chat

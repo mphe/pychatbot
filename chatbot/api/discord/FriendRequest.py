@@ -13,7 +13,7 @@ class FriendRequest(api.FriendRequest):
         assert self._request.type == discordapi.RelationshipType.incoming_request
 
     def get_author(self):
-        return User(self._request.user)
+        return User(self._client, self._request.user)
 
     def get_text(self):
         return ""
