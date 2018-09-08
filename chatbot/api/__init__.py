@@ -6,6 +6,7 @@ from .FriendRequest import FriendRequest
 from .User import User, GenericUser
 from .Chat import GroupChat, Chat, ChatType
 from .GroupInvite import GroupInvite
+from. import testing
 import importlib
 import logging
 
