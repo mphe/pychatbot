@@ -19,18 +19,16 @@ class Chat(object):
     It can be persistent across multiple sessions but doesn't have to.
     The ID can be of any type (string, int, ...).
 
-    Additionally a chat may have an ID that is universally unique, which means
-    it persists after restarts and will never change.
-    It's up to the user to check if the unique_id() function is implemented
-    (raises a NotImplementedError) if it is used.
+    A chat may have an ID that is universally unique, which means it persists
+    after restarts and will never change.
     """
 
     def id(self):
         """Returns the chat's unique ID."""
         raise NotImplementedError
 
-    def unique_id(self):
-        """Optional: Returns the chat's globally unique ID."""
+    def is_id_unique(self):
+        """Returns whether the chat's ID is globally unique."""
         raise NotImplementedError
 
     def send_message(self, text):
