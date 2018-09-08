@@ -24,7 +24,7 @@ def main():
         return 1
 
     logging.basicConfig(level=(logging.DEBUG if args.verbose else logging.INFO),
-                        format="%(levelname)s:%(message)s")
+                        format="%(levelname)s: %(message)s")
 
     bot = chatbot.bot.Bot(args.profiledir)
     return bot.run(profile=args.profile, apiname=args.api,
