@@ -1,19 +1,22 @@
 # -*- coding: utf-8 -*-
 
+import asyncio
 import re
 import math
 import random
+from time import sleep
 from multiprocessing import Process, Array
 from chatbot.bot.subsystem.plugin import BasePlugin
 from chatbot.bot.subsystem import command
 from chatbot import util
 from chatbot.compat import *
+from chatbot.bot import Bot
 
 random.seed()
 
 class Plugin(BasePlugin):
     def __init__(self, oldme, bot):
-        self._bot = bot
+        self._bot = bot # type: Bot
         bot.register_command("clear", self._clear, argc=0)
         bot.register_command("calc", self._calc)
         bot.register_command("hex", self._hex)
@@ -24,6 +27,7 @@ class Plugin(BasePlugin):
         bot.register_command("stretch", self._stretch, argc=2)
         bot.register_command("slap", self._slap)
         bot.register_command("schlag", self._slap_german)
+        bot.register_command("explode", self._explode, argc=0)
 
         # API lacks implementation
         # bot.register_admin_command("mute", self._mute)
@@ -37,7 +41,7 @@ class Plugin(BasePlugin):
     def quit(self):
         self._bot.unregister_command(
             "clear", "calc", "hex", "binary", "choose", "random",
-            "blockspam", "stretch", "slap", "schlag")
+            "blockspam", "stretch", "slap", "schlag", "explode")
 
     def _clear(self, msg, argv):
         """Syntax: clear
@@ -65,7 +69,7 @@ class Plugin(BasePlugin):
         if p.is_alive():
             p.terminate()
             p.join()
-            msg.reply("Expression took to long to evaluate.")
+            msg.reply("Expression took too long to evaluate.")
         else:
             msg.reply(result.value.decode("utf-8"))
 
@@ -143,3 +147,23 @@ class Plugin(BasePlugin):
             msg.get_chat().send_action("schlägt " + " ".join(argv[1:]))
         else:
             msg.get_chat().send_action("schlägt {} mit einem Fisch".format(argv[1]))
+
+    def _explode(self, msg, argv):
+        async def _async_explode(chat):
+            for i in range(5, 0, -1):
+                chat.send_message(str(i))
+                await asyncio.sleep(1)
+            chat.send_action("is back")
+
+        def _thread_explode(chat):
+            for i in range(5, 0, -1):
+                chat.send_message(str(i))
+                time.sleep(1)
+            chat.send_action("is back")
+
+        msg.get_chat().send_action("explodes\nRespawn in...")
+        if self._bot.get_API().api_id() == "discord":
+            asyncio.get_event_loop().create_task(_async_explode(msg.get_chat()))
+        else:
+            #TODO: separate thread?
+            _thread_explode(msg.get_chat())
