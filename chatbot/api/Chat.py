@@ -17,7 +17,7 @@ class Chat(object):
 
     Every chat must have an unique ID that is persistent across the session.
     It can be persistent across multiple sessions but doesn't have to.
-    The ID can be of any type (string, int, ...).
+    The ID, same as with User, should be a string.
 
     A chat may have an ID that is universally unique, which means it persists
     after restarts and will never change.

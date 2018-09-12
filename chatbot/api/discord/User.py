@@ -14,7 +14,7 @@ class User(api.User):
         self._client = client
 
     def handle(self):
-        return self._user.id
+        return str(self._user.id)
 
     def display_name(self):
         return self._user.display_name

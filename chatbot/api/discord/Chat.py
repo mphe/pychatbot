@@ -23,7 +23,7 @@ class DiscordChat(object):
         self._chat = chat
 
     def id(self):
-        return self._chat.id
+        return str(self._chat.id)
 
     def is_id_unique(self):
         return True

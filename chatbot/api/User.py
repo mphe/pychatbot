@@ -9,6 +9,7 @@ class User(object):
         For example, in Skype it would return the username, in Tox it would
         return the user's Tox ID, etc.
         In anonymous groups the handle may have random values.
+        The return type should however be a string.
         """
         raise NotImplementedError
 
