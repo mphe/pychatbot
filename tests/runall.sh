@@ -1,5 +1,6 @@
 #!/bin/bash
 
+cd $(dirname $(readlink -f "$0"))
 
 RED="$(tput setaf 1)"
 GREEN="$(tput setaf 2)"
