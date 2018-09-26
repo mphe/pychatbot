@@ -1,22 +1,15 @@
 # -*- coding: utf-8 -*-
 
-import random
-from chatbot.bot.subsystem.plugin import BasePlugin
-from chatbot import util
 from chatbot.compat import *
+from chatbot.bot import BotPlugin
+from chatbot import util
+import random
 
-random.seed()
 
-class Plugin(BasePlugin):
+class Plugin(BotPlugin):
     def __init__(self, oldme, bot):
-        self._bot = bot
-        bot.register_command("zalgo", self._zalgo)
-
-    def reload(self):
-        pass
-
-    def quit(self):
-        self._bot.unregister_command("zalgo")
+        super(Plugin, self).__init__(oldme, bot)
+        self.register_command("zalgo", self._zalgo)
 
     def _zalgo(self, msg, argv):
         """Syntax: zalgo <text> [strength] [zalgosets]

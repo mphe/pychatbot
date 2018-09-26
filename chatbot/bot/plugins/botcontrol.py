@@ -1,33 +1,24 @@
 # -*- coding: utf-8 -*-
 
-from chatbot.bot import Bot, ExitCode
-from chatbot.bot.subsystem.plugin import BasePlugin
-from chatbot.bot.subsystem import command
 from chatbot.compat import *
+from chatbot.bot import BotPlugin, Bot, ExitCode, command
 
 
-class Plugin(BasePlugin):
+class Plugin(BotPlugin):
     def __init__(self, oldme, bot):
-        self._bot = bot
-        self._bot.register_admin_command("quit", self._quit, argc=0)
-        self._bot.register_admin_command("restart", self._restart, argc=0)
-        self._bot.register_admin_command("reload", self._reload, argc=0)
-        self._bot.register_admin_command("plugins", self._plugins, argc=2)
-        self._bot.register_command("listplugins", self._listplugins, argc=0)
-
-    def reload(self):
-        pass
-
-    def quit(self):
-        self._bot.unregister_command(
-            "quit", "restart", "reload", "listplugins", "plugins")
+        super(Plugin, self).__init__(oldme, bot)
+        self.register_admin_command("quit", self._quit, argc=0)
+        self.register_admin_command("restart", self._restart, argc=0)
+        self.register_admin_command("reload", self._reload, argc=0)
+        self.register_admin_command("plugins", self._plugins, argc=2)
+        self.register_command("listplugins", self._listplugins, argc=0)
 
     def _listplugins(self, msg, argv):
         """Syntax: listplugins
         
         List mounted plugins.
         """
-        msg.reply(", ".join([ k for k,v in self._bot.iter_plugins() ]))
+        msg.reply(", ".join([ k for k,v in self.bot().iter_plugins() ]))
 
     def _plugins(self, msg, argv):
         """Syntax: plugins <mount|unmount|reload> <plugin name>
@@ -36,9 +27,9 @@ class Plugin(BasePlugin):
         Mounting an already mounted plugin remounts it.
         """
         f = {
-            "reload":  (self._bot.reload_plugin,  "Plugin reloaded"),
-            "mount":   (self._bot.mount_plugin,   "Plugin (re)mounted"),
-            "unmount": (self._bot.unmount_plugin, "Plugin unmounted"),
+            "reload":  (self.bot().reload_plugin,  "Plugin reloaded"),
+            "mount":   (self.bot().mount_plugin,   "Plugin (re)mounted"),
+            "unmount": (self.bot().unmount_plugin, "Plugin unmounted"),
         }
         if argv[1] in f:
             f[argv[1]][0](argv[2])
@@ -51,7 +42,7 @@ class Plugin(BasePlugin):
 
         Reload bot's configuration file.
         """
-        self._bot.reload()
+        self.bot().reload()
         msg.reply("Configuration reloaded")
 
     def _quit(self, msg, argv):
@@ -60,7 +51,7 @@ class Plugin(BasePlugin):
         Shutdown bot (with the given exit code).
         """
         msg.reply("Shutting down...")
-        self._bot.quit(ExitCode.Normal if len(argv) == 1 else int(argv[1]))
+        self.bot().quit(ExitCode.Normal if len(argv) == 1 else int(argv[1]))
 
     def _restart(self, msg, argv):
         """Syntax: restart
@@ -68,4 +59,4 @@ class Plugin(BasePlugin):
         Restart bot.
         """
         msg.reply("Restarting...")
-        self._bot.quit(ExitCode.Restart)
+        self.bot().quit(ExitCode.Restart)

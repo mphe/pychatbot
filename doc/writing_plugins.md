@@ -6,49 +6,41 @@ Create a new file "myplugin.py" and add this snippet:
 ```python
 # -*- coding: utf-8 -*-
 
-from chatbot.bot.subsystem.plugin import BasePlugin
 from chatbot.compat import *
+from chatbot.bot import BotPlugin
 
 
-class Plugin(BasePlugin):
+class Plugin(BotPlugin):
     def __init__(self, oldme, bot):
-        self._bot = bot
-
-    def reload(self):
-        # Reload configs here
-        pass
-
-    def quit(self):
-        # Do cleanup
-        pass
+        super(Plugin, self).__init__(oldme, bot)
 ```
 
 This is the basic structure of a plugin.
 Note that your plugin class must be called "Plugin", otherwise it can't be loaded.
 The `bot` parameter in `__init__` is a reference to the Bot instance that loaded this plugin.
 `oldme` is either `None` or the previous instance of your plugin, after it was reloaded. It can be used to move data over to the new instance.
-For further information on what these functions do, you can read the docstrings of `chatbot.bot.subsystem.plugin.Plugin`.
+
+The `BotPlugin` base class provides a bunch of functions for registering/unregistering commands, loading configs, and hooking/unhooking event handlers.
+
+To get the Bot instance, the plugin name, and the config dict there are respective functions: `bot()`, `name()`, and `cfg()`.
+
 
 ## Adding commands
 
-The Bot class provides wrappers for common functions like adding commands or hooking events. You can read the usage instructions in the respective docstrings.
+The `BotPlugin` class provides wrappers for common functions like adding commands or hooking events. You can read the usage instructions in the respective docstrings.
 
 Here's how it looks like:
 
 ```
 def __init__(self, oldme, bot):
-    self._bot = bot
-    self._bot.register_command("echo", self._echo)
-
-def quit(self):
-    self._bot.unregister_command("echo")
+    super(Plugin, self).__init__(oldme, bot)
+    self.register_command("echo", self._echo)
 
 def _echo(self, msg, argv):
     msg.reply(" ".join(argv[1:]))
 ```
 
-It's important to unregister all commands in `quit()`, otherwise they will stay
-in memory even after the plugin was unloaded.
+The base class keeps track of registered commands and unregisters them automatically when the plugin is unloaded.
 
 ### Documentation
 Every command should have a docstring in the following format:
@@ -78,17 +70,15 @@ To declare a command as missing-handler, simply set the CMDFLAG_MISSING flag.
 Unregistering is the same as for normal commands, therefore you should prefix your missing-handlers with a special prefix to avoid possible ambiguity.
 Even though a missng-handler is registered with a name, it can't be called explicitely.
 
-Here's an example (shortened):
+Here's an example:
 
 ```python
 from chatbot.bot.subsystem import command
 
 def __init__(self, oldme, bot):
-    self._bot.register_command("missing_test", self._handler,
-                               argc=0, flags=command.CMDFLAG_MISSING)
-
-def quit(self):
-    self._bot.unregister_command("missing_test")
+    super(Plugin, self).__init__(oldme, bot)
+    self.register_command("missing_test", self._handler,
+                          argc=0, flags=command.CMDFLAG_MISSING)
 
 def _handler(self, msg, argv):
     if argv[0] != "handled":
@@ -100,43 +90,59 @@ Raising COMMAND_ERR_NOTFOUND or COMMAND_ERR_ARGC indicate that the command was n
 
 
 
-
 ## Hooking events
 
-To register an event handler, the Bot class provides a function `register_event_handler()`. It takes 2 arguments: the first one is the event ID defined in `api.APIEvents` and the second is the callback. The callback signature for the respective events can be found in the `api.APIEvents` *module*. Optionally you can also pass a third parameter that indicates the priority of your handler. Small values are called first, high values later. For readability there are some predefined priorities: `event.EVENT_PRE`, `event.EVENT_NORMAL`, and `event.EVENT_POST`.
+To register an event handler, the `BotPlugin` class provides a wrapper function `register_event_handler()`. It takes 2 arguments: the first one is the event ID defined in `api.APIEvents` and the second is the callback. The callback signature for the respective events can be found in the `api.APIEvents` \*module\*. Optionally you can also pass a third parameter that indicates the priority of your handler. Small values are called first, high values later. For readability there are some predefined priorities: `event.EVENT_PRE`, `event.EVENT_NORMAL`, and `event.EVENT_POST`.
 To stop the event execution, e.g. when your handler handled the event and no further handlers should be called, you can return `event.EVENT_HANDLED`.
 
 For example, this will hook the "message received" event:
 ```python
-TODO
+from chatbot.compat import *
+from chatbot.bot import BotPlugin
+from chatbot.api import APIEvents
+from chatbot.util import event
 
+class Plugin(BotPlugin):
+    def __init__(self, oldme, bot):
+        super(Plugin, self).__init__(oldme, bot)
+        self.register_event_handler(APIEvents.Message, self._on_message)
+
+    def _on_message(self, msg):
+        if msg.get_text() == "handled":
+            return event.EVENT_HANDLED
 ```
 
-Again, it's important to unregister all event handlers in `quit()`.
+The `BotPlugin` will automatically unregister the event hook when the plugin is unloaded.
+
 
 ## Loading and storing configs
 
-Bot holds a config manager objects that can be retrieved using the `get_configmgr()` function. For further information on how to use it, see its docstrings at `chatbot.bot.subsystem.ConfigManager`.
+`BotPlugin`  will automatically load the respective config file when instantiated. It also provides a `reload` function that (re-)loads the config file.
 
-Adding config support in a plugin is fairly easy. Here is how it's done:
+All it needs is a static method `get_default_config` that returns the default config values.
+Note that it must be a `@staticmethod`, otherwise it won't work.
 
+Example:
 ```python
-def __init__(self, oldme, bot):
-    self._bot = bot
-    self._bot.register_command("say", self._say, argc=0)
-    self._config = {}
-    self.reload()
+class Plugin(BotPlugin):
+    def __init__(self, oldme, bot):
+        super(Plugin, self).__init__(oldme, bot)
 
-def reload(self):
-    self._config = self._bot.get_configmgr().load_update("sayplugin", {
-        "answers": [ "Hello World", "This is a test" ],
-        "moreoptions": True,
-        "evenmoreoptions": 5,
-    })
-
-def _say(self, msg, argv):
-    msg.reply(random.choice(self._config["answers"]))
+    @staticmethod
+    def get_default_config():
+        return {
+            "some_option": 42,
+            "more_options": "foobar",
+            "some_array": [ "Hello World", "This is a test" ],
+        }
 ```
+The `get_default_config` method is optional and only needed if the plugin makes use of config files.
+It can be safely removed if no config is required.
 
-The config manager will load/store configs in json format. It will automatically translate the given filename ("sayplugin") to the respective path on the filesystem. When a default config is given (second parameter), it will also merge any non-existing keys into the loaded config.
-Using `load_update()` or `load(write=True)` will update the file by rewriting it. This is useful to keep the config file up-to-date when new keys are added. As far as useful, this should be preferred over normal loading.
+
+`Bot` holds a config manager object that can be retrieved using the `get_configmgr()` function. For further information on how to use it, see its docstrings at `chatbot.bot.subsystem.ConfigManager`.
+
+The config manager will load/store configs in json format. It will automatically translate the given filename to the respective path on the filesystem. When a default config is given, it will also merge any non-existing keys into the loaded config.
+Using `load_update()` or `load(write=True)` will update the file by rewriting it. This is useful to keep the config file up-to-date when new keys are added.
+
+Usually it is not necessary to query configs manually, only if the plugin requires a special way of loading its config. `BotPlugin` internally uses respective config manager functions with the plugin's module name as filename to load and store config files.

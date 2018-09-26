@@ -1,29 +1,20 @@
 # -*- coding: utf-8 -*-
 
-import random
-from chatbot.bot.subsystem.plugin import BasePlugin
-from chatbot.bot.subsystem import command
+from chatbot.bot import BotPlugin
 from chatbot.compat import *
+from chatbot.bot import command
+import random
 
-random.seed()
-
-class Plugin(BasePlugin):
+class Plugin(BotPlugin):
     def __init__(self, oldme, bot):
-        self._bot = bot
-        self._bot.register_command("missing_8ball", self._question,
-                                   argc=0, flags=command.CMDFLAG_MISSING)
-        self._answers = []
-        self.reload()
+        super(Plugin, self).__init__(oldme, bot)
+        self.register_command("missing_8ball", self._question, argc=0, flags=command.CMDFLAG_MISSING)
 
-    def reload(self):
-        self._answers = self._bot.get_configmgr().load_update("8ball", {
-            "answers": [ "Yes!", "No!", "Maybe.", ],
-        })["answers"]
-
-    def quit(self):
-        self._bot.unregister_command("missing_8ball")
+    @staticmethod
+    def get_default_config():
+        return { "answers": [ "Yes!", "No!", "Maybe.", ] }
 
     def _question(self, msg, argv):
         if not argv[-1].endswith("?"):
             raise command.CommandError(command.COMMAND_ERR_NOTFOUND)
-        msg.reply(random.choice(self._answers))
+        msg.reply(random.choice(self.cfg()["answers"]))

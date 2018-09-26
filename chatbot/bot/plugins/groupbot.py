@@ -1,29 +1,23 @@
 # -*- coding: utf-8 -*-
 
 from collections import namedtuple
-from chatbot.bot.subsystem.plugin import BasePlugin
+from chatbot.bot import BotPlugin
 from chatbot.compat import *
 
 
 ChatHandle = namedtuple("ChatHandle", [ "password", "chat" ])
 
-class Plugin(BasePlugin):
+class Plugin(BotPlugin):
     def __init__(self, oldme, bot):
-        self._bot = bot
-        self._bot.register_command("join", self._join)
-        self._bot.register_command("join!", self._forcejoin)
-        self._bot.register_command("groups", self._listgroups, argc=0)
+        super(Plugin, self).__init__(oldme, bot)
+        self.register_command("join", self._join)
+        self.register_command("join!", self._forcejoin)
+        self.register_command("groups", self._listgroups, argc=0)
         self._chats = {}
 
         if oldme:
             self._chats = oldme._chats
             self._filter()
-
-    def reload(self):
-        pass
-
-    def quit(self):
-        self._bot.unregister_command("join", "join!", "groups")
 
     def _filter(self):
         # Filter empty chats
@@ -69,7 +63,7 @@ class Plugin(BasePlugin):
 
         if argv[1] not in self._chats or self._chats[argv[1]].chat.size() == 0:
             if argv[0] == "join!":
-                chat = self._bot.get_API().create_group([msg.get_author()])
+                chat = self.bot().get_API().create_group([msg.get_author()])
                 self._chats[argv[1]] = ChatHandle(password, chat)
             else:
                 msg.reply("This chat doesn't exist yet, use `join!` to create it.")

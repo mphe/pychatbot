@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 
-from chatbot.bot.subsystem.plugin import BasePlugin
+from chatbot.bot import BotPlugin
 from chatbot.compat import *
 
 
-class Plugin(BasePlugin):
+class Plugin(BotPlugin):
     urls = {
         "duden":     "https://www.duden.de/suchen/dudenonline/{}",
         "wikipedia": "https://en.wikipedia.org/wiki/Special:Search?search={}",
@@ -15,18 +15,11 @@ class Plugin(BasePlugin):
     }
 
     def __init__(self, oldme, bot):
-        self._bot = bot
+        super(Plugin, self).__init__(oldme, bot)
         for i in Plugin.urls:
             if i != "translate":
-                self._bot.register_command(i, self._search)
-        self._bot.register_command("translate", self._translate, argc=3)
-
-    def reload(self):
-        pass
-
-    def quit(self):
-        for i in Plugin.urls:
-            self._bot.unregister_command(i)
+                self.register_command(i, self._search)
+        self.register_command("translate", self._translate, argc=3)
 
     @staticmethod
     def _generate_url(url, argv):

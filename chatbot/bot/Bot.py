@@ -124,10 +124,6 @@ class Bot(object):
         self._cmdhandler.register(name, callback, argc, flags)
         logging.debug("Registered command: " + name)
 
-    def register_admin_command(self, name, callback, argc=1, flags=0):
-        """Same as register_command() but with CMDFLAG_ADMIN flag set."""
-        self.register_command(name, callback, argc, flags | command.CMDFLAG_ADMIN)
-
     def unregister_command(self, *names):
         """Unregister one or more commands.
 

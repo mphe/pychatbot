@@ -6,42 +6,24 @@ import math
 import random
 from time import sleep
 from multiprocessing import Process, Array
-from chatbot.bot.subsystem.plugin import BasePlugin
-from chatbot.bot.subsystem import command
+from chatbot.bot import BotPlugin, command, Bot
 from chatbot import util
 from chatbot.compat import *
-from chatbot.bot import Bot
 
-random.seed()
-
-class Plugin(BasePlugin):
+class Plugin(BotPlugin):
     def __init__(self, oldme, bot):
-        self._bot = bot # type: Bot
-        bot.register_command("clear", self._clear, argc=0)
-        bot.register_command("calc", self._calc)
-        bot.register_command("hex", self._hex)
-        bot.register_command("binary", self._binary)
-        bot.register_command("choose", self._choose)
-        bot.register_command("random", self._random)
-        bot.register_command("blockspam", self._blockspam, argc=2)
-        bot.register_command("stretch", self._stretch, argc=2)
-        bot.register_command("slap", self._slap)
-        bot.register_command("schlag", self._slap_german)
-        bot.register_command("explode", self._explode, argc=0)
-
-        # API lacks implementation
-        # bot.register_admin_command("mute", self._mute)
-        # bot.register_admin_command("unmute", self._unmute)
-        # bot.register_command("status", self._userstatus)
-        # bot.register_command("fork", self._fork, argc=0)
-
-    def reload(self):
-        pass
-
-    def quit(self):
-        self._bot.unregister_command(
-            "clear", "calc", "hex", "binary", "choose", "random",
-            "blockspam", "stretch", "slap", "schlag", "explode")
+        super(Plugin, self).__init__(oldme, bot)
+        self.register_command("clear", self._clear, argc=0)
+        self.register_command("calc", self._calc)
+        self.register_command("hex", self._hex)
+        self.register_command("binary", self._binary)
+        self.register_command("choose", self._choose)
+        self.register_command("random", self._random)
+        self.register_command("blockspam", self._blockspam, argc=2)
+        self.register_command("stretch", self._stretch, argc=2)
+        self.register_command("slap", self._slap)
+        self.register_command("schlag", self._slap_german)
+        self.register_command("explode", self._explode, argc=0)
 
     def _clear(self, msg, argv):
         """Syntax: clear
@@ -162,8 +144,8 @@ class Plugin(BasePlugin):
             chat.send_action("is back")
 
         msg.get_chat().send_action("explodes\nRespawn in...")
-        if self._bot.get_API().api_id() == "discord":
+        if self.bot().get_API().api_id() == "discord":
             asyncio.get_event_loop().create_task(_async_explode(msg.get_chat()))
         else:
-            #TODO: separate thread?
+            # TODO: separate thread?
             _thread_explode(msg.get_chat())
