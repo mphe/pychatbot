@@ -194,8 +194,9 @@ class Bot(object):
             merge_dicts(cfg["plugins"], defcfg["plugins"])
             merge_dicts(cfg["api_config"], defcfg["api_config"])
 
-            if not newprofile:
-                self._cfgmgr.write(profile, cfg)
+            # NOTE: it shouldn't be necessary to rewrite the config everytime
+            # if not newprofile:
+            #     self._cfgmgr.write(profile, cfg)
 
         if configdir:
             cfg["configdir"] = configdir
