@@ -24,6 +24,7 @@ class Plugin(BotPlugin):
         self.register_command("slap", self._slap)
         self.register_command("schlag", self._slap_german)
         self.register_command("explode", self._explode, argc=0)
+        self.register_command("lenny", self._lenny, argc=0)
 
     def _clear(self, msg, argv):
         """Syntax: clear
@@ -149,3 +150,6 @@ class Plugin(BotPlugin):
         else:
             # TODO: separate thread?
             _thread_explode(msg.get_chat())
+
+    def _lenny(self, msg, argv):
+        msg.get_chat().send_message("( ͡° ͜ʖ ͡°)");

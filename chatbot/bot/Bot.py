@@ -24,7 +24,7 @@ class Bot(object):
     def __init__(self, profiledir=""):
         self._exit = ExitCode.Normal
         self._config = {}
-        self._api = None
+        self._api = None    # type: api.APIBase
         self._dispatcher = None
         self._cmdhandler = None
         self._pluginmgr = None
