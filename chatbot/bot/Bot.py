@@ -282,14 +282,16 @@ class Bot(object):
             "plugins": {
                 # "searchpath": os.path.dirname(chatbot.bot.plugins.__file__),
                 "whitelist": [],
-                "blacklist": [],
+                "blacklist": [
+                    "groupbot",
+                ],
             },
             "configdir": "",
-            "prefix": [ "!bot","@bot", "!" ],
+            "prefix": [ "!bot", "@bot", "!" ],
             "admins": [],
             "display_name": "Bot",
-            "echo": True,
+            "echo": False,
             "autoaccept_friend": True,
             "autoaccept_invite": True,
-            "autoleave": True,
+            "autoleave": False,
         }
