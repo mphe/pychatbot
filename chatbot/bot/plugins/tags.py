@@ -24,7 +24,7 @@ class Plugin(BotPlugin):
 
     def _list(self, msg, argv):
         """Syntax: tags
-        
+
         Shows a list of available tags.
         Tags are mapped to specific URLs and can be used in messages by
         wrapping them in [square brackets].
@@ -35,18 +35,18 @@ class Plugin(BotPlugin):
         if len(self.cfg()) == 0:
             msg.reply("No tags defined")
         else:
-            msg.reply("\n".join([ "[{}]: {}".format(k, v) for k,v in self.cfg().items() ]))
+            msg.reply("\n".join([ "[{}]: {}".format(k, v) for k, v in self.cfg().items() ]))
 
     def _on_message(self, msg):
         tmp = msg.get_text()
         if msg.is_editable():
-            for k,v in self.cfg().items():
+            for k, v in self.cfg().items():
                 tmp = tmp.replace("[{}]".format(k), "[ {} ]".format(v))
             if tmp != msg.get_text():
                 msg.edit(tmp)
         else:
             tags = []
-            for i in re.finditer("\[(\S+?)\]", tmp):
+            for i in re.finditer(r"\[(\S+?)\]", tmp):
                 if i and i.group(1) in self.cfg():
                     tags.append(i.group(1))
             if tags:

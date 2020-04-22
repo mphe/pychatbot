@@ -5,6 +5,7 @@ from chatbot.compat import *
 from chatbot.bot import command
 import random
 
+
 class Plugin(BotPlugin):
     def __init__(self, oldme, bot):
         super(Plugin, self).__init__(oldme, bot)

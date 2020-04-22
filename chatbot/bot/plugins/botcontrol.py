@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from chatbot.compat import *
-from chatbot.bot import BotPlugin, Bot, ExitCode, command
+from chatbot.bot import BotPlugin, ExitCode, command
 
 
 class Plugin(BotPlugin):
@@ -15,10 +15,10 @@ class Plugin(BotPlugin):
 
     def _listplugins(self, msg, argv):
         """Syntax: listplugins
-        
+
         List mounted plugins.
         """
-        msg.reply(", ".join([ k for k,v in self.bot().iter_plugins() ]))
+        msg.reply(", ".join([ k for k, v in self.bot().iter_plugins() ]))
 
     def _plugins(self, msg, argv):
         """Syntax: plugins <mount|unmount|reload> <plugin name>

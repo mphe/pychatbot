@@ -27,7 +27,7 @@ class Plugin(BotPlugin):
 
     def _search(self, msg, argv):
         """Syntax: site <search string> [search string 2]...
-        
+
         Generate a search link for a specific website.
         site is a placeholder for the command name and can be any of the
         following: google, wikipedia, youtube, duden, bisafans.

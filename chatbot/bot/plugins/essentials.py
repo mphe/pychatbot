@@ -6,9 +6,10 @@ import math
 import random
 from time import sleep
 from multiprocessing import Process, Array
-from chatbot.bot import BotPlugin, command, Bot
+from chatbot.bot import BotPlugin, command
 from chatbot import util
 from chatbot.compat import *
+
 
 class Plugin(BotPlugin):
     def __init__(self, oldme, bot):
@@ -26,7 +27,8 @@ class Plugin(BotPlugin):
         self.register_command("explode", self._explode, argc=0)
         self.register_command("lenny", self._lenny, argc=0)
 
-    def _clear(self, msg, argv):
+    @staticmethod
+    def _clear(msg, argv):
         """Syntax: clear
 
         Clear the screen.
@@ -64,7 +66,8 @@ class Plugin(BotPlugin):
         except Exception as e:
             result.value = ("Error: " + str(e))[:256].encode("utf-8")
 
-    def _hex(self, msg, argv):
+    @staticmethod
+    def _hex(msg, argv):
         """Syntax: hex <text>
 
         Convert a given text to hexadecimal.
@@ -73,7 +76,8 @@ class Plugin(BotPlugin):
         text = " ".join([hex(ord(i))[2:].upper() for i in " ".join(argv[1:])])
         util.edit_or_reply(msg, text)
 
-    def _binary(self, msg, argv):
+    @staticmethod
+    def _binary(msg, argv):
         """Syntax: binary <text>
 
         Convert a given text to binary.
@@ -82,14 +86,16 @@ class Plugin(BotPlugin):
         text = " ".join([bin(ord(i))[2:] for i in " ".join(argv[1:])])
         util.edit_or_reply(msg, text)
 
-    def _choose(self, msg, argv):
+    @staticmethod
+    def _choose(msg, argv):
         """Syntax: choose <option1> [option2] [option3] ...
 
         Randomly choose one of the given options.
         """
         msg.reply(random.choice(argv[1:]))
 
-    def _random(self, msg, argv):
+    @staticmethod
+    def _random(msg, argv):
         """Syntax: random <a> [b]
 
         Randomly choose a number between 0 and <a> or, if b is given, <a> and <b>.
@@ -100,7 +106,8 @@ class Plugin(BotPlugin):
         else:
             msg.reply(str(random.randint(int(argv[1]), int(argv[2]))))
 
-    def _blockspam(self, msg, argv):
+    @staticmethod
+    def _blockspam(msg, argv):
         """Syntax: blockspam <text> <amount>
 
         Create a block of text by repeating it for a specific amount of times.
@@ -108,7 +115,8 @@ class Plugin(BotPlugin):
         """
         util.edit_or_reply(msg, int(argv[2]) * argv[1])
 
-    def _stretch(self, msg, argv):
+    @staticmethod
+    def _stretch(msg, argv):
         """Syntax: stretch <text> <strength> [offset]
 
         Repeats every character in <text> after position [offset] <strength> times.
@@ -119,13 +127,15 @@ class Plugin(BotPlugin):
         out = argv[1][:off] + "".join([strength * i for i in argv[1][off:]])
         util.edit_or_reply(msg, out)
 
-    def _slap(self, msg, argv):
+    @staticmethod
+    def _slap(msg, argv):
         if len(argv) > 2:
             msg.get_chat().send_action("slaps " + " ".join(argv[1:]))
         else:
             msg.get_chat().send_action("slaps {} with a fish".format(argv[1]))
 
-    def _slap_german(self, msg, argv):
+    @staticmethod
+    def _slap_german(msg, argv):
         if len(argv) > 2:
             msg.get_chat().send_action("schlägt " + " ".join(argv[1:]))
         else:
@@ -141,7 +151,7 @@ class Plugin(BotPlugin):
         def _thread_explode(chat):
             for i in range(5, 0, -1):
                 chat.send_message(str(i))
-                time.sleep(1)
+                sleep(1)
             chat.send_action("is back")
 
         msg.get_chat().send_action("explodes\nRespawn in...")
@@ -151,5 +161,6 @@ class Plugin(BotPlugin):
             # TODO: separate thread?
             _thread_explode(msg.get_chat())
 
-    def _lenny(self, msg, argv):
-        msg.get_chat().send_message("( ͡° ͜ʖ ͡°)");
+    @staticmethod
+    def _lenny(msg, argv):
+        msg.get_chat().send_message("( ͡° ͜ʖ ͡°)")

@@ -7,6 +7,7 @@ from chatbot.compat import *
 
 ChatHandle = namedtuple("ChatHandle", [ "password", "chat" ])
 
+
 class Plugin(BotPlugin):
     def __init__(self, oldme, bot):
         super(Plugin, self).__init__(oldme, bot)
@@ -21,15 +22,15 @@ class Plugin(BotPlugin):
 
     def _filter(self):
         # Filter empty chats
-        self._chats = { k: v for k,v in self._chats.items() if v.chat.size() > 0 }
+        self._chats = { k: v for k, v in self._chats.items() if v.chat.size() > 0 }
 
     def _listgroups(self, msg, argv):
         """Syntax: groups
-        
+
         List available groups.
         """
         def iterchats():
-            for k,v in self._chats.items():
+            for k, v in self._chats.items():
                 yield k + " [password protected]" if v.password else k
 
         self._filter()
@@ -40,7 +41,7 @@ class Plugin(BotPlugin):
 
     def _forcejoin(self, msg, argv):
         """Syntax: join! <groupname> [password]
-        
+
         Same as `join` but creates the group if it doesn't exist.
         See `join` for further information.
         """
