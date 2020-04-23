@@ -4,7 +4,6 @@ import os
 import imp
 import logging
 from chatbot.util import mkdir_p
-from chatbot.compat import *
 
 
 class BasePlugin(object):

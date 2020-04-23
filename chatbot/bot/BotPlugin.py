@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from chatbot.compat import *
 from .subsystem.plugin import BasePlugin
 from chatbot.util import event
 from chatbot.bot import command, Bot

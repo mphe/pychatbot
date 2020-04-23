@@ -5,7 +5,6 @@
 import logging
 import discord as discordapi
 from chatbot import api
-from chatbot.compat import *
 from .User import User
 from .FriendRequest import FriendRequest
 from .ChatMessage import Message

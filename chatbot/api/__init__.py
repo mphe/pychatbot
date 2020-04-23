@@ -1,4 +1,3 @@
-from chatbot.compat import *
 from .APIBase import APIBase
 from .APIEvents import APIEvents
 from .ChatMessage import ChatMessage, MessageType

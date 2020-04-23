@@ -4,7 +4,6 @@
 from context import *
 from functools import partial
 from chatbot.bot.subsystem.command import *
-from chatbot.compat import *
 
 
 class Test(object):

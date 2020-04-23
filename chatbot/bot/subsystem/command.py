@@ -2,7 +2,6 @@
 
 import logging
 import shlex
-from chatbot.compat import *
 from chatbot.api import MessageType
 
 

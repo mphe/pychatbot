@@ -4,7 +4,6 @@
 from context import logging, api
 from chatbot.util import event
 from chatbot.bot.subsystem import APIEventDispatcher
-from chatbot.compat import *
 
 
 def print_message(msg, prefix):

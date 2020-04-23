@@ -6,18 +6,11 @@ RED="$(tput setaf 1)"
 GREEN="$(tput setaf 2)"
 RESET="$(tput sgr0)"
 
+# arg1: test
 runtest() {
     echo "$1"
-    echo "Python3: $(runtest_python "$1" python3)"
-    echo "Python2: $(runtest_python "$1" python2)"
+    python3 "$1" --test > /dev/null && echo "${GREEN}Successful${RESET}" || echo "${RED}Failed${RESET}"
 }
-
-# arg1: test
-# arg2: python
-runtest_python() {
-    $2 "$1" --test > /dev/null && echo "${GREEN}Successful${RESET}" || echo "${RED}Failed${RESET}"
-}
-
 
 
 if [ $# -gt 0 ]; then

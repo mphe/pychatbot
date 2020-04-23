@@ -8,7 +8,6 @@ from time import sleep
 from multiprocessing import Process, Array
 from chatbot.bot import BotPlugin, command
 from chatbot import util
-from chatbot.compat import *
 
 
 class Plugin(BotPlugin):

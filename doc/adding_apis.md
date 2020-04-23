@@ -16,7 +16,6 @@ This is a simple example of the basic structure of your main class:
 
 ```python
 from chatbot import api
-from chatbot.compat import *
 
 class CoolAPI(api.APIBase):
     def __init__(self, api_id, stub, opts):

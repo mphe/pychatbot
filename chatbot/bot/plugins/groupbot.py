@@ -2,7 +2,6 @@
 
 from collections import namedtuple
 from chatbot.bot import BotPlugin
-from chatbot.compat import *
 
 
 ChatHandle = namedtuple("ChatHandle", [ "password", "chat" ])

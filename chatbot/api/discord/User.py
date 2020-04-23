@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from chatbot.compat import *
 import discord as discordapi
 import chatbot.api as api
 from .Chat import create_chat

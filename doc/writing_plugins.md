@@ -6,7 +6,6 @@ Create a new file "myplugin.py" and add this snippet:
 ```python
 # -*- coding: utf-8 -*-
 
-from chatbot.compat import *
 from chatbot.bot import BotPlugin
 
 
@@ -97,7 +96,6 @@ To stop the event execution, e.g. when your handler handled the event and no fur
 
 For example, this will hook the "message received" event:
 ```python
-from chatbot.compat import *
 from chatbot.bot import BotPlugin
 from chatbot.api import APIEvents
 from chatbot.util import event

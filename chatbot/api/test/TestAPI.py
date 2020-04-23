@@ -4,7 +4,6 @@ import logging
 import time
 from threading import Timer
 from chatbot import api
-from chatbot.compat import *
 
 
 class TestAPI(api.APIBase):

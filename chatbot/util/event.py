@@ -2,7 +2,6 @@
 
 # Requires sortedcontainers module
 from sortedcontainers import SortedList
-from chatbot.compat import *
 
 # Return values for callbacks to determine if event execution should be
 # continued or stopped.

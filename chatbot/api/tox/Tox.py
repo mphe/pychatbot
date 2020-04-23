@@ -7,7 +7,6 @@ import time
 from threading import Timer
 from pytoxcore import ToxCore
 from chatbot import api
-from chatbot.compat import *
 from . import FriendRequest, Message, Chat, User, GroupInvite
 
 

@@ -2,7 +2,6 @@
 
 import os
 import errno
-from chatbot.compat import *
 
 
 def mkdir(path):

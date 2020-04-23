@@ -3,7 +3,6 @@
 
 import logging
 from context import *
-from chatbot.compat import *
 
 
 def print_message(msg, prefix):

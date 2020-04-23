@@ -3,7 +3,6 @@
 
 from functools import partial
 from chatbot.util import event as Event
-from chatbot.compat import *
 
 
 class APIEventDispatcher(object):

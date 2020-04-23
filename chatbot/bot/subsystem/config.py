@@ -4,7 +4,6 @@ import os
 import errno
 import json
 from chatbot.util import mkdir_p, merge_dicts
-from chatbot.compat import *
 
 
 class ConfigManager(object):

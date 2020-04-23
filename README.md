@@ -17,10 +17,8 @@ Additionally you will need the python bindings for the chat protocols you want t
 
 ## Compatibility
 
-Fully compatible with Python 3.<br>
-Theoretically compatible with Python 2, but only partially tested.
+* Requires Python 3.
+* Only tested on Linux, but should theoretically work on other platforms, too.
 
-Only tested on Linux, but should theoretically work on other platforms, too.
-
-<!-- vim: tabstop=2 shiftwidth=2 
+<!-- vim: tabstop=2 shiftwidth=2
 -->

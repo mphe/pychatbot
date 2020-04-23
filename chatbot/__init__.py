@@ -1,1 +1,1 @@
-from . import api, bot, util, compat
+from . import api, bot, util

@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from chatbot.compat import *
 from chatbot.bot import BotPlugin
 from chatbot import util
 import random

@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 from context import util
-from chatbot.compat import *
 
 class Foobar(object):
     def __init__(self, ev):

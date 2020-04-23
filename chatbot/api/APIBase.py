@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import logging
-import time
-from chatbot.compat import *
+from chatbot import api
 
 
 class APIBase(object):

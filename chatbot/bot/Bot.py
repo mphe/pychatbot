@@ -10,7 +10,6 @@ from chatbot import api
 from chatbot.api import APIEvents
 from chatbot.util import event, merge_dicts
 from .subsystem import APIEventDispatcher, command, plugin, ConfigManager
-from chatbot.compat import *
 
 
 class ExitCode(object):

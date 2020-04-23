@@ -3,7 +3,6 @@
 import re
 from chatbot.bot import BotPlugin
 from chatbot.api import APIEvents
-from chatbot.compat import *
 
 
 class Plugin(BotPlugin):
