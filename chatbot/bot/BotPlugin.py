@@ -3,7 +3,6 @@
 from .subsystem.plugin import BasePlugin
 from chatbot.util import event
 from chatbot.bot import command, Bot
-from functools import wraps
 from inspect import getfile
 import os
 
@@ -11,15 +10,18 @@ import os
 class BotPlugin(BasePlugin):
     def __init__(self, oldme, bot):
         super(BotPlugin, self).__init__(oldme, bot)
-        self.__name = os.path.splitext(os.path.basename(getfile(self.__class__)))[0] # type: str
-        self.__bot = bot # type: Bot
-        self.__commands = [] # keeps track of registered commands to unregister them automatically
-        self.__handles = [] # keeps track of registered event handlers
+        self.__name = os.path.splitext(os.path.basename(getfile(self.__class__)))[0]  # type: str
+        self.__bot = bot  # type: Bot
+        self.__commands = []  # keeps track of registered commands to unregister them automatically
+        self.__handles = []  # keeps track of registered event handlers
         self._cfg = {}  # holds config, protected to allow custom loading
         self.reload()
 
     def reload(self):
         self._cfg = self.bot().get_configmgr().load(self.name(), self.get_default_config(), create=True)
+
+    def save_config(self):
+        self._cfg = self.bot().get_configmgr().write(self.name(), self.cfg())
 
     def quit(self):
         self.bot().unregister_command(*self.__commands)

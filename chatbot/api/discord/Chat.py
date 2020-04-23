@@ -2,7 +2,6 @@
 
 import discord as discordapi
 import chatbot.api as api
-import logging
 
 
 def create_chat(client, channel):
@@ -22,7 +21,7 @@ class DiscordChat(object):
         self._chat = chat
 
     def id(self):
-        return str(self._chat.id)
+        return self._chat.id
 
     def is_id_unique(self):
         return True
@@ -37,7 +36,8 @@ class DiscordChat(object):
         return False
 
 
-class PrivateChat(DiscordChat, api.Chat): pass
+class PrivateChat(DiscordChat, api.Chat):
+    pass
 
 
 class GuildChat(DiscordChat, api.GroupChat):

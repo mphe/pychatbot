@@ -43,7 +43,7 @@ class Bot(object):
 
     def run(self, profile="", apiname="", configdir="", **kwargs):
         """Initialize and start the main loop.
-        
+
         profile: a profile config to load
         apiname: an API to load
         kwargs: arguments passed to the API
@@ -95,7 +95,7 @@ class Bot(object):
 
     def register_event_handler(self, event, callback, nice=event.EVENT_NORMAL):
         """Register an event handler and return a handle to it.
-        
+
         To unregister call handle.unregister().
         See bot.subsystem.APIEventDispatcher for further information.
         """

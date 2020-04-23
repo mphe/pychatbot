@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from .ChatMessage import MessageType
-
 
 class ChatType(object):
     """An enum defining group types."""
@@ -11,7 +9,7 @@ class ChatType(object):
 
 class Chat(object):
     """Represents a chat of any type (normal and groupchats).
-    
+
     If normal chats and groupchats have different functionality, use this
     as baseclass.
 
@@ -45,7 +43,7 @@ class Chat(object):
 
     def size(self):
         """Returns the number of chat members (including the current user).
-        
+
         In a normal chat this is 2. Groupchats should override this.
         After calling leave(), the size() function should return 0.
         """
@@ -53,7 +51,7 @@ class Chat(object):
 
     def is_anonymous(self):
         """Returns whether or not this is an anonymous chat.
-        
+
         In anonymous groups you can't access other chat member's handles.
         That means users in an anonymous chat can't be uniquely identified.
         """
@@ -65,13 +63,12 @@ class Chat(object):
     def __str__(self):
         if self.type() == ChatType.Normal:
             return "Chat {}".format(repr(self.id()))
-        else:
-            return "Groupchat {}".format(repr(self.id()))
+        return "Groupchat {}".format(repr(self.id()))
 
 
 class GroupChat(Chat):
     """Represents a group chat.
-    
+
     Basically the same as a normal chat but with some extra functions.
     """
     def type(self):
@@ -79,7 +76,7 @@ class GroupChat(Chat):
 
     def leave(self):
         """Leave a group chat.
-        
+
         After calling leave(), the size() function should return 0.
         """
         raise NotImplementedError
@@ -90,7 +87,7 @@ class GroupChat(Chat):
 
     def size(self):
         """Returns the number of chat members (including the current user).
-        
+
         In a normal chat this is 2. Groupchats should override this.
         After calling leave(), the size() function should return 0.
         """

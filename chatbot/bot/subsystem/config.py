@@ -3,7 +3,7 @@
 import os
 import errno
 import json
-from chatbot.util import mkdir_p, merge_dicts
+from chatbot.util import merge_dicts
 
 
 class ConfigManager(object):
@@ -11,7 +11,7 @@ class ConfigManager(object):
 
     def __init__(self, searchpath):
         self._searchpath = searchpath
-        mkdir_p(searchpath)
+        os.makedirs(searchpath, exist_ok=True)
 
     def set_searchpath(self, searchpath):
         self._searchpath = searchpath

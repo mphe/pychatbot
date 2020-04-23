@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # Requires python3
-# Requires discord.py
+# Requires discord.py==1.2.5, and discord==1.0.1
 
 import logging
 import discord as discordapi
@@ -10,12 +10,12 @@ from .FriendRequest import FriendRequest
 from .ChatMessage import Message
 from .Chat import create_chat
 
+
 class DiscordAPI(api.APIBase):
     def __init__(self, api_id, stub, opts):
         super(DiscordAPI, self).__init__(api_id, stub)
         self._opts = opts
         self._discord = DiscordClient(self)
-
 
     def run(self):
         self._discord.run(self._opts["token"], bot=self._opts["bot"])
@@ -44,23 +44,29 @@ class DiscordAPI(api.APIBase):
             # TODO: maybe use nicknames instead, because usernames can only be
             # changed once an hour apparently
             self.run_task(self._discord.user.edit(username=str(name)))
-        except HTTPException:
+        except discordapi.HTTPException:
             logging.error("Couldn't set username (usernames can only be changed once an hour)")
 
     # TODO: needs testing
     def create_group(self, users=[]):
         if self._discord.user.bot or len(users) >= 10 or len(users) < 2:
             return self.create_server(users)
-        else:
-            return self.create_dmgroup(users)
+        return self.create_dmgroup(users)
 
     def find_user(self, userid):
-        user = self._discord.get_user(userid)
-        return User(self, user) if user else None
+        user = self._discord.get_user(int(userid))
+        if user:
+            logging.warning("Could not find user with ID %s", userid)
+            return None
+        return User(self, user)
 
     def find_chat(self, chatid):
-        return create_chat(self, self._discord.get_channel(chatid))
-
+        chatid = int(chatid)
+        chat = self._discord.get_channel(chatid)
+        if chat is None:
+            logging.warning("Could not find chat with ID %s", chatid)
+            return None
+        return create_chat(self, chat)
 
     @staticmethod
     def get_default_options():
@@ -68,7 +74,6 @@ class DiscordAPI(api.APIBase):
             "token": "",
             "bot": True
         }
-
 
     # extra stuff
     def create_server(self, users=[]):
@@ -87,7 +92,6 @@ class DiscordAPI(api.APIBase):
         # return create_chat(self, self.run_task(
         #     self._discord.user.create_group(*[ i._user for i in users ])))
 
-
     def get_invite_link(self):
         return "https://discordapp.com/api/oauth2/authorize?client_id={}&scope=bot&permissions=0".format(str(self._discord.user.id))
 
@@ -96,10 +100,8 @@ class DiscordAPI(api.APIBase):
         self._discord.loop.create_task(call)
 
 
-
 # Inheriting discordapi.Client in DiscordAPI would cause overlaps in certain
 # functions (like close()).
-
 class DiscordClient(discordapi.Client):
     def __init__(self, apiobj):
         super(DiscordClient, self).__init__()
@@ -109,7 +111,6 @@ class DiscordClient(discordapi.Client):
     def quit(self):
         self.logout()
         self._firstready = True
-
 
     # Events
     async def on_ready(self):

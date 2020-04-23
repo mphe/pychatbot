@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from . import ChatType
 import traceback
 import os
 
