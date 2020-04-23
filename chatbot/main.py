@@ -23,8 +23,16 @@ def main():
         parser.error("an API and/or a profile has to specified.")
         return 1
 
-    logging.basicConfig(level=(logging.DEBUG if args.verbose else logging.INFO),
+    logging.basicConfig(level=logging.DEBUG,
+                        filemode="a", filename="chatbot.log",
                         format="%(levelname)s: %(message)s")
+
+    handler = logging.StreamHandler(sys.stdout)
+    handler.setLevel(logging.DEBUG if args.verbose else logging.INFO)
+    handler.setFormatter(logging.Formatter("%(levelname)s: %(message)s"))
+    logging.root.addHandler(handler)
+
+    logging.debug("------------------------ MAIN ------------------------")
 
     bot = chatbot.bot.Bot(args.profiledir)
     return bot.run(profile=args.profile, apiname=args.api,
