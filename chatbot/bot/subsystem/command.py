@@ -66,7 +66,7 @@ class CommandError(Exception):
             repr(self.code), repr(self.command), repr(self.args[0]))
 
 
-class Command(object):
+class Command:
     def __init__(self, callback, argc, flags):
         self.callback = callback
         self.argc = argc
@@ -76,7 +76,7 @@ class Command(object):
         self.callback(*args, **kwargs)
 
 
-class CommandHandler(object):
+class CommandHandler:
     def __init__(self, prefix=["!"], admins=[]):
         """Takes a list of command prefixes and admins.
         

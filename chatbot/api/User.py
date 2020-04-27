@@ -1,27 +1,28 @@
 # -*- coding: utf-8 -*-
 
+from chatbot import api  # Needed for typehints. pylint: disable=unused-import
 
-class User(object):
+
+class User:
     def handle(self):
         """Returns the user handle.
-        
+
         The return value depends on the chat system.
         For example, in Skype it would return the username, in Tox it would
         return the user's Tox ID, etc.
         In anonymous groups the handle may have random values.
-        The return type should however be a string.
         """
         raise NotImplementedError
 
-    def display_name(self):
+    def display_name(self) -> str:
         """Returns the name of the user.
-        
+
         Unlike handle() this function returns the "pretty" name, that
         most (not all) chat systems offer.
         """
         raise NotImplementedError
 
-    def get_chat(self):
+    async def get_chat(self) -> "api.Chat":
         """Returns a Chat object representing the chat with this user."""
         raise NotImplementedError
 

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
+import asyncio
 import logging
-import time
 from threading import Timer
 from chatbot import api
 
@@ -10,7 +10,7 @@ class TestAPI(api.APIBase):
     def __init__(self, api_id, stub, opts):
         super(TestAPI, self).__init__(api_id, stub)
         # Fires a message received event every second
-        self._timer = None
+        self._timer: asyncio.Task = None
         self._interactive = opts["interactive"]
         self._msg = opts["message"]
         self._chat = TestChat(self)
@@ -18,29 +18,27 @@ class TestAPI(api.APIBase):
         self._otheruser = User("testfriend", "You")
         self._running = False
 
-    def run(self):
+    async def run(self):
         if not self._interactive:
-            self._start_timer()
+            self._timer = asyncio.create_task(self._timer_func())
         self._running = True
-        self._trigger(api.APIEvents.Ready)
+        await self._trigger(api.APIEvents.Ready)
 
         while self._running:
             if self._interactive:
                 text = input("Enter message: ").strip()
                 if text:
                     if text.startswith("/me "):
-                        self.trigger_receive(text[4:], api.MessageType.Action)
+                        await self.trigger_receive(text[4:], api.MessageType.Action)
                     else:
-                        self.trigger_receive(text)
+                        await self.trigger_receive(text)
             else:
-                time.sleep(1)
+                await asyncio.sleep(1)
 
-    def quit(self):
-        self._timer = None
-
-    def close(self):
-        if not self._interactive:
+    async def close(self):
+        if self._timer is not None:
             self._timer.cancel()
+            self._timer = None
         self._running = False
 
     def version(self):
@@ -49,10 +47,10 @@ class TestAPI(api.APIBase):
     def api_name(self):
         return "Test API"
 
-    def get_user(self):
+    async def get_user(self):
         return self._user
 
-    def set_display_name(self, name):
+    async def set_display_name(self, name):
         self._user._name = name
 
     @staticmethod
@@ -63,21 +61,18 @@ class TestAPI(api.APIBase):
         }
 
     # Testing functions
-    def trigger_receive(self, text, msgtype=api.MessageType.Normal):
+    async def trigger_receive(self, text, msgtype=api.MessageType.Normal):
         msg = TestingMessage(self._otheruser, text, self._chat, msgtype)
         logging.info(str(msg))
-        self._trigger(api.APIEvents.Message, msg)
+        await self._trigger(api.APIEvents.Message, msg)
 
-    def trigger_sent(self, text):
-        self._chat.send_message(text)
+    async def trigger_sent(self, text):
+        await self._chat.send_message(text)
 
-    def _timer_func(self):
-        self._start_timer()
-        self.trigger_receive(self._msg)
-
-    def _start_timer(self):
-        self._timer = Timer(1, self._timer_func)
-        self._timer.start()
+    async def _timer_func(self):
+        while True:
+            await asyncio.sleep(1)
+            await self.trigger_receive(self._msg)
 
 
 class TestingMessage(api.ChatMessage):
@@ -115,13 +110,13 @@ class TestChat(api.Chat):
     def id(self):
         return self._id
 
-    def send_message(self, text, msgtype=api.MessageType.Normal):
-        msg = TestingMessage(self._api.get_user(), text, self, msgtype)
+    async def send_message(self, text, msgtype=api.MessageType.Normal):
+        msg = TestingMessage(await self._api.get_user(), text, self, msgtype)
         logging.info(str(msg))
-        self._api._trigger(api.APIEvents.MessageSent, msg)
+        await self._api._trigger(api.APIEvents.MessageSent, msg)
 
-    def send_action(self, text):
-        self.send_message(text, api.MessageType.Action)
+    async def send_action(self, text):
+        await self.send_message(text, api.MessageType.Action)
 
     def type(self):
         return api.ChatType.Normal

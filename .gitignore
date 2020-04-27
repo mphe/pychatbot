@@ -3,3 +3,4 @@ tests/profile.tox
 tmp/
 config
 chatbot.log
+.vim

@@ -3,11 +3,11 @@
 from chatbot import api  # Needed for typehints. pylint: disable=unused-import
 
 
-class MessageType(object):
+class MessageType:
     Normal, Action, System = range(3)
 
 
-class ChatMessage(object):
+class ChatMessage:
     def get_text(self) -> str:
         raise NotImplementedError
 
@@ -26,12 +26,12 @@ class ChatMessage(object):
     def is_editable(self) -> bool:
         raise NotImplementedError
 
-    def edit(self, newstr) -> None:
+    async def edit(self, newstr) -> None:
         raise NotImplementedError
 
-    def reply(self, text) -> None:
+    async def reply(self, text) -> None:
         """Same as ChatMessage.get_chat().send_message(text)."""
-        self.get_chat().send_message(text)
+        await self.get_chat().send_message(text)
 
     def __str__(self) -> str:
         f = "{}: {}" if self.get_type() == MessageType.Normal else "*** {} {} ***"

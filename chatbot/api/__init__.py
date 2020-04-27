@@ -7,10 +7,9 @@ from .FriendRequest import FriendRequest
 from .User import User, GenericUser
 from .Chat import GroupChat, Chat, ChatType
 from .GroupInvite import GroupInvite
-from . import testing
 
 
-def create_api_object(apiname, stub=True, **kwargs):
+def create_api_object(apiname, stub=True, **kwargs) -> APIBase:
     """Loads the API module <apiname> and returns an API object.
 
     The stub parameter determines whether to print stub messages on

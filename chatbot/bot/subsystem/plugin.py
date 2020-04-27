@@ -8,7 +8,7 @@ from typing import List, Callable
 ExceptionCallback = Callable[[str, Exception], bool]
 
 
-class BasePlugin(object):
+class BasePlugin:
     """Base class for plugins."""
 
     def __init__(self, oldme, *argv, **kwargs):
@@ -28,13 +28,13 @@ class BasePlugin(object):
         raise NotImplementedError
 
 
-class PluginHandle(object):
+class PluginHandle:
     def __init__(self):
         self.plugin = None
         self.module = None
 
 
-class PluginManager(object):
+class PluginManager:
     def __init__(self, searchpath, whitelist: List[str] = None,
                  blacklist: List[str] = None):
         """Constructor.

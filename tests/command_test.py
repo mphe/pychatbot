@@ -6,7 +6,7 @@ from functools import partial
 from chatbot.bot.subsystem.command import *
 
 
-class Test(object):
+class Test:
     def __init__(self):
         self._echostring = ""
 

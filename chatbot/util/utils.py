@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from chatbot import api
+
 
 def merge_dicts(srcdict, mergedict, overwrite=False):
     """Merges mergedict into srcdict and returns srcdict."""
@@ -20,8 +22,8 @@ def merge_dicts_copy(srcdict, mergedict, overwrite=False):
     return ndict
 
 
-def edit_or_reply(msg, text):
+async def edit_or_reply(msg: api.ChatMessage, text: str):
     if msg.is_editable():
-        msg.edit(text)
+        await msg.edit(text)
     else:
-        msg.reply(text)
+        await msg.reply(text)

@@ -1,47 +1,43 @@
 # -*- coding: utf-8 -*-
 
 
-class ChatType(object):
+class ChatType:
     """An enum defining group types."""
     Normal = "Normal"
     Group = "Group"
 
 
-class Chat(object):
+class Chat:
     """Represents a chat of any type (normal and groupchats).
 
     If normal chats and groupchats have different functionality, use this
     as baseclass.
 
-    Every chat must have an unique ID that is persistent across the session.
+    Every chat must have a unique ID that is persistent across the session.
     It can be persistent across multiple sessions but doesn't have to.
-    The ID, same as with User, should be a string.
-
-    A chat may have an ID that is universally unique, which means it persists
-    after restarts and will never change.
     """
 
     def id(self):
         """Returns the chat's unique ID."""
         raise NotImplementedError
 
-    def is_id_unique(self):
+    def is_id_unique(self) -> bool:
         """Returns whether the chat's ID is globally unique."""
         raise NotImplementedError
 
-    def send_message(self, text):
+    async def send_message(self, text) -> None:
         """Sends a message with the given text to this chatroom."""
         raise NotImplementedError
 
-    def send_action(self, text):
+    async def send_action(self, text) -> None:
         """Sends an action (/me ...) with the given text to this chatroom."""
         raise NotImplementedError
 
-    def type(self):
+    def type(self) -> ChatType:
         """Returns the chat type. See ChatType for available types."""
         return ChatType.Normal
 
-    def size(self):
+    def size(self) -> int:
         """Returns the number of chat members (including the current user).
 
         In a normal chat this is 2. Groupchats should override this.
@@ -49,7 +45,7 @@ class Chat(object):
         """
         return 2
 
-    def is_anonymous(self):
+    def is_anonymous(self) -> bool:
         """Returns whether or not this is an anonymous chat.
 
         In anonymous groups you can't access other chat member's handles.
@@ -71,21 +67,21 @@ class GroupChat(Chat):
 
     Basically the same as a normal chat but with some extra functions.
     """
-    def type(self):
+    def type(self) -> ChatType:
         return ChatType.Group
 
-    def leave(self):
+    async def leave(self) -> None:
         """Leave a group chat.
 
         After calling leave(), the size() function should return 0.
         """
         raise NotImplementedError
 
-    def invite(self, user):
+    async def invite(self, user) -> None:
         """Invite the given User to the groupchat."""
         raise NotImplementedError
 
-    def size(self):
+    def size(self) -> int:
         """Returns the number of chat members (including the current user).
 
         In a normal chat this is 2. Groupchats should override this.

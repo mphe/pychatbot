@@ -15,7 +15,7 @@ def create_chat(client, channel):
         return None
 
 
-class DiscordChat(object):
+class DiscordChat:
     def __init__(self, client, chat):
         self._client = client
         self._chat = chat

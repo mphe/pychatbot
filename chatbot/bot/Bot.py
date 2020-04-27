@@ -12,14 +12,14 @@ from chatbot.util import event, merge_dicts
 from .subsystem import APIEventDispatcher, command, plugin, ConfigManager
 
 
-class ExitCode(object):
+class ExitCode:
     """Exit codes returned by Bot.run()"""
     Normal = 0
     Error = 1
     Restart = 42  # Use a higher value so it stands out from usual exitcodes
 
 
-class Bot(object):
+class Bot:
     def __init__(self, profiledir=""):
         self._exit = ExitCode.Normal
         self._config = {}

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Requires sortedcontainers module
+import asyncio
 from sortedcontainers import SortedList
 
 # Return values for callbacks to determine if event execution should be
@@ -14,7 +14,7 @@ EVENT_NORMAL = 0
 EVENT_POST   = 1000
 
 
-class Handle(object):
+class Handle:
     def __init__(self, event, callback, nice):
         self._event = event
         self._callback = callback
@@ -28,6 +28,9 @@ class Handle(object):
             # Avoid preventing garbage collection
             self._callback = None
             self._event = None
+
+    def __del__(self):
+        self.unregister()
 
     def __call__(self, *args, **kwargs):
         return self._callback(*args, **kwargs)
@@ -43,15 +46,15 @@ class Handle(object):
             repr(self._event), repr(self._callback), repr(self._nice))
 
 
-class Event(object):
+class Event:
     """Contains a list of callbacks and calls them when the event is trigger()ed.
-    
+
     It's safe to remove/unregister a callback during the trigger() loop
     (unregistering a callback inside a callback).
 
     Callbacks can return a value to determine whether the event execution
     should be continued or stopped. This might be useful when certain events
-    should only be handled by specific event handlers. 
+    should only be handled by specific event handlers.
     Returning nothing or EVENT_CONTINUE will continue executing the remaining
     handlers. EVENT_HANDLED will stop the execution.
 
@@ -65,22 +68,25 @@ class Event(object):
         self._dirty = 0     # counts how many handlers need to be removed
         self._running = False   # Whether or not trigger() is currently executed
 
-    def register(self, callback, nice = EVENT_NORMAL):
+    def register(self, callback, nice=EVENT_NORMAL):
         """Adds a callback that will be called when the event is triggered.
 
         Returns a handle that can be used to unregister.
 
-        nice determines the priority. Lower priorities are called first,
+        `callback` must be a coroutine.
+        `nice` determines the priority. Lower priorities are called first,
         higher ones later. For simplicity and readability there are some
         predefined constants for common priorities:
             EVENT_PRE    = -1000
             EVENT_NORMAL = 0
             EVENT_POST   = 1000
-        If nice is not specified, EVENT_NORMAL is used.
+        If `nice` is not specified, EVENT_NORMAL is used.
 
         The callback may return EVENT_HANDLED to abort the event
         execution early. (See also class docstring)
         """
+        assert asyncio.iscoroutinefunction(callback), "Callback must be a coroutine"
+
         hnd = Handle(self, callback, nice)
         if not self._running:
             self._handlers.add(hnd)
@@ -92,7 +98,8 @@ class Event(object):
             self._waiting.append(hnd)
         return hnd
 
-    def unregister(self, handle):
+    @staticmethod
+    def unregister(handle):
         """Removes a previously registered callback.
 
         Same as calling Handle.unregister() directly.
@@ -109,15 +116,15 @@ class Event(object):
         for i in self._handlers:
             i.unregister()
 
-    def trigger(self, *args, **kwargs):
+    async def trigger(self, *args, **kwargs):
         """Calls every registered event handler with the given arguments.
-        
+
         The loop will stop if EVENT_HANDLED is returned by a callback or an
         Exception is thrown. In case of an exception, it won't be handled.
         """
         self._running = True
         for i in self._handlers:
-            if i and i(*args, **kwargs) == EVENT_HANDLED:
+            if i and await i(*args, **kwargs) == EVENT_HANDLED:
                 break
         self._running = False
         self._update()
@@ -135,8 +142,8 @@ class Event(object):
         if not self._running:
             # Remove every handler that was marked for removal.
             if self._dirty > 0:
-                self._handlers = SortedList([ i for i in self._handlers if i ],
-                                            key=lambda x: x._nice)
+                self._handlers = SortedList(
+                    [ i for i in self._handlers if i ], key=lambda x: x._nice)
                 self._waiting = [ i for i in self._waiting if i ]
                 self._dirty = 0
 

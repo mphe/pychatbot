@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 
+from chatbot import api  # Needed for typehints. pylint: disable=unused-import
 
-class APIEvents(object):
+
+class APIEvents:
     """An enum of API events."""
-    Ready            = "Ready"
+    Ready            = "Ready"  # Ready text doc
     Message          = "MessageReceived"
     MessageSent      = "MessageSent"
     FriendRequest    = "FriendRequest"
@@ -14,61 +16,60 @@ class APIEvents(object):
 
 def iterevents():
     """Returns a generator to iterate over the values in APIEvents."""
-    return ( v for k,v in APIEvents.__dict__.iteritems() if not k.startswith("_") )
+    return ( v for k, v in APIEvents.__dict__.items() if not k.startswith("_") )
 
 
 # The following functions are solely for documentation.
 
 def on_ready():
     """Triggered when the API is initialized and ready to be used"""
-    pass
 
-def on_message_received(msg):
+
+def on_message_received(msg: "api.ChatMessage"):
     """Triggered when receiving a message.
-    
-    Parameters:
+
+    Args:
         msg:            A ChatMessage object
     """
-    pass
 
-def on_message_sent(msg):
+
+def on_message_sent(msg: "api.ChatMessage"):
     """Triggered when a message was sent.
-    
-    Parameters:
+
+    Args:
         msg:            A ChatMessage object
     """
-    pass
 
-def on_friend_request_received(request):
+
+def on_friend_request_received(request: "api.FriendRequest"):
     """Triggered when receiving a friend request.
-    
-    Parameters:
+
+    Args:
         request:        A FriendRequest object
     """
-    pass
 
-def on_group_invite(invite):
+
+def on_group_invite(invite: "api.GroupInvite"):
     """Triggered when receiving a groupchat invite.
-    
-    Parameters:
+
+    Args:
         invite:         A GroupInvite object
     """
-    pass
 
-def on_group_member_join(chat, user):
+
+def on_group_member_join(chat: "api.Chat", user: "api.User"):
     """Triggered when a user joins a groupchat.
-    
-    Parameters:
+
+    Args:
         chat:           A Chat object representing the groupchat
         user:           A User object of the joined user
     """
-    pass
 
-def on_group_member_leave(chat, user):
+
+def on_group_member_leave(chat: "api.Chat", user: "api.User"):
     """Triggered when a user leaves a groupchat.
-    
-    Parameters:
+
+    Args:
         chat:           A Chat object representing the groupchat
         user:           A User object of the left user
     """
-    pass

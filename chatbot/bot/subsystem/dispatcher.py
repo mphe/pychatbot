@@ -1,16 +1,16 @@
 # -*- coding: utf-8 -*-
 
-
+import asyncio
 from functools import partial
-from chatbot.util import event as Event
+from chatbot.util.event import Event
 
 
-class APIEventDispatcher(object):
+class APIEventDispatcher:
     """Provides a dispatch system to allow multiple handlers per API event."""
 
     def __init__(self, apiobj, exc_handler=None):
         """Constructor
-        
+
         apiobj is an API objects instance.
         exc_handler is an optional callback with the signature
             (event, Exception, *args, **kwargs) -> bool
@@ -22,20 +22,22 @@ class APIEventDispatcher(object):
         If exception_handler is None, exceptions will be re-raised
         immediately.
         """
-        self._events = {}
+        self._events = {}  # type: dict[str, Event]
         self._api = apiobj
         self._exc_handler = exc_handler
 
-    def register(self, event, callback, nice=Event.EVENT_NORMAL):
+    def register(self, event, callback, nice=0):
         """Register an event handler and return a Handle to it.
 
         See util.event.Event.register for further information.
         """
-        if not event in self._events:
-            self._setup_dispatch(event)
-        return self._events[event].register(callback, nice)
+        ev = self._events.get(event, None)
+        if ev is None:
+            ev = self._setup_dispatch(event)
+        return ev.register(callback, nice)
 
-    def unregister(self, handle):
+    @staticmethod
+    def unregister(handle):
         """Unregister an event handler using its handle.
 
         Same as handle.unregister().
@@ -48,19 +50,19 @@ class APIEventDispatcher(object):
             self._api.unregister_event_handler(i)
         self._events = {}
 
-
     # Utility functions
     def _setup_dispatch(self, event):
         self._api.register_event_handler(
-            event, partial(self._dispatch_event, event))
-        self._events[event] = Event.Event()
+            event, asyncio.coroutine(partial(self._dispatch_event, event)))
+        ev = self._events[event] = Event()
+        return ev
 
-    def _dispatch_event(self, event, *args, **kwargs):
+    async def _dispatch_event(self, event, *args, **kwargs):
         """Generic function to dispatch an event to all registered callbacks."""
         ev = self._events[event]
         if len(ev) > 0:
             try:
-                ev.trigger(*args, **kwargs)
+                await ev.trigger(*args, **kwargs)
             except Exception as e:
                 if self._exc_handler:
                     if not self._exc_handler(event, e, *args, **kwargs):
@@ -76,4 +78,4 @@ class APIEventDispatcher(object):
             del self._events[event]
             self._api.unregister_event_handler(event)
             # Trigger without anything registered (as it should have been)
-            self._api._trigger(event, *args, **kwargs)
+            await self._api._trigger(event, *args, **kwargs)

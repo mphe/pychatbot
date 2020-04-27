@@ -1,32 +1,25 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from context import *
-import time
+import asyncio
+from context import api, print_message
+import logging
 
 
-def print_message(msg, prefix):
-    logging.info("{} message in {}:\n\t {}".format(
-        prefix,
-        str(msg.get_chat()),
-        str(msg)
-    ))
-
-
-class Test(object):
+class Test:
     def __init__(self):
-        self._msg = None # stores the received message
-        self._api = None
+        self._msg = None  # stores the received message
+        self._api = None  # api.APIBase
         self._sent = False
 
-    def _on_receive(self, msg):
+    async def _on_receive(self, msg):
         print_message(msg, "Received")
         self._msg = msg
-        msg.get_chat().send_message("Reply")
+        await msg.get_chat().send_message("Reply")
 
-    def _on_sent(self, msg):
+    async def _on_sent(self, msg):
         print_message(msg, "Sent")
-        self._api.close()
+        await self._api.close()
         self._sent = True
 
     def run(self):
@@ -39,8 +32,8 @@ class Test(object):
         self._api.register_event_handler(api.APIEvents.MessageSent, self._on_sent)
 
         logging.info("Running...")
-        self._api.run()
-        self._api.quit()
+
+        asyncio.run(self._api.run())
 
         assert self._sent
 
@@ -48,5 +41,6 @@ class Test(object):
         self._api.unregister_event_handler(api.APIEvents.MessageSent)
 
         logging.info("Done")
+
 
 Test().run()

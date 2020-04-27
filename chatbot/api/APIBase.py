@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 
+import asyncio
 import logging
-from chatbot import api
+from chatbot import api  # Needed for typehints. pylint: disable=unused-import
+from typing import List
 
 
-class APIBase(object):
+class APIBase:
     """Base class for API objects.
 
     See also the \"test\" API for an example.
@@ -50,20 +52,16 @@ class APIBase(object):
         """
         return self._api_id
 
-    def run(self):
-        # TODO: maybe include cleanup (quit())
-        """Run the main loop including initialization."""
+    async def run(self):
+        """Run the main loop including initialization and cleanup afterwards."""
         raise NotImplementedError
 
-    def quit(self):
-        """Unload the API and free resources"""
-        raise NotImplementedError
-
-    def close(self):
-        """Stop the main loop"""
+    async def close(self):
+        """Stop the main loop."""
         raise NotImplementedError
 
     def version(self):
+        """Return API version."""
         raise NotImplementedError
 
     def api_name(self) -> str:
@@ -73,27 +71,26 @@ class APIBase(object):
         """
         raise NotImplementedError
 
-    def get_user(self) -> "api.User":
+    async def get_user(self) -> "api.User":
         """Returns a User object of the currently logged in user."""
         raise NotImplementedError
 
-    def set_display_name(self, name):
+    async def set_display_name(self, name):
         """Set the logged in user's display name."""
         raise NotImplementedError
 
-    def create_group(self, users=[]) -> "api.Chat":
+    async def create_group(self, users: List["api.User"]) -> "api.Chat":
         """Create a new groupchat with the given Users.
 
         Returns a Chat object representing the group.
-        The users parameter should be optional.
         """
         raise NotImplementedError
 
-    def find_user(self, userid) -> "api.User":
+    async def find_user(self, userid) -> "api.User":
         """Returns a User object for the user with the given ID."""
         raise NotImplementedError
 
-    def find_chat(self, chatid) -> "api.Chat":
+    async def find_chat(self, chatid) -> "api.Chat":
         """Returns a Chat object for the chat with the given ID."""
         raise NotImplementedError
 
@@ -103,7 +100,9 @@ class APIBase(object):
         return {}
 
     def register_event_handler(self, event, callback):
-        """Add an event handler to the given event.
+        """Set an event handler for the given event.
+
+        `callback` must be a coroutine.
 
         Only one callback can be registered per event. If you need more, you
         have to write your own dispatch functionality.
@@ -116,6 +115,7 @@ class APIBase(object):
         if callback is None:
             del self._events[event]
         else:
+            assert asyncio.iscoroutinefunction(callback), "Callback must be a coroutine"
             self._events[event] = callback
 
     def unregister_event_handler(self, event):
@@ -125,13 +125,14 @@ class APIBase(object):
         """
         self.register_event_handler(event, None)
 
-    def _trigger(self, event, *args, **kwargs):
+    async def _trigger(self, event, *args, **kwargs):
         """Triggers the given event with the given arguments.
 
         Should be used instead of accessing self._events directly.
         """
-        if event in self._events:
-            self._events[event](*args, **kwargs)
+        ev = self._events.get(event, None)
+        if ev is not None:
+            await ev(*args, **kwargs)
         elif self._stub:
             logging.debug("Unhandled event: %s", str(event))
 

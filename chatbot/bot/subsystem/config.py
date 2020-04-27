@@ -6,7 +6,7 @@ import json
 from chatbot.util import merge_dicts
 
 
-class ConfigManager(object):
+class ConfigManager:
     """Provides functionality for loading and saving configs as json."""
 
     def __init__(self, searchpath):
