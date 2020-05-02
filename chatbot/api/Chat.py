@@ -18,7 +18,13 @@ class Chat:
     """
 
     def id(self):
-        """Returns the chat's unique ID."""
+        """Returns the chat's unique ID.
+
+        Similar to User.id().
+
+        This should always be a string, no matter what the underlying API uses
+        internally.
+        """
         raise NotImplementedError
 
     def is_id_unique(self) -> bool:

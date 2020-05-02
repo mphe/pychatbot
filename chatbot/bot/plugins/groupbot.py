@@ -63,7 +63,7 @@ class Plugin(BotPlugin):
 
         if argv[1] not in self._chats or self._chats[argv[1]].chat.size() == 0:
             if argv[0] == "join!":
-                chat = self.bot().get_API().create_group([msg.get_author()])
+                chat = self.bot().get_api().create_group([msg.get_author()])
                 self._chats[argv[1]] = ChatHandle(password, chat)
             else:
                 msg.reply("This chat doesn't exist yet, use `join!` to create it.")

@@ -48,21 +48,20 @@ class DiscordAPI(api.APIBase):
             logging.error("Couldn't set username (usernames can only be changed once an hour)")
 
     # TODO: needs testing
-    def create_group(self, users=[]):
+    def create_group(self, users=()):
         if self._discord.user.bot or len(users) >= 10 or len(users) < 2:
             return self.create_server(users)
         return self.create_dmgroup(users)
 
-    def find_user(self, userid):
+    def find_user(self, userid: str):
         user = self._discord.get_user(int(userid))
         if user:
             logging.warning("Could not find user with ID %s", userid)
             return None
         return User(self, user)
 
-    def find_chat(self, chatid):
-        chatid = int(chatid)
-        chat = self._discord.get_channel(chatid)
+    def find_chat(self, chatid: str):
+        chat = self._discord.get_channel(int(chatid))
         if chat is None:
             logging.warning("Could not find chat with ID %s", chatid)
             return None
@@ -76,7 +75,7 @@ class DiscordAPI(api.APIBase):
         }
 
     # extra stuff
-    def create_server(self, users=[]):
+    def create_server(self, users=()):
         raise NotImplementedError
         # TODO: needs testing
         # server = self.run_task(self._discord.create_guild("New Server"))
@@ -85,7 +84,7 @@ class DiscordAPI(api.APIBase):
         #     chat.invite(i)
         # return chat
 
-    def create_dmgroup(self, users=[]):
+    def create_dmgroup(self, users=()):
         raise NotImplementedError
         # TODO: needs testing
         # assert len(users) >= 2 and len(users) < 10

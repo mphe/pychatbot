@@ -4,20 +4,22 @@ from chatbot import api  # Needed for typehints. pylint: disable=unused-import
 
 
 class User:
-    def handle(self):
-        """Returns the user handle.
+    def id(self) -> str:
+        """Returns the user ID.
 
-        The return value depends on the chat system.
-        For example, in Skype it would return the username, in Tox it would
-        return the user's Tox ID, etc.
+        The return value depends on the chat system, for example, in Discord it
+        would return the username, in Tox it would return the Tox ID, etc.
         In anonymous groups the handle may have random values.
+
+        This should always be a string, no matter what the underlying API uses
+        internally.
         """
         raise NotImplementedError
 
     def display_name(self) -> str:
         """Returns the name of the user.
 
-        Unlike handle() this function returns the "pretty" name, that
+        Unlike id() this function returns the "pretty" name, that
         most (not all) chat systems offer.
         """
         raise NotImplementedError
@@ -27,18 +29,18 @@ class User:
         raise NotImplementedError
 
     def __str__(self):
-        return "{} ({})".format(self.display_name(), self.handle())
+        return "{} ({})".format(self.display_name(), self.id())
 
 
 class GenericUser(User):
-    """Generic user with a handle and a name."""
+    """Generic user with an ID and a name."""
 
-    def __init__(self, handle, name="Unknown"):
-        self._handle = handle
+    def __init__(self, userid, name="Unknown"):
+        self._id = userid
         self._name = name
 
-    def handle(self):
-        return self._handle
+    def id(self) -> str:
+        return self._id
 
-    def display_name(self):
+    def display_name(self) -> str:
         return self._name

@@ -1,89 +1,67 @@
 # -*- coding: utf-8 -*-
 
+import asyncio
+import enum
 import logging
 import shlex
-from chatbot.api import MessageType
+from typing import Callable, List
+from collections import namedtuple
+from chatbot.api import MessageType, ChatMessage
 
 
-# Command flags
-# Require admin privileges to run this command
-CMDFLAG_ADMIN = 1
-
-# Expand the arguments list rather passing it as list to the callback 
-CMDFLAG_EXPAND = 2
-
-# Not an actual command but an alias to an already existing one
-# TODO: Implement this
-CMDFLAG_ALIAS = 4
-
-# The registered command is called when an entered command does not exist
-CMDFLAG_MISSING = 8
+CommandHandle = namedtuple("CommandHandle", [ "callback", "argc", "flags" ])
 
 
-# Return values for callbacks
-COMMAND_ERR             = 1 # Unspecified error
-COMMAND_ERR_ARGC        = 2 # Wrong argument count
-COMMAND_ERR_PERM        = 3 # Missing permissions
-COMMAND_ERR_SYNTAX      = 4 # Syntax error
-COMMAND_ERR_NOTFOUND    = 5 # Continue as if the command didn't exist
-                            # (useful in CMDFLAG_MISSING callbacks)
+class CommandFlag(enum.IntFlag):
+    """Require admin privileges to run this command."""
+    Admin = 1
+
+    """Expand the arguments list rather passing it as list to the callback."""
+    Expand = 2
+
+    """Not an actual command but an alias to an already existing one.
+    Not yet implemented.
+    """
+    # TODO: Implement this
+    Alias = 4
+
+    """The registered command is called when an entered command does not exist.
+    These commands are called consecutively (NOT in order of registration)
+    until a command executes successfully.
+    """
+    Missing = 8
+
 
 class CommandError(Exception):
-    """Represents a command specific error.
-
-    The constructor takes an error code and optionally the name of
-    the command and/or a custom error message, e.g.:
-        raise CommandError(COMMAND_ERR_PERM, command="mycommand")
-        raise CommandError(COMMAND_ERR, msg="Custom error message")
-        raise CommandError(COMMAND_ERR_SYNTAX).
-
-    If no message is supplied, the default message for this error code
-    is used.
-
-    Possible error codes are:
-        COMMAND_ERR           -  Unspecified error
-        COMMAND_ERR_ARGC      -  Wrong argument count
-        COMMAND_ERR_PERM      -  Missing permissions
-        COMMAND_ERR_SYNTAX    -  Syntax error
-        COMMAND_ERR_NOTFOUND  -  Command not found
-    """
-    _err_strings = {
-        COMMAND_ERR             : "An error occurred",
-        COMMAND_ERR_ARGC        : "Wrong number of arguments",
-        COMMAND_ERR_PERM        : "Permission denied",
-        COMMAND_ERR_SYNTAX      : "Syntax error",
-        COMMAND_ERR_NOTFOUND    : "Command not found"
-    }
-
-    def __init__(self, code, msg="", command=""):
-        msg = msg if msg else CommandError._err_strings[code]
+    def __init__(self, msg="An error occurred.", command=""):
         super(CommandError, self).__init__(msg)
-        self.code = code
         self.command = command
 
-    def __repr__(self):
-        return "CommandError({}, command={}, msg={})".format(
-            repr(self.code), repr(self.command), repr(self.args[0]))
+
+class CommandNotFoundError(CommandError):
+    def __init__(self, command=""):
+        super(CommandNotFoundError, self).__init__("Command not found.", command)
 
 
-class Command:
-    def __init__(self, callback, argc, flags):
-        self.callback = callback
-        self.argc = argc
-        self.flags = flags
+class CommandSyntaxError(CommandError):
+    def __init__(self, msg="", command=""):
+        msg = "Syntax error: {}.".format(msg) if msg else "Syntax error."
+        super(CommandSyntaxError, self).__init__(msg, command)
 
-    def __call__(self, *args, **kwargs):
-        self.callback(*args, **kwargs)
+
+class CommandArgcError(CommandSyntaxError):
+    def __init__(self, command=""):
+        super(CommandArgcError, self).__init__("Wrong number of arguments.", command)
+
+
+class CommandPermError(CommandError):
+    def __init__(self, command=""):
+        super(CommandPermError, self).__init__("Permission denied.", command)
 
 
 class CommandHandler:
-    def __init__(self, prefix=["!"], admins=[]):
-        """Takes a list of command prefixes and admins.
-        
-        Both lists are stored without being copied or modified. It's safe
-        to modify them outside of CommandHandler to dynamically add more
-        admins or prefixes.
-        """
+    def __init__(self, prefix=("!",), admins=()):
+        """Takes a list of command prefixes and admins."""
         self._prefix = prefix
         self._admins = admins
         self._cmds = {}
@@ -91,89 +69,82 @@ class CommandHandler:
         self.register("help", self._help, argc=0)
         self.register("list", self._list, argc=0)
 
-    def register(self, name, callback, argc=1, flags=0):
+    def register(self, name: str,
+                 callback: Callable[[ChatMessage, List[str]], None],
+                 argc=1, flags=0):
         """Register a chat command.
-        
-        name:       The name of the command. If a command with the same name
-                    already exists, it will be overwritten.
-        callback:   A callback function.
-        argc:       The minimum amount of arguments needed for this command.
-                    If there are less, a CommandError(COMMAND_ERR_ARGC)
-                    exception is raised.
-        flags:      A list of flags or'ed together.
 
-        The callback must be of the format (return values are ignored):
-            (api.ChatMessage, list[str]) -> Any
+        Args:
+            name: The name of the command. If a command with the same name
+                  already exists, it will be overwritten.
+            callback: A coroutine callback function.
+            argc: The minimum amount of arguments needed for this command.
+                  If there are less, a CommandArgcError is raised.
+            flags: A list of flags or'ed together. See also `CommandFlag`.
+
+        The callback must have one of the following signatures
+        (return values are ignored):
+            (api.ChatMessage, list[str]) -> None
         or
-            (api.ChatMessage, *args) -> Any
+            (api.ChatMessage, *args) -> None
 
         The first argument is the message object issuing the command.
         The second argument is a list of arguments that were passed to
         the command (the first element is the name of the command itself).
 
         The second callback format can be used by specifying the
-        CMDFLAG_EXPAND flag. This way, the arguments to the command are
-        passed as individual arguments rather than as an array.
+        `CommandFlag.Expand` flag. This way, the arguments to the command are
+        passed as individual arguments rather than as array.
         If there are more arguments given than the command expects
-        (-> argc parameter), only the expected amount of arguments is
+        (-> argc parameter), only the expected amount of arguments are
         forwarded. Every additional argument will be discarded.
-        Note that the function will still receive argc+1 number of arguments.
-        The first one is the name of the command itself.
+        Note that the function will _not_ receive the name of the command as
+        first argument.
 
-        Every command can have certain flags that can be or'ed together,
-        e.g.: CMDFLAG_ADMIN | CMDFLAG_EXPAND
-
-        Available flags are:
-            CMDFLAG_ADMIN   -  The command is only available to admins.
-            CMDFLAG_EXPAND  -  Use the second callback format where the
-                               arguments to the command are passed as
-                               individual arguments to the callback.
-            CMDFLAG_ALIAS   -  Not yet implemented.
-            CMDFLAG_MISSING -  These commands are called consecutively
-                               (NOT in order of registration) as long as a
-                               command was not found or couldn't be executed
-                               because of wrong argument count.
-
-        Aside from normal exceptions, there is a CommandError exception
+        Aside from normal exceptions, there are several CommandError exceptions
         that can be thrown to let the command fail.
-        See the CommandError docs on how to use it.
 
-        Throwing a COMMAND_ERR_NOTFOUND error will make the execution
-        continue as if the command was not found. This is especially useful
-        in command-missing-handlers (CMDFLAG_MISSING).
+        Throwing CommandNotFoundError will make the execution continue as if
+        the command was not found. This is especially useful in
+        command-missing-handlers (CommandFlag.Missing).
 
-        Throwing COMMAND_ERR_ARGC inside a missing handler will skip this
-        handler and jump to the next one. So, effectively it does the same
-        as throwing COMMAND_ERR_NOTFOUND.
+        Throwing CommandNotFoundError or CommandArgcError inside a
+        command-missing-handler will skip this handler and jump to the next one.
 
         When a CommandError was raised inside the command callback, it will
         be catched by the CommandHandler, edited to include the command's
         name, and then re-raised. This way one doesn't have to bother with
         passing the command name manually.
         """
-        group = self._missing_cmds if flags & CMDFLAG_MISSING else self._cmds
+        assert asyncio.iscoroutinefunction(callback), "Callback must be a coroutine"
+        group = self._missing_cmds if flags & CommandFlag.Missing else self._cmds
         if name in group:
-            logging.warn("Overwriting existing command: " + name)
-        group[name] = Command(callback, argc, flags)
+            logging.warning("Overwriting existing command: %s", name)
+        group[name] = CommandHandle(callback, argc, flags)
+        logging.debug("Registered command: %s", name)
 
     def unregister(self, name):
-        if name in self._cmds:
-            del self._cmds[name]
-        elif name in self._missing_cmds:
-            del self._missing_cmds[name]
-        else:
-            logging.warn("Trying to unregister non-existing command: " + name)
+        try:
+            self._cmds.pop(name)
+        except KeyError:
+            try:
+                self._missing_cmds.pop(name)
+            except KeyError:
+                logging.warning("Trying to unregister non-existing command: %s", name)
+                return
+        logging.debug("Unregistered command: %s", name)
 
     def clear(self):
         """Remove all (except builtin) commands."""
+        logging.debug("Clearning all commands")
         self._cmds.clear()
         self._missing_cmds.clear()
         self.register("help", self._help, argc=0)
         self.register("list", self._list, argc=0)
 
-    def execute(self, msg):
+    async def execute(self, msg: ChatMessage):
         """Execute a command from a message.
-        
+
         Returns True if the message was a command, otherwise False.
         Exceptions may be raised and have to be handled by the calling scope.
         """
@@ -181,90 +152,91 @@ class CommandHandler:
             return False
 
         argv = []
+        text = msg.get_text()
 
-        command = msg.get_text()
         # Check if the message is a command and fill argv with its arguments.
         for i in self._prefix:
-            if command.startswith(i):
+            if text.startswith(i):
                 # Abort if the command is another prefix
-                if not command[len(i):].strip().startswith(i.strip()):
-                    argv = shlex.split(command[len(i):])
+                if not text[len(i):].strip().startswith(i.strip()):
+                    argv = shlex.split(text[len(i):])
                 break
 
         if not argv:
             return False
 
-        if argv[0] in self._cmds:
+        command = self._cmds.get(argv[0], None)
+        if command:
             try:
-                self._exec_command(msg, self._cmds[argv[0]], argv)
+                await self._exec_command(msg, command, argv)
                 return True
+            except CommandNotFoundError:
+                pass
             except CommandError as e:
-                if e.code != COMMAND_ERR_NOTFOUND:
-                    e.command = argv[0]
-                    raise
+                e.command = argv[0]
+                raise
 
         # Missing handlers
         # It's important to make a copy of the list to avoid
         # "dictionary changed size while iterating" errors
         for i in list(v for v in self._missing_cmds.values()):
             try:
-                self._exec_command(msg, i, argv)
+                await self._exec_command(msg, i, argv)
                 return True
+            except (CommandNotFoundError, CommandArgcError):
+                pass
             except CommandError as e:
-                if e.code not in (COMMAND_ERR_NOTFOUND, COMMAND_ERR_ARGC):
-                    e.command = argv[0]
-                    raise
+                e.command = argv[0]
+                raise
 
-        raise CommandError(COMMAND_ERR_NOTFOUND, command=argv[0])
+        raise CommandNotFoundError(command=argv[0])
 
-    def _exec_command(self, msg, cmd, argv):
+    async def _exec_command(self, msg: ChatMessage, cmd: CommandHandle, argv: List[str]):
         if not cmd:
-            raise CommandError(COMMAND_ERR_NOTFOUND)
+            raise CommandNotFoundError
 
-        if cmd.flags & CMDFLAG_ADMIN:
-            if msg.get_author().handle() not in self._admins:
-                raise CommandError(COMMAND_ERR_PERM)
+        if cmd.flags & CommandFlag.Admin:
+            if msg.get_author().id() not in self._admins:
+                raise CommandPermError
 
         if len(argv) <= cmd.argc:
-            raise CommandError(COMMAND_ERR_ARGC)
+            raise CommandArgcError
 
-        if cmd.flags & CMDFLAG_EXPAND:
-            cmd.callback(msg, *argv[:cmd.argc + 1])
+        if cmd.flags & CommandFlag.Expand:
+            await cmd.callback(msg, *argv[1:cmd.argc + 1])
         else:
-            cmd.callback(msg, argv)
-
+            await cmd.callback(msg, argv)
 
     # Commands
-    def _help(self, msg, argv):
+    async def _help(self, msg: ChatMessage, argv: List[str]):
         """Syntax: help [command]
 
         Shows the documentation of the given command.
         Use `list` to display a list of all available commands.
 
-        Parameters in <angular brackets> are required, those in
+        Arguments in <angular brackets> are required, those in
         [square brackets] are optional. | means "or", A|B means "A or B".
-        Parameters followed by 3 dots (...) stand for 0 or more arguments.
+        Arguments followed by 3 dots (...) stand for 0 or more arguments.
         Wrapping arguments in "quotation marks" allows strings to have spaces.
         References to other commands are noted in `backticks`.
         """
+        helpcmd = argv[0] if len(argv) == 1 else argv[1]
+        cmd = self._cmds.get(helpcmd, None)
 
-        if len(argv) == 1:
-            argv.append(argv[0]) # Show own help
-
-        if not argv[1] in self._cmds:
-            # Use COMMAND_ERR rather than COMMAND_ERR_NOTFOUND to avoid
+        if not cmd:
+            # Use CommandError rather than CommandNotFoundError to avoid
             # calling not-found-handlers.
-            raise CommandError(COMMAND_ERR, msg="Command not found")
+            raise CommandError("There is no such command.")
 
-        doc = self._cmds[argv[1]].callback.__doc__
-        msg.get_chat().send_message(doc if doc else "No documentation found.")
+        doc = cmd.callback.__doc__
+        await msg.get_chat().send_message(doc if doc else "No documentation found.")
 
-    def _list(self, msg, argv):
+    async def _list(self, msg, _argv):
         """Syntax: list
 
         List available commands.
         """
-        msg.reply("User commands: {}\n\nAdmin commands: {}".format(
-            ", ".join([ k for k,v in self._cmds.items() if not (v.flags & CMDFLAG_ADMIN) ]),
-            ", ".join([ k for k,v in self._cmds.items() if v.flags & CMDFLAG_ADMIN ])
+        await msg.reply("User commands: {}\n\nAdmin commands: {}".format(
+            ", ".join([ k for k, v in self._cmds.items() if not (v.flags & CommandFlag.Admin) ]),
+            ", ".join([ k for k, v in self._cmds.items() if v.flags & CommandFlag.Admin ])
         ))

@@ -1,15 +1,18 @@
 # -*- coding: utf-8 -*-
 
-# Requires appdirs module
 import appdirs
-import traceback
 import logging
 import os
+from typing import List, Iterable
 import chatbot
 from chatbot import api
-from chatbot.api import APIEvents
-from chatbot.util import event, merge_dicts
-from .subsystem import APIEventDispatcher, command, plugin, ConfigManager
+from chatbot.util import merge_dicts
+from .subsystem import APIEventDispatcher, ConfigManager
+from .subsystem.command import CommandError, CommandHandler
+from .subsystem.plugin import PluginManager
+
+
+CONFIG_DIR = appdirs.user_config_dir("pychatbot")
 
 
 class ExitCode:
@@ -23,77 +26,75 @@ class Bot:
     def __init__(self, profiledir=""):
         self._exit = ExitCode.Normal
         self._config = {}
-        self._api = None    # type: api.APIBase
-        self._dispatcher = None
-        self._cmdhandler = None
-        self._pluginmgr = None
+        self._api = None  # type: api.APIBase
+        self._dispatcher = None  # type: APIEventDispatcher
+        self._cmdhandler = None  # type: CommandHandler
+        self._pluginmgr = None  # type: PluginManager
 
         if profiledir:
             self._cfgmgr = ConfigManager(profiledir)
-            logging.info("Using custom profile directory: " + profiledir)
+            logging.info("Using custom profile directory: %s", profiledir)
         else:
-            self._cfgmgr = ConfigManager(appdirs.user_config_dir("pychatbot"))
-            logging.info("Using default profile directory: " + appdirs.user_config_dir("pychatbot"))
+            self._cfgmgr = ConfigManager(CONFIG_DIR)
+            logging.info("Using default profile directory: %s", CONFIG_DIR)
 
-    def quit(self, code=ExitCode.Normal):
+    async def close(self, code=ExitCode.Normal) -> None:
         """Gives the signal to stop with the given exit code."""
         logging.info("Shutting down...")
-        self._api.close()
+        await self._api.close()
         self._exit = code
 
-    def run(self, profile="", apiname="", configdir="", **kwargs):
-        """Initialize and start the main loop.
+    def init(self, profile="", apiname="", configdir="", **kwargs) -> None:
+        """Run initialization or throw Exception if something fails.
 
-        profile: a profile config to load
-        apiname: an API to load
-        kwargs: arguments passed to the API
+        Args:
+            profile: a profile config to load
+            apiname: an API to load
+            **kwargs: arguments passed to the API
 
         If neither profile nor apiname is specified, the initialization fails.
         """
-
+        # NOTE: init() is a separate function and not included in run()
+        # so that it's possible to register some custom handlers before
+        # starting the main loop.
+        # See echobot test.
         try:
             self._init(profile, apiname, configdir, **kwargs)
-        except:
+        except Exception as e:
+            logging.exception(e)
             logging.error("Failed to initialize.")
             raise
 
+    async def run(self) -> int:
+        """Run the main loop, including cleanup afterwards.
+
+        Returns an exit code. See `ExitCode` class.
+        """
         logging.info("Running API...")
+        await self._api.run()
 
-        # TODO: handle SIGTERM
-        try:
-            self._api.run()
-        except (KeyboardInterrupt, SystemExit) as e:
-            logging.info(repr(e))
-            self.quit()
-        finally:
-            self._cleanup()
-
-        logging.info("Exited with code " + str(self._exit))
+        logging.info("Exited with code %s", str(self._exit))
         return self._exit
 
-    def reload(self):
-        raise NotImplementedError
+    def is_admin(self, userid: str) -> bool:
+        return userid in self.get_admins()
 
-    def is_admin(self, userhandle):
-        return userhandle in self.get_admins()
-
-    def get_admins(self):
+    def get_admins(self) -> List[str]:
         assert self._config["admins"] == self._cmdhandler._admins
         return self._config["admins"]
 
-    def get_API(self):
-        """Returns the API objects."""
+    def get_api(self) -> api.APIBase:
+        """Returns the API object."""
         return self._api
+
+    def get_configmgr(self) -> ConfigManager:
+        return self._cfgmgr
 
     # Wrappers
     # TODO: Consider using some hacks to set the docstrings to the wrapped
     #       functions' docstring.
 
-    def get_configmgr(self):
-        return self._cfgmgr
-
-
-    def register_event_handler(self, event, callback, nice=event.EVENT_NORMAL):
+    def register_event_handler(self, event: str, callback, nice=0):
         """Register an event handler and return a handle to it.
 
         To unregister call handle.unregister().
@@ -101,78 +102,78 @@ class Bot:
         """
         return self._dispatcher.register(event, callback, nice)
 
-
-    def mount_plugin(self, name):
+    def mount_plugin(self, name: str) -> None:
         self._pluginmgr.mount_plugin(name, self)
 
-    def unmount_plugin(self, name):
+    def unmount_plugin(self, name: str) -> None:
         self._pluginmgr.unmount_plugin(name)
 
-    def reload_plugin(self, name):
+    def reload_plugin(self, name: str) -> None:
         self._pluginmgr.reload_plugin(name)
 
-    def iter_plugins(self):
+    def iter_plugins(self) -> Iterable["chatbot.bot.BotPlugin"]:
         return self._pluginmgr.iter_plugins()
 
-
-    def register_command(self, name, callback, argc=1, flags=0):
+    def register_command(self, name, callback, argc=1, flags=0) -> None:
         """Register a command.
 
         See bot.subsystem.command.CommandHandler for further information.
         """
         self._cmdhandler.register(name, callback, argc, flags)
-        logging.debug("Registered command: " + name)
+        logging.debug("Registered command: %s", name)
 
-    def unregister_command(self, *names):
+    def unregister_command(self, *names) -> None:
         """Unregister one or more commands.
 
         See bot.subsystem.command.CommandHandler for further information.
         """
         for i in names:
             self._cmdhandler.unregister(i)
-            logging.debug("Unregistered command: " + i)
-
+            logging.debug("Unregistered command: %s", i)
 
     # Callbacks
-    def _on_ready(self):
+    async def _on_ready(self) -> None:
         if self._config["display_name"]:
-            self._api.set_display_name(self._config["display_name"])
+            logging.info("Setting display name to: %s", self._config["display_name"])
+            await self._api.set_display_name(self._config["display_name"])
 
         logging.info(str(self._api))
-        logging.info("User handle: " + str(self._api.get_user().handle()))
-        logging.info("Display name: " + self._api.get_user().display_name())
+        user = await self._api.get_user()
+        logging.info("User handle: %s", user.id())
+        logging.info("Display name: %s", user.display_name())
         logging.info("Ready!")
 
-
-    def _handle_command(self, msg):
+    async def _handle_command(self, msg) -> None:
         try:
-            if not self._cmdhandler.execute(msg) and self._config["echo"]:
-                msg.get_chat().send_message("Echo: " + msg.get_text())
+            if not await self._cmdhandler.execute(msg) and self._config["echo"]:
+                await msg.get_chat().send_message("Echo: " + msg.get_text())
         except Exception as e:
-            if not isinstance(e, command.CommandError):
+            if not isinstance(e, CommandError):
                 self._handle_plugin_exc("", e)
-            msg.get_chat().send_message("Error: " + str(e))
+            await msg.get_chat().send_message("Error: " + str(e))
 
-    def _autoaccept(self, request):
-        request.accept()
-        logging.info("Accepted friend request from \"{}\" ({})".format(
-            request.get_author().display_name(),
-            request.get_author().handle()))
+    @staticmethod
+    async def _autoaccept(request) -> None:
+        await request.accept()
+        logging.info("Accepted friend request from \"%s\" (%s)",
+                     request.get_author().display_name(),
+                     request.get_author().id())
 
-    def _autojoin(self, invite):
-        invite.accept()
-        logging.info("Accepted group invite from \"{}\" ({})".format(
-            invite.get_author().display_name(),
-            invite.get_author().handle()))
+    @staticmethod
+    async def _autojoin(invite) -> None:
+        await invite.accept()
+        logging.info("Accepted group invite from \"%s\" (%s)",
+                     invite.get_author().display_name(),
+                     invite.get_author().id())
 
-    def _autoleave(self, chat, user):
+    @staticmethod
+    async def _autoleave(chat, _user) -> None:
         if chat.size() == 1:
-            logging.info("Leaving group after last user left ({})".format(chat.id()))
-            chat.leave()
-
+            logging.info("Leaving group after last user left (%s)", chat.id())
+            await chat.leave()
 
     # Utility functions
-    def _load_config(self, profile="", apiname="", configdir="", **kwargs):
+    def _load_config(self, profile="", apiname="", configdir="", **kwargs) -> None:
         if not apiname and not profile:
             raise ValueError("No API and no profile specified")
 
@@ -188,10 +189,8 @@ class Bot:
             cfg = self._cfgmgr.load(profile, defcfg)
             merge_dicts(cfg["plugins"], defcfg["plugins"])
             merge_dicts(cfg["api_config"], defcfg["api_config"])
-
-            # NOTE: it shouldn't be necessary to rewrite the config everytime
-            # if not newprofile:
-            #     self._cfgmgr.write(profile, cfg)
+        else:
+            cfg = dict(defcfg)
 
         if configdir:
             cfg["configdir"] = configdir
@@ -213,43 +212,43 @@ class Bot:
 
         if cfg["configdir"]:
             self._cfgmgr.set_searchpath(cfg["configdir"])
-            logging.info("Using custom config directory: " + cfg["configdir"])
+            logging.info("Using custom config directory: %s", cfg["configdir"])
 
         self._config = cfg
 
-    def _init(self, profile="", apiname="", configdir="", **kwargs):
+    def _init(self, profile="", apiname="", configdir="", **kwargs) -> None:
         logging.info("Initializing...")
         logging.info("Loading configs")
         self._load_config(profile, apiname, configdir, **kwargs)
 
-        self._cmdhandler = command.CommandHandler(
+        self._cmdhandler = CommandHandler(
             self._config["prefix"], self._config["admins"])
-        self._pluginmgr = plugin.PluginManager(
+        self._pluginmgr = PluginManager(
             os.path.dirname(chatbot.bot.plugins.__file__),
             whitelist=self._config["plugins"]["whitelist"],
             blacklist=self._config["plugins"]["blacklist"])
 
         logging.info("Preparing API...")
-        self._api = api.create_api_object(self._config["api"],
-                                          **self._config["api_config"])
+        self._api = api.create_api_object(
+            self._config["api"], **self._config["api_config"])
 
         self._dispatcher = APIEventDispatcher(self._api, self._handle_event_exc)
-        self._dispatcher.register(APIEvents.Message, self._handle_command)
-        self._dispatcher.register(APIEvents.Ready, self._on_ready)
+        self._dispatcher.register(api.APIEvents.Message, self._handle_command)
+        self._dispatcher.register(api.APIEvents.Ready, self._on_ready)
 
         if self._config["autoaccept_friend"]:
-            self._dispatcher.register(APIEvents.FriendRequest, self._autoaccept)
+            self._dispatcher.register(api.APIEvents.FriendRequest, self._autoaccept)
         if self._config["autoaccept_invite"]:
-            self._dispatcher.register(APIEvents.GroupInvite, self._autojoin)
+            self._dispatcher.register(api.APIEvents.GroupInvite, self._autojoin)
         if self._config["autoleave"]:
-            self._dispatcher.register(APIEvents.GroupMemberLeave, self._autoleave)
+            self._dispatcher.register(api.APIEvents.GroupMemberLeave, self._autoleave)
 
         logging.info("Mounting plugins...")
         self._pluginmgr.mount_all(self._handle_plugin_exc, self)
 
         logging.info("Done")
 
-    def _cleanup(self):
+    def _cleanup(self) -> None:
         """Performs actual cleanup after exiting the main loop."""
         logging.info("Umounting plugins...")
         self._pluginmgr.unmount_all(self._handle_plugin_exc)
@@ -260,15 +259,16 @@ class Bot:
         logging.info("Unregistering event handlers...")
         self._dispatcher.clear()
 
-        logging.info("Unloading API...")
-        self._api.quit()
-
-    def _handle_plugin_exc(self, name, e):
-        logging.error(traceback.format_exc())
+    @staticmethod
+    def _handle_plugin_exc(name, exc) -> bool:
+        logging.exception(exc)
+        logging.debug("Plugin: %s", name)
         return True
 
-    def _handle_event_exc(self, event, e, *args, **kwargs):
-        logging.error(traceback.format_exc())
+    @staticmethod
+    def _handle_event_exc(event, exc, *args, **kwargs) -> bool:
+        logging.exception(exc)
+        logging.debug("Event: %s\nargs: %s\nkwargs: %s", event, args, kwargs)
         return True
 
     @staticmethod
@@ -279,7 +279,6 @@ class Bot:
                 "stub": False,
             },
             "plugins": {
-                # "searchpath": os.path.dirname(chatbot.bot.plugins.__file__),
                 "whitelist": [],
                 "blacklist": [
                     "groupbot",

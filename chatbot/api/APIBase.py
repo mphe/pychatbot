@@ -52,12 +52,27 @@ class APIBase:
         """
         return self._api_id
 
-    async def run(self):
-        """Run the main loop including initialization and cleanup afterwards."""
+    async def run(self) -> None:
+        """Run the main loop, including initialization and cleanup afterwards.
+
+        Wrapper around `start()` and `cleanup()` that ensures cleanup
+        afterwards if an exception occurs.
+        """
+        try:
+            await self.start()
+        finally:
+            await self.cleanup()
+
+    async def start(self) -> None:
+        """Initialize and run the main loop."""
         raise NotImplementedError
 
-    async def close(self):
-        """Stop the main loop."""
+    async def cleanup(self) -> None:
+        """Cleanup and free resources."""
+        raise NotImplementedError
+
+    async def close(self) -> None:
+        """Signal to stop the main loop."""
         raise NotImplementedError
 
     def version(self):
@@ -86,12 +101,22 @@ class APIBase:
         """
         raise NotImplementedError
 
-    async def find_user(self, userid) -> "api.User":
-        """Returns a User object for the user with the given ID."""
+    async def find_user(self, userid: str) -> "api.User":
+        """Returns a User object for the user with the given ID.
+
+        As mentioned in api.User, the given ID should be a string.
+        Therefore, if the underlying API uses a different type, you must
+        manually convert it here.
+        """
         raise NotImplementedError
 
-    async def find_chat(self, chatid) -> "api.Chat":
-        """Returns a Chat object for the chat with the given ID."""
+    async def find_chat(self, chatid: str) -> "api.Chat":
+        """Returns a Chat object for the chat with the given ID.
+
+        As mentioned in api.Chat, the given ID should be a string.
+        Therefore, if the underlying API uses a different type, you must
+        manually convert it here.
+        """
         raise NotImplementedError
 
     @staticmethod

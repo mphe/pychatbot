@@ -48,8 +48,8 @@ async def test_function(func, *argv, **kwargs):
 
 
 async def test_builtins(o):
-    await test_function(o.__str__)
-    await test_function(o.__repr__)
+    test_function(o.__str__)
+    test_function(o.__repr__)
 
 
 def test(name):
@@ -64,12 +64,12 @@ def test(name):
 
 @test("Chat")
 async def test_chat(chat, api=None):
-    await test_function(chat.id)
-    await test_function(chat.is_id_unique)
+    test_function(chat.id)
+    test_function(chat.is_id_unique)
+    test_function(chat.type)
+    test_function(chat.size)
     await test_function(chat.send_message, "test message")
     await test_function(chat.send_action, "test action")
-    await test_function(chat.type)
-    await test_function(chat.size)
 
     if await test_function(chat.id) and api:
         if await test_function(api.find_chat, chat.id()):
@@ -78,13 +78,14 @@ async def test_chat(chat, api=None):
 
 @test("User")
 async def test_user(user, api=None):
-    await test_function(user.display_name)
-    handle = await test_function(user.handle)
+    test_function(user.display_name)
+    userid = test_function(user.id)
     chat = await test_function(user.get_chat)
 
-    if handle and api:
-        if await test_function(api.find_user, user.handle()):
-            await test_user(await api.find_user(user.handle()))
+    if userid and api:
+        founduser = await test_function(api.find_user, userid)
+        if founduser:
+            await test_user(founduser)
 
     if chat:
         await test_chat(await user.get_chat(), api)
@@ -92,13 +93,13 @@ async def test_user(user, api=None):
 
 @test("Message")
 async def test_message(msg, api=None):
-    await test_function(msg.get_text)
-    await test_function(msg.get_type)
-    await test_function(msg.is_editable)
+    test_function(msg.get_text)
+    test_function(msg.get_type)
+    test_function(msg.is_editable)
     await test_function(msg.edit, "test edit")
     await test_function(msg.reply, "test reply")
-    author = await test_function(msg.get_author)
-    chat = await test_function(msg.get_chat)
+    author = test_function(msg.get_author)
+    chat = test_function(msg.get_chat)
 
     if author:
         await test_user(msg.get_author(), api)

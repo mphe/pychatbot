@@ -154,7 +154,7 @@ class Plugin(BotPlugin):
             chat.send_action("is back")
 
         msg.get_chat().send_action("explodes\nRespawn in...")
-        if self.bot().get_API().api_id() == "discord":
+        if self.bot().get_api().api_id() == "discord":
             asyncio.get_event_loop().create_task(_async_explode(msg.get_chat()))
         else:
             # TODO: separate thread?

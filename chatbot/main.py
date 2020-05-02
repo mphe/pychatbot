@@ -36,8 +36,13 @@ def main():
     logging.debug("------------------------ MAIN ------------------------")
 
     bot = chatbot.bot.Bot(args.profiledir)
-    return bot.run(profile=args.profile, apiname=args.api,
-                   configdir=args.configdir)
+
+    try:
+        return bot.run(profile=args.profile, apiname=args.api,
+                       configdir=args.configdir)
+    except Exception as e:
+        logging.exception(e)
+        raise
 
 
 if __name__ == "__main__":

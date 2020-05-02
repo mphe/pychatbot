@@ -2,7 +2,6 @@
 
 import asyncio
 import logging
-from threading import Timer
 from chatbot import api
 
 
@@ -18,7 +17,7 @@ class TestAPI(api.APIBase):
         self._otheruser = User("testfriend", "You")
         self._running = False
 
-    async def run(self):
+    async def start(self):
         if not self._interactive:
             self._timer = asyncio.create_task(self._timer_func())
         self._running = True
@@ -34,6 +33,9 @@ class TestAPI(api.APIBase):
                         await self.trigger_receive(text)
             else:
                 await asyncio.sleep(1)
+
+    async def cleanup(self) -> None:
+        pass
 
     async def close(self):
         if self._timer is not None:
@@ -101,9 +103,9 @@ class TestingMessage(api.ChatMessage):
 class TestChat(api.Chat):
     _id_counter = 0
 
-    def __init__(self, api):
+    def __init__(self, apiobj):
         super(TestChat, self).__init__()
-        self._api = api
+        self._api = apiobj
         self._id = TestChat._id_counter
         TestChat._id_counter += 1
 
@@ -125,13 +127,5 @@ class TestChat(api.Chat):
         return False
 
 
-class User(api.User):
-    def __init__(self, handle, name):
-        self._handle = handle
-        self._name = name
-
-    def handle(self):
-        return self._handle
-
-    def display_name(self):
-        return self._name
+class User(api.GenericUser):
+    pass

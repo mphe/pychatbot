@@ -1,34 +1,33 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import os
+import asyncio
 import logging
-from context import *
+from context import api, bot, print_message
 
 
-def print_message(msg, prefix):
-    logging.info("{} message in {}:\n\t {}".format(
-        prefix,
-        str(msg.get_chat()),
-        str(msg)
-    ))
-
-
-def on_friend_request(req):
-    logging.info("Received friend request from " + req.get_author().handle())
-    req.accept()
+async def on_friend_request(req):
+    logging.info("Received friend request from %s", req.get_author().id())
+    await req.accept()
     logging.info("Accepted.")
 
-def on_message(msg):
+
+async def on_message(msg):
     print_message(msg, "Received")
-    msg.get_chat().send_message(msg.get_text())
+    await msg.get_chat().send_message(msg.get_text())
+
+
+async def on_ready():
+    pass
 
 
 def main():
-    b = bot.Bot("tox", savefile="profile.tox")
-    b.init()
+    b = bot.Bot(os.path.join(os.path.dirname(__file__), "test_profile"))
+    b.init(apiname="test")
     b.register_event_handler(api.APIEvents.FriendRequest, on_friend_request)
     b.register_event_handler(api.APIEvents.Message, on_message)
-    b.run()
+    asyncio.run(b.run())
 
 
 if __name__ == "__main__":
