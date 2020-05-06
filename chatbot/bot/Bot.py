@@ -71,7 +71,13 @@ class Bot:
         Returns an exit code. See `ExitCode` class.
         """
         logging.info("Running API...")
-        await self._api.run()
+        try:
+            await self._api.run()
+        except (KeyboardInterrupt, SystemExit):
+            await self._api.close()
+        finally:
+            logging.info("Exiting...")
+            self._cleanup()
 
         logging.info("Exited with code %s", str(self._exit))
         return self._exit
@@ -120,7 +126,6 @@ class Bot:
         See bot.subsystem.command.CommandHandler for further information.
         """
         self._cmdhandler.register(name, callback, argc, flags)
-        logging.debug("Registered command: %s", name)
 
     def unregister_command(self, *names) -> None:
         """Unregister one or more commands.
@@ -129,7 +134,6 @@ class Bot:
         """
         for i in names:
             self._cmdhandler.unregister(i)
-            logging.debug("Unregistered command: %s", i)
 
     # Callbacks
     async def _on_ready(self) -> None:
