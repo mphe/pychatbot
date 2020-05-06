@@ -153,13 +153,17 @@ class APIBase:
     async def _trigger(self, event, *args, **kwargs):
         """Triggers the given event with the given arguments.
 
+        Runs the associated callback as a new asyncio task and returns the
+        Task object. Returns None, if no callback registered.
+
         Should be used instead of accessing self._events directly.
         """
         ev = self._events.get(event, None)
         if ev is not None:
-            await ev(*args, **kwargs)
+            return asyncio.create_task(ev(*args, **kwargs))
         elif self._stub:
             logging.debug("Unhandled event: %s", str(event))
+        return None
 
     def __str__(self):
         return "API: {}, version {}".format(self.api_name(), self.version())
