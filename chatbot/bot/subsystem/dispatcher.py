@@ -59,7 +59,10 @@ class APIEventDispatcher:
 
     async def _dispatch_event(self, event, *args, **kwargs):
         """Generic function to dispatch an event to all registered callbacks."""
-        ev = self._events[event]
+        ev = self._events.get(event, None)
+        if ev is None:
+            return
+
         if len(ev) > 0:
             try:
                 await ev.trigger(*args, **kwargs)
