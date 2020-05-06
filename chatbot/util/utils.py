@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
 from chatbot import api
 
 
@@ -27,3 +29,13 @@ async def edit_or_reply(msg: api.ChatMessage, text: str):
         await msg.edit(text)
     else:
         await msg.reply(text)
+
+
+async def run_in_thread(callback, *args):
+    """Spawn a new thread, run a callback in it, and wait until it returns.
+
+    Returns what the callback returns.
+    """
+    loop = asyncio.get_running_loop()
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        return await loop.run_in_executor(pool, callback, *args)
