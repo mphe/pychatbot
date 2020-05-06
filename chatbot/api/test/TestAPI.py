@@ -1,15 +1,17 @@
 # -*- coding: utf-8 -*-
 
+import time
 import asyncio
 import logging
-from chatbot import api
+from chatbot import api, util
 
 
 class TestAPI(api.APIBase):
     def __init__(self, api_id, stub, opts):
         super(TestAPI, self).__init__(api_id, stub)
         # Fires a message received event every second
-        self._timer: asyncio.Task = None
+        self._timer = None  # type: asyncio.Task
+        self._input_task = None  # type: asyncio.Task
         self._interactive = opts["interactive"]
         self._msg = opts["message"]
         self._chat = TestChat(self)
@@ -25,7 +27,18 @@ class TestAPI(api.APIBase):
 
         while self._running:
             if self._interactive:
-                text = input("Enter message: ").strip()
+                def input_cb():
+                    time.sleep(0.1)  # Simple fix text overlapping
+                    return input("Enter message: ").strip()
+
+                # Run input() in a thread to prevent blocking
+                if self._input_task is None or self._input_task.done():
+                    self._input_task = asyncio.create_task(util.run_in_thread(input_cb))
+                    try:
+                        text = await self._input_task
+                    except asyncio.CancelledError:
+                        pass
+
                 if text:
                     if text.startswith("/me "):
                         await self.trigger_receive(text[4:], api.MessageType.Action)
@@ -42,6 +55,8 @@ class TestAPI(api.APIBase):
             self._timer.cancel()
             self._timer = None
         self._running = False
+        if self._input_task and not self._input_task.done():
+            self._input_task.cancel()
 
     def version(self):
         return "42.0"

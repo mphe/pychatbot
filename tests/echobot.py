@@ -19,7 +19,7 @@ async def on_message(msg):
 
 
 async def on_ready():
-    pass
+    logging.info("Type !exit or !quit to exit.")
 
 
 def main():
@@ -27,6 +27,14 @@ def main():
     b.init(apiname="test")
     b.register_event_handler(api.APIEvents.FriendRequest, on_friend_request)
     b.register_event_handler(api.APIEvents.Message, on_message)
+    b.register_event_handler(api.APIEvents.Ready, on_ready)
+
+    async def exitcmd(_msg, _argv):
+        await b.close()
+
+    b.register_command("exit", exitcmd, argc=0)
+    b.register_command("quit", exitcmd, argc=0)
+
     asyncio.run(b.run())
 
 
