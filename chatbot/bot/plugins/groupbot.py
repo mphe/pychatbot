@@ -23,7 +23,7 @@ class Plugin(BotPlugin):
         # Filter empty chats
         self._chats = { k: v for k, v in self._chats.items() if v.chat.size() > 0 }
 
-    def _listgroups(self, msg, argv):
+    async def _listgroups(self, msg, argv):
         """Syntax: groups
 
         List available groups.
@@ -34,19 +34,19 @@ class Plugin(BotPlugin):
 
         self._filter()
         if not self._chats:
-            msg.reply("No groups exist at the moment.")
+            await msg.reply("No groups exist at the moment.")
         else:
-            msg.reply("The following groups exist:\n" + "\t\n".join(iterchats()))
+            await msg.reply("The following groups exist:\n" + "\t\n".join(iterchats()))
 
-    def _forcejoin(self, msg, argv):
+    async def _forcejoin(self, msg, argv):
         """Syntax: join! <groupname> [password]
 
         Same as `join` but creates the group if it doesn't exist.
         See `join` for further information.
         """
-        self._join(msg, argv)
+        await self._join(msg, argv)
 
-    def _join(self, msg, argv):
+    async def _join(self, msg, argv):
         """Syntax: join[!] <groupname> [password]
 
         Join a groupchat. If `join!` is used, it will be created if it doesn't
@@ -56,20 +56,20 @@ class Plugin(BotPlugin):
         provide the password when joining.
         """
         if msg.get_chat().is_anonymous():
-            msg.reply("This command is not available in anonymous chats. Please try the private chat.")
+            await msg.reply("This command is not available in anonymous chats. Please try the private chat.")
             return
 
         password = argv[2] if len(argv) > 2 else ""
 
         if argv[1] not in self._chats or self._chats[argv[1]].chat.size() == 0:
             if argv[0] == "join!":
-                chat = self.bot().get_api().create_group([msg.get_author()])
+                chat = await self.bot.get_api().create_group([msg.get_author()])
                 self._chats[argv[1]] = ChatHandle(password, chat)
             else:
-                msg.reply("This chat doesn't exist yet, use `join!` to create it.")
+                await msg.reply("This chat doesn't exist yet, use `join!` to create it.")
         else:
             chat = self._chats[argv[1]]
             if not chat.password or password == chat.password:
-                chat.chat.invite(msg.get_author())
+                await chat.chat.invite(msg.get_author())
             else:
-                msg.reply("Wrong password.")
+                await msg.reply("Wrong password.")

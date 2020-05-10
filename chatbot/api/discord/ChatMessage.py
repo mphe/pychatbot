@@ -4,9 +4,11 @@ import discord as discordapi
 import chatbot.api as api
 from .Chat import create_chat
 from .User import User
+import logging
+
 
 class Message(api.ChatMessage):
-    def __init__(self, client, msg, editable=False):
+    def __init__(self, client, msg: discordapi.Message, editable=False):
         self._msg = msg
         self._editable = editable
         self._chat = create_chat(client, msg.channel)
@@ -28,3 +30,9 @@ class Message(api.ChatMessage):
 
     def is_editable(self):
         return self._editable
+
+    async def edit(self, newstr) -> None:
+        try:
+            await self._msg.edit(content=newstr)
+        except (discordapi.HTTPException, discordapi.Forbidden):
+            logging.error("Could not edit message: %s", self)

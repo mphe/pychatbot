@@ -7,8 +7,8 @@ from .User import User
 
 
 class FriendRequest(api.FriendRequest):
-    def __init__(self, client, request):
-        self._request = request # type: discordapi.Relationship
+    def __init__(self, client, request: discordapi.Relationship):
+        self._request = request
         self._client = client
         assert self._request.type == discordapi.RelationshipType.incoming_request
 
@@ -18,9 +18,12 @@ class FriendRequest(api.FriendRequest):
     def get_text(self):
         return ""
 
-    def accept(self):
-        logging.error("Can't accept invites because it was blacklisted from the API.\nDoing so will not work but invalidate the account, thus requiring to revalidate the email address")
-        # self._client.run_task(self._request.accept())
+    async def accept(self):
+        errstring = "Can't accept friend requests because it was blacklisted from the API.\nDoing so will not work but invalidate the account, thus requiring to revalidate the email address."
+        logging.error(errstring)
+        await (await self.get_author().get_chat()).send_message(errstring)
+        await self.decline()
+        # await self._request.accept()
 
-    def decline(self):
-        self._client.run_task(self._request.delete())
+    async def decline(self):
+        await self._request.delete()

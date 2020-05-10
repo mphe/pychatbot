@@ -3,7 +3,7 @@
 import asyncio
 import logging
 from chatbot import api  # Needed for typehints. pylint: disable=unused-import
-from typing import List
+from typing import Iterable, Optional
 
 
 class APIBase:
@@ -60,6 +60,9 @@ class APIBase:
         """
         try:
             await self.start()
+        except (KeyboardInterrupt, SystemExit) as e:
+            logging.info(e)
+            await self.close()
         finally:
             await self.cleanup()
 
@@ -75,8 +78,8 @@ class APIBase:
         """Signal to stop the main loop."""
         raise NotImplementedError
 
-    def version(self):
-        """Return API version."""
+    def version(self) -> str:
+        """Return API version as string."""
         raise NotImplementedError
 
     def api_name(self) -> str:
@@ -90,12 +93,12 @@ class APIBase:
         """Returns a User object of the currently logged in user."""
         raise NotImplementedError
 
-    async def set_display_name(self, name):
+    async def set_display_name(self, name) -> None:
         """Set the logged in user's display name."""
         raise NotImplementedError
 
-    async def create_group(self, users: List["api.User"]) -> "api.Chat":
-        """Create a new groupchat with the given Users.
+    async def create_group(self, users: Iterable["api.User"]) -> "api.Chat":
+        """Create a new groupchat with the given `api.User`s.
 
         Returns a Chat object representing the group.
         """
@@ -120,11 +123,11 @@ class APIBase:
         raise NotImplementedError
 
     @staticmethod
-    def get_default_options():
+    def get_default_options() -> dict:
         """Return a dictionary with options and their default values for this API."""
         return {}
 
-    def register_event_handler(self, event, callback):
+    def register_event_handler(self, event, callback) -> None:
         """Set an event handler for the given event.
 
         `callback` must be a coroutine.
@@ -143,14 +146,14 @@ class APIBase:
             assert asyncio.iscoroutinefunction(callback), "Callback must be a coroutine"
             self._events[event] = callback
 
-    def unregister_event_handler(self, event):
+    def unregister_event_handler(self, event) -> None:
         """Remove the event handler from the given event.
 
         See also register_event_handler().
         """
         self.register_event_handler(event, None)
 
-    async def _trigger(self, event, *args, **kwargs):
+    async def _trigger(self, event, *args, **kwargs) -> Optional[asyncio.Task]:
         """Triggers the given event with the given arguments.
 
         Runs the associated callback as a new asyncio task and returns the

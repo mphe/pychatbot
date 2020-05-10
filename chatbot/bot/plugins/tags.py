@@ -14,14 +14,14 @@ class Plugin(BotPlugin):
     # This plugin actually needs a custom reload function so that the default
     # example entry gets overwritten.
     def reload(self):
-        self._cfg = self.bot().get_configmgr().load(
-            self.name(), self.get_default_config(), validate=False, create=True)
+        self._cfg = self.bot.get_configmgr().load(
+            self.name, self.get_default_config(), validate=False, create=True)
 
     @staticmethod
     def get_default_config():
         return { "tagname": "<url>" }
 
-    def _list(self, msg, argv):
+    async def _list(self, msg, _argv):
         """Syntax: tags
 
         Shows a list of available tags.
@@ -31,22 +31,22 @@ class Plugin(BotPlugin):
         the original message. Otherwise they are sent in a separate message
         in order of appearance.
         """
-        if len(self.cfg()) == 0:
-            msg.reply("No tags defined")
+        if len(self.cfg) == 0:
+            await msg.reply("No tags defined")
         else:
-            msg.reply("\n".join([ "[{}]: {}".format(k, v) for k, v in self.cfg().items() ]))
+            await msg.reply("\n".join([ "[{}]: {}".format(k, v) for k, v in self.cfg.items() ]))
 
-    def _on_message(self, msg):
+    async def _on_message(self, msg):
         tmp = msg.get_text()
         if msg.is_editable():
-            for k, v in self.cfg().items():
+            for k, v in self.cfg.items():
                 tmp = tmp.replace("[{}]".format(k), "[ {} ]".format(v))
             if tmp != msg.get_text():
-                msg.edit(tmp)
+                await msg.edit(tmp)
         else:
             tags = []
             for i in re.finditer(r"\[(\S+?)\]", tmp):
-                if i and i.group(1) in self.cfg():
+                if i and i.group(1) in self.cfg:
                     tags.append(i.group(1))
             if tags:
-                msg.reply("\n".join([ "[ {} ]".format(self.cfg()[t]) for t in tags ]))
+                await msg.reply("\n".join([ "[ {} ]".format(self.cfg[t]) for t in tags ]))

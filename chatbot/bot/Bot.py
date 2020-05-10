@@ -73,8 +73,6 @@ class Bot:
         logging.info("Running API...")
         try:
             await self._api.run()
-        except (KeyboardInterrupt, SystemExit):
-            await self._api.close()
         finally:
             logging.info("Exiting...")
             self._cleanup()

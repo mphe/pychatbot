@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
-# Requires python3
-# Requires discord.py==1.2.5, and discord==1.0.1
 
+import asyncio
 import logging
 import discord as discordapi
 from chatbot import api
@@ -15,52 +14,54 @@ class DiscordAPI(api.APIBase):
     def __init__(self, api_id, stub, opts):
         super(DiscordAPI, self).__init__(api_id, stub)
         self._opts = opts
-        self._discord = DiscordClient(self)
+        self._discord = None  # type: DiscordClient
 
-    def run(self):
-        self._discord.run(self._opts["token"], bot=self._opts["bot"])
-
-    def quit(self):
-        if not self._discord.is_closed:
-            self.run_task(self._discord.quit())
-
-    def close(self):
-        self.run_task(self._discord.close())
-
-    def version(self):
+    def version(self) -> str:
         return "{}.{}.{}-{}".format(*discordapi.version_info)
 
-    def api_name(self):
+    def api_name(self) -> str:
         return "Discord"
 
-    def get_user(self):
+    async def start(self) -> None:
+        if not self._discord:
+            self._discord = DiscordClient(self, loop=asyncio.get_running_loop())
+
+        await self._discord.start(self._opts["token"], bot=self._opts["bot"])
+
+    async def cleanup(self) -> None:
+        pass
+
+    async def close(self) -> None:
+        await self._discord.close()
+
+    async def get_user(self) -> User:
         return User(self, self._discord.user)
 
-    def set_display_name(self, name):
-        if (name == self.get_user().display_name()):
+    async def set_display_name(self, name) -> None:
+        if (name == (await self.get_user()).display_name()):
             return
 
         try:
             # TODO: maybe use nicknames instead, because usernames can only be
             # changed once an hour apparently
-            self.run_task(self._discord.user.edit(username=str(name)))
+            await self._discord.user.edit(username=str(name))
         except discordapi.HTTPException:
             logging.error("Couldn't set username (usernames can only be changed once an hour)")
 
     # TODO: needs testing
-    def create_group(self, users=()):
+    async def create_group(self, users=()):
         if self._discord.user.bot or len(users) >= 10 or len(users) < 2:
-            return self.create_server(users)
-        return self.create_dmgroup(users)
+            return await self.create_server(users)
+        return await self.create_dmgroup(users)
 
-    def find_user(self, userid: str):
+    async def find_user(self, userid: str) -> User:
         user = self._discord.get_user(int(userid))
-        if user:
+        if user is None:
             logging.warning("Could not find user with ID %s", userid)
             return None
         return User(self, user)
 
-    def find_chat(self, chatid: str):
+    async def find_chat(self, chatid: str):
         chat = self._discord.get_channel(int(chatid))
         if chat is None:
             logging.warning("Could not find chat with ID %s", chatid)
@@ -75,84 +76,87 @@ class DiscordAPI(api.APIBase):
         }
 
     # extra stuff
-    def create_server(self, users=()):
+    async def create_server(self, users=()):
         raise NotImplementedError
         # TODO: needs testing
-        # server = self.run_task(self._discord.create_guild("New Server"))
+        # server = await self._discord.create_guild("New Server")
         # chat = create_chat(self, server.text_channels[0])
         # for i in users:
         #     chat.invite(i)
         # return chat
 
-    def create_dmgroup(self, users=()):
+    async def create_dmgroup(self, users=()):
         raise NotImplementedError
         # TODO: needs testing
         # assert len(users) >= 2 and len(users) < 10
-        # return create_chat(self, self.run_task(
-        #     self._discord.user.create_group(*[ i._user for i in users ])))
+        # return create_chat(
+        #     self, await self._discord.user.create_group(*[ i._user for i in users ]))
 
     def get_invite_link(self):
         return "https://discordapp.com/api/oauth2/authorize?client_id={}&scope=bot&permissions=0".format(str(self._discord.user.id))
-
-    def run_task(self, call):
-        """Shortcut for calling coroutines from non-coroutines"""
-        self._discord.loop.create_task(call)
 
 
 # Inheriting discordapi.Client in DiscordAPI would cause overlaps in certain
 # functions (like close()).
 class DiscordClient(discordapi.Client):
-    def __init__(self, apiobj):
-        super(DiscordClient, self).__init__()
+    def __init__(self, apiobj, *args, **kwargs):
+        super(DiscordClient, self).__init__(*args, **kwargs)
         self._firstready = True
         self._api = apiobj
 
-    def quit(self):
-        self.logout()
-        self._firstready = True
+    async def close(self):
+        if not self.is_closed():
+            logging.info("Closing discord connection")
+            await super(DiscordClient, self).close()
+            self._firstready = True
 
     # Events
     async def on_ready(self):
         logging.info("(Re-)Connected to Discord.")
-        if self._firstready:
-            self._firstready = False
-            if self.user.bot:
-                logging.info("Invite link: " + self._api.get_invite_link())
-            else:
-                logging.info("Username: " + self._api.get_user().username())
-            self._api._trigger(api.APIEvents.Ready)
+        if not self._firstready:
+            return
 
-            for i in self.user.relationships:
-                await self.on_relationship_add(i)
+        self._firstready = False
+        if self.user.bot:
+            logging.info("Invite link: %s", self._api.get_invite_link())
+        else:
+            logging.info("Username: %s", (await self._api.get_user()).username())
+        await self._api._trigger(api.APIEvents.Ready)
 
-    async def on_message(self, msg):
+        # Process pending friend requests
+        for i in self.user.relationships:
+            await self.on_relationship_add(i)
+
+    async def on_message(self, msg: discordapi.Message):
         if not self.user.bot:
-            self._api.run_task(msg.ack())
+            await msg.ack()
+
         if msg.type == discordapi.MessageType.default:
             if msg.author == self.user:
-                self._api._trigger(api.APIEvents.MessageSent, Message(self._api, msg, True))
+                await self._api._trigger(api.APIEvents.MessageSent, Message(self._api, msg, True))
             else:
                 # Preload private chat because it can't be created in a non-async
                 # function because the result isn't returned instantly.
-                if self.user.bot or msg.author.is_friend():
-                    await msg.author.create_dm()
+                # TODO: necessary?
+                # if self.user.bot or msg.author.is_friend():
+                #     await msg.author.create_dm()
 
-                self._api._trigger(api.APIEvents.Message, Message(self._api, msg, False))
-                # api.testing.test_message(Message(self._api, msg, False), self._api)
+                await self._api._trigger(api.APIEvents.Message, Message(self._api, msg, False))
+                # await util.testing.test_message(Message(self._api, msg, False), self._api)
 
     async def on_relationship_add(self, relationship):
         if relationship.type == discordapi.RelationshipType.incoming_request:
-            self._api._trigger(api.APIEvents.FriendRequest, FriendRequest(self._api, relationship))
+            await self._api._trigger(api.APIEvents.FriendRequest, FriendRequest(self._api, relationship))
 
     async def on_member_join(self, member):
-        self._api._trigger(api.APIEvents.GroupMemberJoin, User(self._api, member))
+        await self._api._trigger(api.APIEvents.GroupMemberJoin, User(self._api, member))
 
     async def on_member_remove(self, member):
-        self._api._trigger(api.APIEvents.GroupMemberLeave, User(self._api, member))
+        await self._api._trigger(api.APIEvents.GroupMemberLeave, User(self._api, member))
 
     # private channel
-    async def on_group_join(self, channel, member):
-        self._api._trigger(api.APIEvents.GroupMemberJoin, User(self._api, member))
+    async def on_group_join(self, _channel, member):
+        await self._api._trigger(api.APIEvents.GroupMemberJoin, User(self._api, member))
 
-    async def on_group_remove(self, channel, member):
-        self._api._trigger(api.APIEvents.GroupMemberLeave, User(self._api, member))
+    async def on_group_remove(self, _channel, member):
+        await self._api._trigger(api.APIEvents.GroupMemberLeave, User(self._api, member))

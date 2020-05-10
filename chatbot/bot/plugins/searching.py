@@ -24,20 +24,20 @@ class Plugin(BotPlugin):
     def _generate_url(url, argv):
         return Plugin.urls[url].format("%20".join(argv))
 
-    def _search(self, msg, argv):
+    async def _search(self, msg, argv):
         """Syntax: site <search string> [search string 2]...
 
         Generate a search link for a specific website.
         site is a placeholder for the command name and can be any of the
         following: google, wikipedia, youtube, duden, bisafans.
         """
-        msg.reply(self._generate_url(argv[0], argv[1:]))
+        await msg.reply(self._generate_url(argv[0], argv[1:]))
 
-    def _translate(self, msg, argv):
+    async def _translate(self, msg, argv):
         """Syntax: translate <src> <dest> <text>
 
         Translate <text> from one language to another using Google Translator.
         <src> is the original language, <dst> the new language.
         """
         argv[3] = "{}/{}/{}".format(argv[1], argv[2], argv[3])
-        msg.reply(self._generate_url(argv[0], argv[3:]))
+        await msg.reply(self._generate_url(argv[0], argv[3:]))

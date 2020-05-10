@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import asyncio
 import sys
 import logging
 import argparse
@@ -38,11 +39,13 @@ def main():
     bot = chatbot.bot.Bot(args.profiledir)
 
     try:
-        return bot.run(profile=args.profile, apiname=args.api,
-                       configdir=args.configdir)
+        bot.init(profile=args.profile, apiname=args.api, configdir=args.configdir)
+        return asyncio.run(bot.run())
+    except (KeyboardInterrupt, SystemExit) as e:
+        logging.info(e)
     except Exception as e:
         logging.exception(e)
-        raise
+        return chatbot.bot.ExitCode.Error
 
 
 if __name__ == "__main__":

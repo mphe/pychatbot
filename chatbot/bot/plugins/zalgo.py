@@ -11,7 +11,7 @@ class Plugin(BotPlugin):
         self.register_command("zalgo", self._zalgo)
 
     @staticmethod
-    def _zalgo(msg, argv):
+    async def _zalgo(msg, argv):
         """Syntax: zalgo <text> [strength] [zalgosets]
 
         Create a Zalgo text.
@@ -38,7 +38,7 @@ class Plugin(BotPlugin):
             sets.append(ZALGO_DOWN)
 
         out = create_zalgo(argv[1], strength, sets)
-        util.edit_or_reply(msg, out)
+        await util.edit_or_reply(msg, out)
 
 
 # Zalgo stuff
