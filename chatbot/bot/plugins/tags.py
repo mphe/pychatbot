@@ -14,8 +14,7 @@ class Plugin(BotPlugin):
     # This plugin actually needs a custom reload function so that the default
     # example entry gets overwritten.
     def reload(self):
-        self._cfg = self.bot.get_configmgr().load(
-            self.name, self.get_default_config(), validate=False, create=True)
+        self.cfg.load(self.get_default_config(), validate=False, create=True)
 
     @staticmethod
     def get_default_config():
@@ -34,19 +33,19 @@ class Plugin(BotPlugin):
         if len(self.cfg) == 0:
             await msg.reply("No tags defined")
         else:
-            await msg.reply("\n".join([ "[{}]: {}".format(k, v) for k, v in self.cfg.items() ]))
+            await msg.reply("\n".join([ "[{}]: {}".format(k, v) for k, v in self.cfg.data.items() ]))
 
     async def _on_message(self, msg):
         tmp = msg.get_text()
         if msg.is_editable():
-            for k, v in self.cfg.items():
+            for k, v in self.cfg.data.items():
                 tmp = tmp.replace("[{}]".format(k), "[ {} ]".format(v))
             if tmp != msg.get_text():
                 await msg.edit(tmp)
         else:
             tags = []
             for i in re.finditer(r"\[(\S+?)\]", tmp):
-                if i and i.group(1) in self.cfg:
+                if i and i.group(1) in self.cfg.data:
                     tags.append(i.group(1))
             if tags:
                 await msg.reply("\n".join([ "[ {} ]".format(self.cfg[t]) for t in tags ]))

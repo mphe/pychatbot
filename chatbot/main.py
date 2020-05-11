@@ -16,9 +16,8 @@ def main():
     parser.add_argument("-p", "--profile",    help="Profile name", default="")
     parser.add_argument("-a", "--api",        help="API name",     default="")
     parser.add_argument("-d", "--profiledir", help="Profile directory (bot config). If not specified, the platform specific default directory is used.")
-    parser.add_argument("-c", "--configdir",  help="Config directory (plugin configs). If not specified, the profile directory is used..")
-    parser.add_argument("-v", "--verbose",    help="Show debug output",
-                        action="store_true")
+    parser.add_argument("-n", "--namespace",  help="Config directory (plugin configs). If not specified, the profile directory is used..")
+    parser.add_argument("-v", "--verbose",    help="Show debug output", action="store_true")
     args = parser.parse_args()
 
     if not args.profile and not args.api:
@@ -39,7 +38,7 @@ def main():
     bot = chatbot.bot.Bot(args.profiledir)
 
     try:
-        bot.init(profile=args.profile, apiname=args.api, configdir=args.configdir)
+        bot.init(profile=args.profile, apiname=args.api, namespace=args.namespace)
         return asyncio.run(bot.run())
     except (KeyboardInterrupt, SystemExit) as e:
         logging.info(e)

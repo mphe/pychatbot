@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from .subsystem.plugin import BasePlugin
-from chatbot.util import event
+from chatbot.util import event, config
 from chatbot.bot import command, Bot
 from inspect import getfile
 import os
@@ -14,14 +14,14 @@ class BotPlugin(BasePlugin):
         self.__bot = bot  # type: Bot
         self.__commands = []  # keeps track of registered commands to unregister them automatically
         self.__handles = []  # keeps track of registered event handlers
-        self._cfg = {}  # holds config, protected to allow custom loading
+        self.__cfg = bot.get_configmgr().get_config(self.name)
         self.reload()
 
     def reload(self):
-        self._cfg = self.bot.get_configmgr().load(self.name, self.get_default_config(), create=True)
+        self.cfg.load(self.get_default_config(), create=True)
 
     def save_config(self):
-        self._cfg = self.bot.get_configmgr().write(self.name, self.cfg)
+        self.cfg.write()
 
     def quit(self):
         self.bot.unregister_command(*self.__commands)
@@ -42,8 +42,8 @@ class BotPlugin(BasePlugin):
         return self.__name
 
     @property
-    def cfg(self) -> dict:
-        return self._cfg
+    def cfg(self) -> config.Config:
+        return self.__cfg
 
     def register_command(self, name, callback, argc=1, flags=0):
         """Wrapper around Bot.register_command"""

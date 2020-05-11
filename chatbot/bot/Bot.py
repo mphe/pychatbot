@@ -7,7 +7,8 @@ from typing import List, Iterable
 import chatbot
 from chatbot import api
 from chatbot.util import merge_dicts
-from .subsystem import APIEventDispatcher, ConfigManager
+from chatbot.util.config import ConfigManager, Config
+from .subsystem import APIEventDispatcher
 from .subsystem.command import CommandError, CommandHandler
 from .subsystem.plugin import PluginManager
 
@@ -25,7 +26,7 @@ class ExitCode:
 class Bot:
     def __init__(self, profiledir=""):
         self._exit = ExitCode.Normal
-        self._config = {}
+        self._config = None  # type: Config
         self._api = None  # type: api.APIBase
         self._dispatcher = None  # type: APIEventDispatcher
         self._cmdhandler = None  # type: CommandHandler
@@ -44,22 +45,22 @@ class Bot:
         await self._api.close()
         self._exit = code
 
-    def init(self, profile="", apiname="", configdir="", **kwargs) -> None:
+    def init(self, profile="", apiname="", namespace="", api_kwargs: dict = None) -> None:
         """Run initialization or throw Exception if something fails.
 
         Args:
-            profile: a profile config to load
-            apiname: an API to load
-            **kwargs: arguments passed to the API
+            profile: A profile name to load.
+            apiname: An API to load.
+            api_kwargs: Dictionary of API options passed to the API object.
 
-        If neither profile nor apiname is specified, the initialization fails.
+        If neither `profile` nor `apiname` is specified, the initialization fails.
         """
         # NOTE: init() is a separate function and not included in run()
         # so that it's possible to register some custom handlers before
         # starting the main loop.
         # See echobot test.
         try:
-            self._init(profile, apiname, configdir, **kwargs)
+            self._init(profile, apiname, namespace, api_kwargs)
         except Exception as e:
             logging.exception(e)
             logging.error("Failed to initialize.")
@@ -135,9 +136,10 @@ class Bot:
 
     # Callbacks
     async def _on_ready(self) -> None:
-        if self._config["display_name"]:
-            logging.info("Setting display name to: %s", self._config["display_name"])
-            await self._api.set_display_name(self._config["display_name"])
+        displayname = self._config["display_name"]
+        if displayname:
+            logging.info("Setting display name to: %s", displayname)
+            await self._api.set_display_name(displayname)
 
         logging.info(str(self._api))
         user = await self._api.get_user()
@@ -175,56 +177,45 @@ class Bot:
             await chat.leave()
 
     # Utility functions
-    def _load_config(self, profile="", apiname="", configdir="", **kwargs) -> None:
+    def _load_config(self, profile="", apiname="", namespace="", api_kwargs: dict = None) -> None:
         if not apiname and not profile:
             raise ValueError("No API and no profile specified")
 
-        newprofile = False
-
-        # Load default or existing config
-        defcfg = self._get_default_config()
-        if profile:
-            if not self._cfgmgr.exists(profile):
-                newprofile = True
-            # Read config and update defaults
-            # TODO: Maybe implement recursive merging into ConfigManager
-            cfg = self._cfgmgr.load(profile, defcfg)
-            merge_dicts(cfg["plugins"], defcfg["plugins"])
-            merge_dicts(cfg["api_config"], defcfg["api_config"])
-        else:
-            cfg = dict(defcfg)
-
-        if configdir:
-            cfg["configdir"] = configdir
+        cfg = self._cfgmgr.get_config(profile)
+        cfg.load(self._get_default_config())
 
         # Apply custom settings and overwrite existing
+        if namespace:
+            cfg["namespace"] = namespace
+
         if apiname:
             cfg["api"] = apiname
         elif not cfg["api"]:
             raise ValueError("No API specified")
 
-        merge_dicts(cfg["api_config"],
-                    api.get_api_class(cfg["api"]).get_default_options())
-        if kwargs:
-            merge_dicts(cfg["api_config"], kwargs, True)
+        if api_kwargs:
+            merge_dicts(cfg["api_config"], api_kwargs, True)
 
-        # Update the profile (with applied settings)
-        if newprofile:
-            self._cfgmgr.write(profile, cfg)
+        # Save if new profile
+        if profile and not cfg.exists():
+            # Add API specific defaults
+            merge_dicts(cfg["api_config"],
+                        api.get_api_class(cfg["api"]).get_default_options())
+            cfg.write()
 
-        if cfg["configdir"]:
-            self._cfgmgr.set_searchpath(cfg["configdir"])
-            logging.info("Using custom config directory: %s", cfg["configdir"])
+        if cfg["namespace"]:
+            self._cfgmgr.set_searchpath(
+                os.path.join(self._cfgmgr.get_searchpath(), cfg["namespace"]))
+            logging.info("Using custom config directory: %s", cfg["namespace"])
 
         self._config = cfg
 
-    def _init(self, profile="", apiname="", configdir="", **kwargs) -> None:
+    def _init(self, profile="", apiname="", namespace="", api_kwargs: dict = None) -> None:
         logging.info("Initializing...")
         logging.info("Loading configs")
-        self._load_config(profile, apiname, configdir, **kwargs)
+        self._load_config(profile, apiname, namespace, api_kwargs)
 
-        self._cmdhandler = CommandHandler(
-            self._config["prefix"], self._config["admins"])
+        self._cmdhandler = CommandHandler(self._config["prefix"], self._config["admins"])
         self._pluginmgr = PluginManager(
             os.path.dirname(chatbot.bot.plugins.__file__),
             whitelist=self._config["plugins"]["whitelist"],
@@ -286,7 +277,7 @@ class Bot:
                     "groupbot",
                 ],
             },
-            "configdir": "",
+            "namespace": "",
             "prefix": [ "!bot", "@bot", "!" ],
             "admins": [],
             "display_name": "Bot",

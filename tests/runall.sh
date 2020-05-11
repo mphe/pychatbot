@@ -24,4 +24,5 @@ else
     runtest event_test.py
     runtest plugintest.py
     runtest testapi_test.py
+    runtest configtest.py
 fi

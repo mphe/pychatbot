@@ -5,23 +5,31 @@ from concurrent.futures import ThreadPoolExecutor
 from chatbot import api
 
 
-def merge_dicts(srcdict, mergedict, overwrite=False):
-    """Merges mergedict into srcdict and returns srcdict."""
-    if overwrite:
-        for k, v in mergedict.items():
+def merge_dicts(srcdict: dict, mergedict: dict, overwrite=False):
+    """Recursively merges `mergedict` into `srcdict` and returns `srcdict`.
+
+    Makes shallow copies of `dict` and `list` values.
+    """
+    for k, v in mergedict.items():
+        srcvalue = srcdict.get(k, None)
+
+        if isinstance(v, dict) and isinstance(srcvalue, dict):
+            merge_dicts(srcvalue, v, overwrite)
+            continue
+
+        if overwrite or srcvalue is None:
+            if isinstance(v, dict):
+                v = dict(v)
+            elif isinstance(v, list):
+                v = list(v)
             srcdict[k] = v
-    else:
-        diff = set(mergedict) - set(srcdict)
-        for i in diff:
-            srcdict[i] = mergedict[i]
+
     return srcdict
 
 
 def merge_dicts_copy(srcdict, mergedict, overwrite=False):
     """Same as _merge_dicts but returns a shallow copy instead of merging directly into srcdict."""
-    ndict = dict(srcdict)
-    merge_dicts(ndict, mergedict, overwrite)
-    return ndict
+    return merge_dicts(dict(srcdict), mergedict, overwrite)
 
 
 async def edit_or_reply(msg: api.ChatMessage, text: str):
