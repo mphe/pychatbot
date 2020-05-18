@@ -58,9 +58,11 @@ class TestAPI(api.APIBase):
         if self._input_task and not self._input_task.done():
             self._input_task.cancel()
 
+    @property
     def version(self):
         return "42.0"
 
+    @property
     def api_name(self):
         return "Test API"
 
@@ -99,18 +101,23 @@ class TestingMessage(api.ChatMessage):
         self._chat = chat
         self._type = msgtype
 
-    def get_text(self):
+    @property
+    def text(self):
         return self._text
 
-    def get_author(self):
+    @property
+    def author(self):
         return self._author
 
-    def get_chat(self):
+    @property
+    def chat(self):
         return self._chat
 
-    def get_type(self):
+    @property
+    def type(self):
         return self._type
 
+    @property
     def is_editable(self):
         return False
 
@@ -124,8 +131,17 @@ class TestChat(api.Chat):
         self._id = TestChat._id_counter
         TestChat._id_counter += 1
 
+    @property
     def id(self):
         return self._id
+
+    @property
+    def type(self):
+        return api.ChatType.Normal
+
+    @property
+    def is_anonymous(self):
+        return False
 
     async def send_message(self, text, msgtype=api.MessageType.Normal):
         msg = TestingMessage(await self._api.get_user(), text, self, msgtype)
@@ -134,12 +150,6 @@ class TestChat(api.Chat):
 
     async def send_action(self, text):
         await self.send_message(text, api.MessageType.Action)
-
-    def type(self):
-        return api.ChatType.Normal
-
-    def is_anonymous(self):
-        return False
 
 
 class User(api.GenericUser):

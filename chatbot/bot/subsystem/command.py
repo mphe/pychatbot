@@ -4,7 +4,7 @@ import asyncio
 import enum
 import logging
 import shlex
-from typing import Callable, List
+from typing import Callable, List, Iterable, Any
 from collections import namedtuple
 from chatbot.api import MessageType, ChatMessage
 
@@ -69,9 +69,11 @@ class CommandHandler:
         self.register("help", self._help, argc=0)
         self.register("list", self._list, argc=0)
 
-    def register(self, name: str,
-                 callback: Callable[[ChatMessage, List[str]], None],
-                 argc=1, flags=0):
+    @property
+    def admins(self) -> Iterable[str]:
+        return self._admins
+
+    def register(self, name: str, callback: Callable, argc=1, flags=0):
         """Register a chat command.
 
         Args:
@@ -148,11 +150,11 @@ class CommandHandler:
         Returns True if the message was a command, otherwise False.
         Exceptions may be raised and have to be handled by the calling scope.
         """
-        if msg.get_type() != MessageType.Normal:
+        if msg.type != MessageType.Normal:
             return False
 
         argv = []
-        text = msg.get_text()
+        text = msg.text
 
         # Check if the message is a command and fill argv with its arguments.
         for i in self._prefix:
@@ -196,7 +198,7 @@ class CommandHandler:
             raise CommandNotFoundError
 
         if cmd.flags & CommandFlag.Admin:
-            if msg.get_author().id() not in self._admins:
+            if msg.author.id not in self._admins:
                 raise CommandPermError
 
         if len(argv) <= cmd.argc:
@@ -229,7 +231,7 @@ class CommandHandler:
             raise CommandError("There is no such command.")
 
         doc = cmd.callback.__doc__
-        await msg.get_chat().send_message(doc if doc else "No documentation found.")
+        await msg.reply(doc if doc else "No documentation found.")
 
     async def _list(self, msg, _argv):
         """Syntax: list

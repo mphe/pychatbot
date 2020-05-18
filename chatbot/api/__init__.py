@@ -3,10 +3,9 @@ import logging
 from .APIBase import APIBase
 from .APIEvents import APIEvents
 from .ChatMessage import ChatMessage, MessageType
-from .FriendRequest import FriendRequest
 from .User import User, GenericUser
 from .Chat import GroupChat, Chat, ChatType
-from .GroupInvite import GroupInvite
+from .Request import Request, FriendRequest, GroupInvite
 
 
 def create_api_object(apiname, stub=True, **kwargs) -> APIBase:

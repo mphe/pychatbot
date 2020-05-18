@@ -63,18 +63,18 @@ class Test:
         logging.info("Done")
 
     async def run_command(self, cmdstring, author="user"):
-        msg = api.test.TestAPI.TestingMessage(
-            api.test.TestAPI.User(author, ""), cmdstring, None)
+        msg = api.test.TestAPI.TestingMessage(                   # type: ignore
+            api.test.TestAPI.User(author, ""), cmdstring, None)  # type: ignore
         await self.cmd.execute(msg)
 
-    async def _cmd_echo(self, msg, argv):
+    async def _cmd_echo(self, _msg, argv):
         self._echostring = " ".join(argv[1:])
 
     @staticmethod
-    async def _cmd_fail(msg, argv):
+    async def _cmd_fail(_msg, _argv):
         return 2 / 0
 
-    async def _cmd_expand(self, msg, arg1, arg2):
+    async def _cmd_expand(self, _msg, _arg1, arg2):
         self._echostring = arg2
 
     @staticmethod

@@ -3,7 +3,7 @@
 import os
 import imp
 import logging
-from typing import List, Callable
+from typing import List, Callable, Dict
 
 ExceptionCallback = Callable[[str, Exception], bool]
 
@@ -52,7 +52,7 @@ class PluginManager:
         self._searchpath = searchpath
         self.blacklist = blacklist if blacklist else []
         self.whitelist = whitelist if whitelist else []
-        self._plugins = {}
+        self._plugins: Dict[str, PluginHandle] = {}
         os.makedirs(searchpath, exist_ok=True)
 
     def mount_plugin(self, name, *argv, **kwargs):

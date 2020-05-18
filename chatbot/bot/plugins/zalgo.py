@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 
+from typing import List, Tuple
 from chatbot.bot import BotPlugin
-from chatbot import util
+from chatbot import util, api
 import random
 
 
@@ -11,7 +12,7 @@ class Plugin(BotPlugin):
         self.register_command("zalgo", self._zalgo)
 
     @staticmethod
-    async def _zalgo(msg, argv):
+    async def _zalgo(msg: api.ChatMessage, argv):
         """Syntax: zalgo <text> [strength] [zalgosets]
 
         Create a Zalgo text.
@@ -28,7 +29,7 @@ class Plugin(BotPlugin):
         """
         strength = 5 if len(argv) == 2 else min(15, int(argv[2]))
         flags = int(argv[3]) if len(argv) > 3 else 7
-        sets = []
+        sets: List[Tuple] = []
 
         if flags & 1:
             sets.append(ZALGO_UP)

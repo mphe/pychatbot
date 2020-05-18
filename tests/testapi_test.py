@@ -12,12 +12,12 @@ class Test:
         self._api = None  # api.APIBase
         self._sent = False
 
-    async def _on_receive(self, msg):
+    async def _on_receive(self, msg: api.ChatMessage):
         print_message(msg, "Received")
         self._msg = msg
-        await msg.get_chat().send_message("Reply")
+        await msg.chat.send_message("Reply")
 
-    async def _on_sent(self, msg):
+    async def _on_sent(self, msg: api.ChatMessage):
         print_message(msg, "Sent")
         await self._api.close()
         self._sent = True

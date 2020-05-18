@@ -7,15 +7,15 @@ import logging
 from context import api, bot, print_message
 
 
-async def on_friend_request(req):
-    logging.info("Received friend request from %s", req.get_author().id())
+async def on_friend_request(req: api.FriendRequest):
+    logging.info("Received friend request from %s", req.author.id)
     await req.accept()
     logging.info("Accepted.")
 
 
-async def on_message(msg):
+async def on_message(msg: api.ChatMessage):
     print_message(msg, "Received")
-    await msg.get_chat().send_message(msg.get_text())
+    await msg.chat.send_message(msg.text)
 
 
 async def on_ready():

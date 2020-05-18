@@ -10,9 +10,11 @@ class User(api.User):
         self._user = user
         self._client = client
 
+    @property
     def id(self):
         return self._user.id
 
+    @property
     def display_name(self):
         return self._user.display_name
 
@@ -25,5 +27,6 @@ class User(api.User):
         return create_chat(self._client, channel)
 
     # extra
+    @property
     def username(self):
         return str(self._user)

@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 
+from enum import IntEnum
 
-class ChatType:
+
+class ChatType(IntEnum):
     """An enum defining group types."""
-    Normal = "Normal"
-    Group = "Group"
+    Normal, Group = range(2)
 
 
 class Chat:
@@ -17,7 +18,8 @@ class Chat:
     It can be persistent across multiple sessions but doesn't have to.
     """
 
-    def id(self):
+    @property
+    def id(self) -> str:
         """Returns the chat's unique ID.
 
         Similar to User.id().
@@ -27,30 +29,28 @@ class Chat:
         """
         raise NotImplementedError
 
+    @property
     def is_id_unique(self) -> bool:
         """Returns whether the chat's ID is globally unique."""
         raise NotImplementedError
 
-    async def send_message(self, text) -> None:
-        """Sends a message with the given text to this chatroom."""
-        raise NotImplementedError
-
-    async def send_action(self, text) -> None:
-        """Sends an action (/me ...) with the given text to this chatroom."""
-        raise NotImplementedError
-
+    @property
     def type(self) -> ChatType:
         """Returns the chat type. See ChatType for available types."""
         return ChatType.Normal
 
+    @property
     def size(self) -> int:
         """Returns the number of chat members (including the current user).
 
         In a normal chat this is 2. Groupchats should override this.
-        After calling leave(), the size() function should return 0.
+
+        If the user is not part of this chat or leave()ed, the size is
+        undefined behavior.
         """
         return 2
 
+    @property
     def is_anonymous(self) -> bool:
         """Returns whether or not this is an anonymous chat.
 
@@ -59,13 +59,21 @@ class Chat:
         """
         raise NotImplementedError
 
+    async def send_message(self, text: str) -> None:
+        """Sends a message with the given text to this chatroom."""
+        raise NotImplementedError
+
+    async def send_action(self, text: str) -> None:
+        """Sends an action (/me ...) with the given text to this chatroom."""
+        raise NotImplementedError
+
     def __len__(self):
-        return self.size()
+        return self.size
 
     def __str__(self):
-        if self.type() == ChatType.Normal:
-            return "Chat {}".format(repr(self.id()))
-        return "Groupchat {}".format(repr(self.id()))
+        if self.type == ChatType.Normal:
+            return "Chat {}".format(self.id)
+        return "Groupchat {}".format(self.id)
 
 
 class GroupChat(Chat):
@@ -73,6 +81,7 @@ class GroupChat(Chat):
 
     Basically the same as a normal chat but with some extra functions.
     """
+    @property
     def type(self) -> ChatType:
         return ChatType.Group
 
@@ -87,6 +96,7 @@ class GroupChat(Chat):
         """Invite the given User to the groupchat."""
         raise NotImplementedError
 
+    @property
     def size(self) -> int:
         """Returns the number of chat members (including the current user).
 

@@ -1,20 +1,25 @@
 # -*- coding: utf-8 -*-
 
+from typing import List
 from .subsystem.plugin import BasePlugin
+import chatbot
 from chatbot.util import event, config
-from chatbot.bot import command, Bot
+from chatbot.bot import command
 from inspect import getfile
 import os
 
 
 class BotPlugin(BasePlugin):
-    def __init__(self, oldme, bot: Bot):
+    def __init__(self, oldme, bot: "chatbot.bot.Bot"):
         super(BotPlugin, self).__init__(oldme, bot)
-        self.__name = os.path.splitext(os.path.basename(getfile(self.__class__)))[0]  # type: str
-        self.__bot = bot  # type: Bot
-        self.__commands = []  # keeps track of registered commands to unregister them automatically
-        self.__handles = []  # keeps track of registered event handlers
-        self.__cfg = bot.get_configmgr().get_config(self.name)
+        self.__name: str = os.path.splitext(os.path.basename(getfile(self.__class__)))[0]
+        self.__bot: "chatbot.bot.Bot" = bot
+        self.__cfg = bot.config_manager.get_config(self.name)
+
+        # Keep track of registered commands and event handlers to unregister them automatically
+        self.__commands: List[str] = []
+        self.__handles: List[event.Handle] = []
+
         self.reload()
 
     def reload(self):
@@ -34,7 +39,7 @@ class BotPlugin(BasePlugin):
         return {}
 
     @property
-    def bot(self) -> Bot:
+    def bot(self) -> "chatbot.bot.Bot":
         return self.__bot
 
     @property

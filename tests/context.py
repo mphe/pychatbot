@@ -12,5 +12,5 @@ if len(sys.argv) > 1 and sys.argv[1] == "--test":
     logging.disable(logging.CRITICAL)
 
 
-def print_message(msg, prefix):
-    logging.info("%s message in %s:\n\t %s", prefix, str(msg.get_chat()), str(msg))
+def print_message(msg: api.ChatMessage, prefix):
+    logging.info("%s message in %s:\n\t %s", prefix, str(msg.chat), str(msg))

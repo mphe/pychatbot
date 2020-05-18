@@ -3,11 +3,10 @@
 import appdirs
 import logging
 import os
-from typing import List, Iterable
+from typing import Iterable, Tuple
 import chatbot
 from chatbot import api
-from chatbot.util import merge_dicts
-from chatbot.util.config import ConfigManager, Config
+from chatbot.util import merge_dicts, config
 from .subsystem import APIEventDispatcher
 from .subsystem.command import CommandError, CommandHandler
 from .subsystem.plugin import PluginManager
@@ -26,17 +25,17 @@ class ExitCode:
 class Bot:
     def __init__(self, profiledir=""):
         self._exit = ExitCode.Normal
-        self._config = None  # type: Config
-        self._api = None  # type: api.APIBase
-        self._dispatcher = None  # type: APIEventDispatcher
-        self._cmdhandler = None  # type: CommandHandler
-        self._pluginmgr = None  # type: PluginManager
+        self._config: config.Config = None
+        self._api: api.APIBase = None
+        self._dispatcher: APIEventDispatcher = None
+        self._cmdhandler: CommandHandler = None
+        self._pluginmgr: PluginManager = None
 
         if profiledir:
-            self._cfgmgr = ConfigManager(profiledir)
+            self._cfgmgr = config.ConfigManager(profiledir)
             logging.info("Using custom profile directory: %s", profiledir)
         else:
-            self._cfgmgr = ConfigManager(CONFIG_DIR)
+            self._cfgmgr = config.ConfigManager(CONFIG_DIR)
             logging.info("Using default profile directory: %s", CONFIG_DIR)
 
     async def close(self, code=ExitCode.Normal) -> None:
@@ -81,18 +80,21 @@ class Bot:
         logging.info("Exited with code %s", str(self._exit))
         return self._exit
 
-    def is_admin(self, userid: str) -> bool:
-        return userid in self.get_admins()
+    def is_admin(self, user: api.User) -> bool:
+        return user.id in self.admins
 
-    def get_admins(self) -> List[str]:
-        assert self._config["admins"] == self._cmdhandler._admins
-        return self._config["admins"]
+    @property
+    def admins(self) -> Iterable[str]:
+        """Get user IDs of admins."""
+        return self._cmdhandler._admins
 
-    def get_api(self) -> api.APIBase:
+    @property
+    def api(self) -> api.APIBase:
         """Returns the API object."""
         return self._api
 
-    def get_configmgr(self) -> ConfigManager:
+    @property
+    def config_manager(self) -> config.ConfigManager:
         return self._cfgmgr
 
     # Wrappers
@@ -116,7 +118,7 @@ class Bot:
     def reload_plugin(self, name: str) -> None:
         self._pluginmgr.reload_plugin(name)
 
-    def iter_plugins(self) -> Iterable["chatbot.bot.BotPlugin"]:
+    def iter_plugins(self) -> Iterable[Tuple[str, "chatbot.bot.BotPlugin"]]:
         return self._pluginmgr.iter_plugins()
 
     def register_command(self, name, callback, argc=1, flags=0) -> None:
@@ -143,37 +145,37 @@ class Bot:
 
         logging.info(str(self._api))
         user = await self._api.get_user()
-        logging.info("User handle: %s", user.id())
-        logging.info("Display name: %s", user.display_name())
+        logging.info("User handle: %s", user.id)
+        logging.info("Display name: %s", user.display_name)
         logging.info("Ready!")
 
-    async def _handle_command(self, msg) -> None:
+    async def _handle_command(self, msg: chatbot.api.ChatMessage) -> None:
         try:
             if not await self._cmdhandler.execute(msg) and self._config["echo"]:
-                await msg.get_chat().send_message("Echo: " + msg.get_text())
+                await msg.chat.send_message("Echo: " + msg.text)
         except Exception as e:
             if not isinstance(e, CommandError):
                 self._handle_plugin_exc("", e)
-            await msg.get_chat().send_message("Error: " + str(e))
+            await msg.chat.send_message("Error: " + str(e))
 
     @staticmethod
-    async def _autoaccept(request) -> None:
+    async def _autoaccept(request: chatbot.api.FriendRequest) -> None:
         await request.accept()
         logging.info("Accepted friend request from \"%s\" (%s)",
-                     request.get_author().display_name(),
-                     request.get_author().id())
+                     request.author.display_name,
+                     request.author.id)
 
     @staticmethod
-    async def _autojoin(invite) -> None:
+    async def _autojoin(invite: chatbot.api.GroupInvite) -> None:
         await invite.accept()
         logging.info("Accepted group invite from \"%s\" (%s)",
-                     invite.get_author().display_name(),
-                     invite.get_author().id())
+                     invite.author.display_name,
+                     invite.author.id)
 
     @staticmethod
-    async def _autoleave(chat, _user) -> None:
-        if chat.size() == 1:
-            logging.info("Leaving group after last user left (%s)", chat.id())
+    async def _autoleave(chat: chatbot.api.GroupChat, _user: chatbot.api.User) -> None:
+        if chat.size == 1:
+            logging.info("Leaving group after last user left (%s)", chat.id)
             await chat.leave()
 
     # Utility functions

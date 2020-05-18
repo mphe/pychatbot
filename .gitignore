@@ -4,3 +4,4 @@ tmp/
 config
 chatbot.log
 .vim
+.mypy_cache

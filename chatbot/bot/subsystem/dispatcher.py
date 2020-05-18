@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from typing import Dict
 import asyncio
 from functools import partial
 from chatbot.util.event import Event
@@ -22,7 +23,7 @@ class APIEventDispatcher:
         If exception_handler is None, exceptions will be re-raised
         immediately.
         """
-        self._events = {}  # type: dict[str, Event]
+        self._events: Dict[str, Event] = {}
         self._api = apiobj
         self._exc_handler = exc_handler
 

@@ -14,20 +14,25 @@ class Message(api.ChatMessage):
         self._chat = create_chat(client, msg.channel)
         self._user = User(client, msg.author)
 
-    def get_author(self):
+    @property
+    def author(self):
         return self._user
 
-    def get_chat(self):
+    @property
+    def chat(self):
         return self._chat
 
-    def get_text(self):
+    @property
+    def text(self):
         return self._msg.content
 
-    def get_type(self):
+    @property
+    def type(self):
         if self._msg.type == discordapi.MessageType.default:
             return api.MessageType.Normal
         return api.MessageType.System
 
+    @property
     def is_editable(self):
         return self._editable
 

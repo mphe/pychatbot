@@ -12,16 +12,18 @@ class FriendRequest(api.FriendRequest):
         self._client = client
         assert self._request.type == discordapi.RelationshipType.incoming_request
 
-    def get_author(self):
+    @property
+    def author(self):
         return User(self._client, self._request.user)
 
-    def get_text(self):
+    @property
+    def text(self):
         return ""
 
     async def accept(self):
         errstring = "Can't accept friend requests because it was blacklisted from the API.\nDoing so will not work but invalidate the account, thus requiring to revalidate the email address."
         logging.error(errstring)
-        await (await self.get_author().get_chat()).send_message(errstring)
+        await (await self.author.get_chat()).send_message(errstring)
         await self.decline()
         # await self._request.accept()
 

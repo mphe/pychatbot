@@ -16,9 +16,11 @@ class DiscordAPI(api.APIBase):
         self._opts = opts
         self._discord = None  # type: DiscordClient
 
+    @property
     def version(self) -> str:
         return "{}.{}.{}-{}".format(*discordapi.version_info)
 
+    @property
     def api_name(self) -> str:
         return "Discord"
 
@@ -38,7 +40,7 @@ class DiscordAPI(api.APIBase):
         return User(self, self._discord.user)
 
     async def set_display_name(self, name) -> None:
-        if (name == (await self.get_user()).display_name()):
+        if name == (await self.get_user()).display_name:
             return
 
         try:
@@ -120,7 +122,7 @@ class DiscordClient(discordapi.Client):
         if self.user.bot:
             logging.info("Invite link: %s", self._api.get_invite_link())
         else:
-            logging.info("Username: %s", (await self._api.get_user()).username())
+            logging.info("Username: %s", (await self._api.get_user()).username)
         await self._api._trigger(api.APIEvents.Ready)
 
         # Process pending friend requests

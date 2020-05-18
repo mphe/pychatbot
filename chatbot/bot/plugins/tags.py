@@ -2,29 +2,29 @@
 
 import re
 from chatbot.bot import BotPlugin
-from chatbot.api import APIEvents
+from chatbot import api
 
 
 class Plugin(BotPlugin):
     def __init__(self, oldme, bot):
         super(Plugin, self).__init__(oldme, bot)
         self.register_command("tags", self._list, argc=0)
-        self.register_event_handler(APIEvents.Message, self._on_message)
+        self.register_event_handler(api.APIEvents.Message, self._on_message)
 
     # This plugin actually needs a custom reload function so that the default
-    # example entry gets overwritten.
+    # example entry gets overwritten if the user wants to.
     def reload(self):
         self.cfg.load(self.get_default_config(), validate=False, create=True)
 
     @staticmethod
     def get_default_config():
-        return { "tagname": "<url>" }
+        return { "lenny": "( ͡° ͜ʖ ͡°)" }
 
-    async def _list(self, msg, _argv):
+    async def _list(self, msg: api.ChatMessage, _argv):
         """Syntax: tags
 
-        Shows a list of available tags.
-        Tags are mapped to specific URLs and can be used in messages by
+        Shows the list of available tags.
+        Tags are mapped to specific text and can be used in messages by
         wrapping them in [square brackets].
         If supported by the chat protocol, all tags will be substituted within
         the original message. Otherwise they are sent in a separate message
@@ -35,12 +35,12 @@ class Plugin(BotPlugin):
         else:
             await msg.reply("\n".join([ "[{}]: {}".format(k, v) for k, v in self.cfg.data.items() ]))
 
-    async def _on_message(self, msg):
-        tmp = msg.get_text()
-        if msg.is_editable():
+    async def _on_message(self, msg: api.ChatMessage):
+        tmp = msg.text
+        if msg.is_editable:
             for k, v in self.cfg.data.items():
                 tmp = tmp.replace("[{}]".format(k), "[ {} ]".format(v))
-            if tmp != msg.get_text():
+            if tmp != msg.text:
                 await msg.edit(tmp)
         else:
             tags = []

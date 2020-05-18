@@ -4,6 +4,7 @@ from chatbot import api  # Needed for typehints. pylint: disable=unused-import
 
 
 class User:
+    @property
     def id(self) -> str:
         """Returns the user ID.
 
@@ -16,6 +17,7 @@ class User:
         """
         raise NotImplementedError
 
+    @property
     def display_name(self) -> str:
         """Returns the name of the user.
 
@@ -29,7 +31,7 @@ class User:
         raise NotImplementedError
 
     def __str__(self):
-        return "{} ({})".format(self.display_name(), self.id())
+        return "{} ({})".format(self.display_name, self.id)
 
 
 class GenericUser(User):
@@ -39,8 +41,10 @@ class GenericUser(User):
         self._id = userid
         self._name = name
 
+    @property
     def id(self) -> str:
         return self._id
 
+    @property
     def display_name(self) -> str:
         return self._name

@@ -1,38 +1,44 @@
 # -*- coding: utf-8 -*-
 
+from enum import IntEnum
 from chatbot import api  # Needed for typehints. pylint: disable=unused-import
 
 
-class MessageType:
+class MessageType(IntEnum):
     Normal, Action, System = range(3)
 
 
 class ChatMessage:
-    def get_text(self) -> str:
+    @property
+    def text(self) -> str:
         raise NotImplementedError
 
-    def get_author(self) -> "api.User":
+    @property
+    def author(self) -> "api.User":
         """Returns a User object of the sender."""
         raise NotImplementedError
 
-    def get_chat(self) -> "api.Chat":
+    @property
+    def chat(self) -> "api.Chat":
         """Returns a Chat object representing the chat this message was sent in."""
         raise NotImplementedError
 
-    def get_type(self) -> MessageType:
+    @property
+    def type(self) -> MessageType:
         """Returns the message type."""
         raise NotImplementedError
 
+    @property
     def is_editable(self) -> bool:
         raise NotImplementedError
 
-    async def edit(self, newstr) -> None:
+    async def edit(self, newstr: str) -> None:
         raise NotImplementedError
 
-    async def reply(self, text) -> None:
-        """Same as ChatMessage.get_chat().send_message(text)."""
-        await self.get_chat().send_message(text)
+    async def reply(self, text: str) -> None:
+        """Same as ChatMessage.chat.send_message(text)."""
+        await self.chat.send_message(text)
 
     def __str__(self) -> str:
-        f = "{}: {}" if self.get_type() == MessageType.Normal else "*** {} {} ***"
-        return f.format(self.get_author().display_name(), self.get_text())
+        f = "{}: {}" if self.type == MessageType.Normal else "*** {} {} ***"
+        return f.format(self.author, self.text)

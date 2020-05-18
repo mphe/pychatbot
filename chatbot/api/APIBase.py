@@ -44,6 +44,7 @@ class APIBase:
         self._api_id = api_id
         self._stub = stub
 
+    @property
     def api_id(self) -> str:
         """Returns the API's unique module name.
 
@@ -51,6 +52,19 @@ class APIBase:
         API implementations must not override this method!
         """
         return self._api_id
+
+    @property
+    def version(self) -> str:
+        """Return API version as string."""
+        raise NotImplementedError
+
+    @property
+    def api_name(self) -> str:
+        """Returns the name of the API.
+
+        Note: for a unique identifier use api_id() instead.
+        """
+        raise NotImplementedError
 
     async def run(self) -> None:
         """Run the main loop, including initialization and cleanup afterwards.
@@ -76,17 +90,6 @@ class APIBase:
 
     async def close(self) -> None:
         """Signal to stop the main loop."""
-        raise NotImplementedError
-
-    def version(self) -> str:
-        """Return API version as string."""
-        raise NotImplementedError
-
-    def api_name(self) -> str:
-        """Returns the name of the API.
-
-        Note: for a unique identifier use api_id() instead.
-        """
         raise NotImplementedError
 
     async def get_user(self) -> "api.User":
@@ -164,9 +167,9 @@ class APIBase:
         ev = self._events.get(event, None)
         if ev is not None:
             return asyncio.create_task(ev(*args, **kwargs))
-        elif self._stub:
+        if self._stub:
             logging.debug("Unhandled event: %s", str(event))
         return None
 
     def __str__(self):
-        return "API: {}, version {}".format(self.api_name(), self.version())
+        return "API: {}, version {}".format(self.api_name, self.version)

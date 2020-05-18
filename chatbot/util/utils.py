@@ -33,7 +33,7 @@ def merge_dicts_copy(srcdict, mergedict, overwrite=False):
 
 
 async def edit_or_reply(msg: api.ChatMessage, text: str):
-    if msg.is_editable():
+    if msg.is_editable:
         await msg.edit(text)
     else:
         await msg.reply(text)

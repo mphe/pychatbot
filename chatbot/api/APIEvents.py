@@ -5,7 +5,7 @@ from chatbot import api  # Needed for typehints. pylint: disable=unused-import
 
 class APIEvents:
     """An enum of API events."""
-    Ready            = "Ready"  # Ready text doc
+    Ready            = "Ready"
     Message          = "MessageReceived"
     MessageSent      = "MessageSent"
     FriendRequest    = "FriendRequest"
