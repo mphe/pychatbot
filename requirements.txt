@@ -1,0 +1,3 @@
+sortedcontainers
+appdirs
+discord.py==1.3.3
