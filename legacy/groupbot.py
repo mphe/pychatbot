@@ -2,6 +2,7 @@
 
 from collections import namedtuple
 from chatbot.bot import BotPlugin
+from chatbot import api
 
 
 ChatHandle = namedtuple("ChatHandle", [ "password", "chat" ])
@@ -63,7 +64,7 @@ class Plugin(BotPlugin):
 
         if argv[1] not in self._chats or self._chats[argv[1]].chat.size() == 0:
             if argv[0] == "join!":
-                chat = await self.bot.get_api().create_group([msg.get_author()])
+                chat = await self.bot.api.create_group([msg.get_author()])
                 self._chats[argv[1]] = ChatHandle(password, chat)
             else:
                 await msg.reply("This chat doesn't exist yet, use `join!` to create it.")

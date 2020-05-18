@@ -273,9 +273,7 @@ class Bot:
             },
             "plugins": {
                 "whitelist": [],
-                "blacklist": [
-                    "groupbot",
-                ],
+                "blacklist": [],
             },
             "namespace": "",
             "prefix": [ "!bot", "@bot", "!" ],
