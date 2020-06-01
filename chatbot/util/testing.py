@@ -94,6 +94,7 @@ async def test_chat(chat: api.Chat, apiobj: api.APIBase = None):
 @test("User")
 async def test_user(user: api.User, apiobj: api.APIBase = None):
     await test_property(user, "display_name")
+    await test_property(user, "mention")
     userid = await test_property(user, "id")
     chat = await test_function(user.get_chat)
 

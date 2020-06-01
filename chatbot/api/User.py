@@ -26,6 +26,11 @@ class User:
         """
         raise NotImplementedError
 
+    @property
+    def mention(self) -> str:
+        """Returns the corresponding string to ping the user, e.g. "@SomeUser"."""
+        return "@" + self.id
+
     async def get_chat(self) -> "api.Chat":
         """Returns a Chat object representing the chat with this user."""
         raise NotImplementedError

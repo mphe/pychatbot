@@ -18,6 +18,10 @@ class User(api.User):
     def display_name(self):
         return self._user.display_name
 
+    @property
+    def mention(self) -> str:
+        return self._user.mention
+
     async def get_chat(self):
         channel = self._user.dm_channel
         if not channel:
