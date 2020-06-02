@@ -9,10 +9,10 @@ class User:
         """Returns the user ID.
 
         The return value depends on the chat system, for example, in Discord it
-        would return the username, in Tox it would return the Tox ID, etc.
+        would return a snowflake ID, in Tox it would return the Tox ID, etc.
         In anonymous groups the handle may have random values.
 
-        This should always be a string, no matter what the underlying API uses
+        This _must_ always be a string, no matter what the underlying API uses
         internally.
         """
         raise NotImplementedError

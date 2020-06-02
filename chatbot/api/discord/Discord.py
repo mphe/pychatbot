@@ -24,6 +24,10 @@ class DiscordAPI(api.APIBase):
     def api_name(self) -> str:
         return "Discord"
 
+    @property
+    def is_ready(self) -> bool:
+        return self._discord.is_ready()
+
     async def start(self) -> None:
         if not self._discord:
             self._discord = DiscordClient(self, loop=asyncio.get_running_loop())
@@ -58,15 +62,19 @@ class DiscordAPI(api.APIBase):
 
     async def find_user(self, userid: str) -> User:
         user = self._discord.get_user(int(userid))
+        if user is None and self._discord.user.bot:
+            user = await self._discord.fetch_user(int(userid))
         if user is None:
-            logging.warning("Could not find user with ID %s", userid)
+            logging.warning("Could not find user with ID %s.\nYou probably don't share any groups and/or don't use a bot account.\nAlso make sure the API is ready.", userid)
             return None
         return User(self, user)
 
     async def find_chat(self, chatid: str):
         chat = self._discord.get_channel(int(chatid))
         if chat is None:
-            logging.warning("Could not find chat with ID %s", chatid)
+            chat = await self._discord.fetch_channel(int(chatid))
+        if chat is None:
+            logging.warning("Could not find chat with ID %s.\nYou probably don't have access to this group and/or don't use a bot account.\nAlso make sure the API is ready.", chatid)
             return None
         return create_chat(self, chat)
 
@@ -130,19 +138,12 @@ class DiscordClient(discordapi.Client):
             await self.on_relationship_add(i)
 
     async def on_message(self, msg: discordapi.Message):
-        if not self.user.bot:
-            await msg.ack()
-
         if msg.type == discordapi.MessageType.default:
             if msg.author == self.user:
                 await self._api._trigger(api.APIEvents.MessageSent, Message(self._api, msg, True))
             else:
-                # Preload private chat because it can't be created in a non-async
-                # function because the result isn't returned instantly.
-                # TODO: necessary?
-                # if self.user.bot or msg.author.is_friend():
-                #     await msg.author.create_dm()
-
+                if not self.user.bot:
+                    await msg.ack()
                 await self._api._trigger(api.APIEvents.Message, Message(self._api, msg, False))
                 # await util.testing.test_message(Message(self._api, msg, False), self._api)
 

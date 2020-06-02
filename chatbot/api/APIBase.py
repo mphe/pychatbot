@@ -66,6 +66,11 @@ class APIBase:
         """
         raise NotImplementedError
 
+    @property
+    def is_ready(self) -> bool:
+        """Returns true if the API is ready to be used."""
+        raise NotImplementedError
+
     async def run(self) -> None:
         """Run the main loop, including initialization and cleanup afterwards.
 
@@ -117,7 +122,7 @@ class APIBase:
         raise NotImplementedError
 
     async def find_chat(self, chatid: str) -> "api.Chat":
-        """Returns a Chat object for the chat with the given ID.
+        """Returns a Chat object for the chat with the given ID or None.
 
         As mentioned in api.Chat, the given ID should be a string.
         Therefore, if the underlying API uses a different type, you must

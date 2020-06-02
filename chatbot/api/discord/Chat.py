@@ -25,8 +25,8 @@ class DiscordChat:
         self._chat = chat
 
     @property
-    def id(self):
-        return self._chat.id
+    def id(self) -> str:
+        return str(self._chat.id)
 
     @property
     def is_id_unique(self):

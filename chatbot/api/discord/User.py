@@ -11,11 +11,11 @@ class User(api.User):
         self._client = client
 
     @property
-    def id(self):
-        return self._user.id
+    def id(self) -> str:
+        return str(self._user.id)
 
     @property
-    def display_name(self):
+    def display_name(self) -> str:
         return self._user.display_name
 
     @property
@@ -32,5 +32,5 @@ class User(api.User):
 
     # extra
     @property
-    def username(self):
+    def username(self) -> str:
         return str(self._user)

@@ -24,7 +24,7 @@ class Chat:
 
         Similar to User.id().
 
-        This should always be a string, no matter what the underlying API uses
+        This _must_ always be a string, no matter what the underlying API uses
         internally.
         """
         raise NotImplementedError
