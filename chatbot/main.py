@@ -8,7 +8,7 @@ import argparse
 import chatbot.bot
 
 
-def main():
+async def main():
     parser = argparse.ArgumentParser(
         description="Run the bot using a given profile and/or a given API.",
         epilog="At least one of -p/--profile or -a/--api has to be specified."
@@ -39,7 +39,7 @@ def main():
 
     try:
         bot.init(profile=args.profile, apiname=args.api, namespace=args.namespace)
-        return asyncio.run(bot.run())
+        return await bot.run()
     except (KeyboardInterrupt, SystemExit) as e:
         logging.info(e)
     except Exception as e:
@@ -48,4 +48,4 @@ def main():
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(asyncio.run(main()))

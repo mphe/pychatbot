@@ -40,9 +40,9 @@ class Bot:
 
     async def close(self, code=ExitCode.Normal) -> None:
         """Gives the signal to stop with the given exit code."""
-        logging.info("Shutting down...")
-        await self._api.close()
+        logging.info("Received exit code %s, closing API...", code)
         self._exit = code
+        await self._api.close()
 
     def init(self, profile="", apiname="", namespace="", api_kwargs: dict = None) -> None:
         """Run initialization or throw Exception if something fails.
