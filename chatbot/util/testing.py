@@ -23,6 +23,7 @@ COLOR_BOLD = "\033[1m"
 SUCCESS = (0, "Success", COLOR_OK)
 NOTIMPL = (1, "Not implemented", COLOR_WARNING)
 ERROR = (2, "Error", COLOR_FAIL)
+ERROR_TYPE = (2, "Wrong Type", COLOR_FAIL)
 
 
 def colorize(s, *argv):
@@ -35,11 +36,13 @@ def print_header(s):
     logging.info("%s", colorize(s, COLOR_BOLD))
 
 
-async def test_property(instance: object, propname: str):
-    return await test_function(lambda: getattr(instance, propname), test_func_name=propname)
+async def test_property(instance: object, propname: str, assert_type=None):
+    return await test_function(lambda: getattr(instance, propname),
+                               test_func_name=propname,
+                               assert_type=assert_type)
 
 
-async def test_function(func, *argv, test_func_name="", **kwargs):
+async def test_function(func, *argv, test_func_name="", assert_type=None, **kwargs):
     state = SUCCESS
     ret = None
 
@@ -53,6 +56,13 @@ async def test_function(func, *argv, test_func_name="", **kwargs):
     except Exception as e:
         state = ERROR
         logging.exception(e)
+
+    if state == SUCCESS and assert_type is not None:
+        try:
+            assert isinstance(ret, assert_type), "Incorrect return value type: got {}, expected {}.".format(type(ret), assert_type)
+        except Exception as e:
+            state = ERROR_TYPE
+            logging.exception(e)
 
     logging.info("%s: %s -> %s",
                  colorize(state[1], COLOR_BOLD, state[2]),
@@ -79,7 +89,7 @@ def test(name):
 
 @test("Chat")
 async def test_chat(chat: api.Chat, apiobj: api.APIBase = None):
-    chatid = await test_property(chat, "id")
+    chatid = await test_property(chat, "id", str)
     await test_property(chat, "is_id_unique")
     await test_property(chat, "type")
     await test_property(chat, "size")
@@ -95,7 +105,7 @@ async def test_chat(chat: api.Chat, apiobj: api.APIBase = None):
 async def test_user(user: api.User, apiobj: api.APIBase = None):
     await test_property(user, "display_name")
     await test_property(user, "mention")
-    userid = await test_property(user, "id")
+    userid = await test_property(user, "id", str)
     chat = await test_function(user.get_chat)
 
     if userid and apiobj:
