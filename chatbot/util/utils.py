@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 
+import logging
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
 from chatbot import api
+from typing import Callable
 
 
 def merge_dicts(srcdict: dict, mergedict: dict, overwrite=False):
@@ -32,11 +34,23 @@ def merge_dicts_copy(srcdict, mergedict, overwrite=False):
     return merge_dicts(dict(srcdict), mergedict, overwrite)
 
 
+def string_prepend(prefix: str, string: str):
+    """Prepends each line in `string` with `prefix`."""
+    sub = "\n" + prefix
+    return prefix + string.replace("\n", sub)
+
+
 async def edit_or_reply(msg: api.ChatMessage, text: str):
     if msg.is_editable:
         await msg.edit(text)
     else:
         await msg.reply(text)
+
+
+async def wait_until_api_ready(api: api.APIBase):
+    if not api.is_ready:
+        logging.debug("Waiting for API to become ready...")
+        await wait_until_true(lambda: api.is_ready)
 
 
 async def run_in_thread(callback, *args):
@@ -47,3 +61,18 @@ async def run_in_thread(callback, *args):
     loop = asyncio.get_running_loop()
     with ThreadPoolExecutor(max_workers=1) as pool:
         return await loop.run_in_executor(pool, callback, *args)
+
+
+async def wait_until_true(callback: Callable, *args, **kwargs):
+    """Wait (in 1s intervals) until `callback` returns true.
+
+    `callback` can be a normal function or a coroutine.
+    """
+    while True:
+        if asyncio.iscoroutine(callback):
+            if await callback(*args, **kwargs):
+                break
+        else:
+            if callback(*args, **kwargs):
+                break
+        await asyncio.sleep(1)
