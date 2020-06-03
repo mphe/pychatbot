@@ -9,8 +9,7 @@ In this example a new API called "coolapi" will be created. Therefore we create 
 
 ## Main class
 
-The main API class should be derived from `APIBase` and implement all necessary functions. It provides the entry point for your API.<br>
-
+The main API class should be derived from `chatbot.api.APIBase` and implement all necessary functions. It provides the entry point for your API.
 
 This is a simple example of the basic structure of your main class:
 
@@ -29,21 +28,21 @@ class CoolAPI(api.APIBase):
         }
 ```
 
-It's important to call the `APIBase` constructor with the supplied arguments `api_id` and `stub`.<br>
-The third parameter `opts` are the options passed to your API. They are based on get_default_options() with user supplied options merged into it.
+It is important to call the `APIBase` constructor with the supplied arguments `api_id` and `stub`.<br>
+The third parameter `opts` are the options passed to your API. They are based on `get_default_options()` with user supplied options merged into it.
 
-If `get_default_options()` is not implemented, the default one will be used, which returns an empty dictionary.<br>
+If `get_default_options()` is not implemented, the default one will be used, which returns an empty dictionary.
 Also note that `get_default_options()` **must** be static.
 
-The remaining functions, like `attach()`, `detach()`, `version()`, etc, are pretty much self explanatory and have docstrings explaining their purpose (see `APIBase`).<br>
-Functions that have to be implemented will raise `NotImplementedError` by default. That means, even if your API does not make use of certain functions you still have to derive them.<br>
-If they provide a default (like `iterate()`, which sleeps for 1 second by default), they are optional and don't need to be implemented.
+The remaining functions, properties, and classes are pretty much self explanatory and have docstrings explaining their purpose and requirements (see `APIBase`).<br>
+Functions/Properties that have to be implemented will raise `NotImplementedError` by default.<br>
 
 ### Make it accessible
-We now have a file `CoolAPI.py` in `chatbot.api.coolapi` that contains the main class.<br>
-To make it visible, so that `api.create_api_object()` finds it, you need to include your main class in your package as `API`.
+There is now a file `CoolAPI.py` in `chatbot.api.coolapi` that contains the main class.<br>
 
-To do that, create another file `__init__.py` and add the following lines (obviously replace the example classes/files with your actual classes/files)
+`api.create_api_object()` will look for a class named `API`, hence you need to include your main class in your package as `API`.
+
+To do that, create another file `__init__.py` and add the following line:
 
 ```
 from .CoolAPI import CoolAPI as API
@@ -51,4 +50,4 @@ from .CoolAPI import CoolAPI as API
 
 ## Events
 
-
+TODO
