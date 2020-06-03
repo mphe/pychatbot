@@ -33,30 +33,30 @@ class CommandFlag(enum.IntFlag):
 
 
 class CommandError(Exception):
-    def __init__(self, msg="An error occurred.", command=""):
+    def __init__(self, msg="An error occurred", command=""):
         super(CommandError, self).__init__(msg)
         self.command = command
 
 
 class CommandNotFoundError(CommandError):
     def __init__(self, command=""):
-        super(CommandNotFoundError, self).__init__("Command not found.", command)
+        super(CommandNotFoundError, self).__init__("Command not found", command)
 
 
 class CommandSyntaxError(CommandError):
     def __init__(self, msg="", command=""):
-        msg = "Syntax error: {}.".format(msg) if msg else "Syntax error."
+        msg = "Syntax error: {}".format(msg) if msg else "Syntax error"
         super(CommandSyntaxError, self).__init__(msg, command)
 
 
 class CommandArgcError(CommandSyntaxError):
     def __init__(self, command=""):
-        super(CommandArgcError, self).__init__("Wrong number of arguments.", command)
+        super(CommandArgcError, self).__init__("Wrong number of arguments", command)
 
 
 class CommandPermError(CommandError):
     def __init__(self, command=""):
-        super(CommandPermError, self).__init__("Permission denied.", command)
+        super(CommandPermError, self).__init__("Permission denied", command)
 
 
 class CommandHandler:

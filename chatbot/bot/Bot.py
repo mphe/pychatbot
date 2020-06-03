@@ -7,8 +7,7 @@ from typing import Iterable, Tuple
 import chatbot
 from chatbot import api
 from chatbot.util import merge_dicts, config
-from .subsystem import APIEventDispatcher
-from .subsystem.command import CommandError, CommandHandler
+from .subsystem import APIEventDispatcher, command
 from .subsystem.plugin import PluginManager
 
 
@@ -28,7 +27,7 @@ class Bot:
         self._config: config.Config = None
         self._api: api.APIBase = None
         self._dispatcher: APIEventDispatcher = None
-        self._cmdhandler: CommandHandler = None
+        self._cmdhandler: command.CommandHandler = None
         self._pluginmgr: PluginManager = None
 
         if profiledir:
@@ -152,11 +151,15 @@ class Bot:
     async def _handle_command(self, msg: chatbot.api.ChatMessage) -> None:
         try:
             if not await self._cmdhandler.execute(msg) and self._config["echo"]:
-                await msg.chat.send_message("Echo: " + msg.text)
+                await msg.reply("Echo: " + msg.text)
+        except command.CommandSyntaxError as e:
+            await msg.reply("Error: {}.\nSee `help {}` for usage instructions.".format(e, e.command))
+        except command.CommandNotFoundError as e:
+            await msg.reply("Error: {}.\nType `list` for a list of available commands.".format(e))
         except Exception as e:
-            if not isinstance(e, CommandError):
+            if not isinstance(e, command.CommandError):
                 self._handle_plugin_exc("", e)
-            await msg.chat.send_message("Error: " + str(e))
+            await msg.reply("Error: {}.".format(e))
 
     @staticmethod
     async def _autoaccept(request: chatbot.api.FriendRequest) -> None:
@@ -217,7 +220,7 @@ class Bot:
         logging.info("Loading configs")
         self._load_config(profile, apiname, namespace, api_kwargs)
 
-        self._cmdhandler = CommandHandler(self._config["prefix"], self._config["admins"])
+        self._cmdhandler = command.CommandHandler(self._config["prefix"], self._config["admins"])
         self._pluginmgr = PluginManager(
             os.path.dirname(chatbot.bot.plugins.__file__),
             whitelist=self._config["plugins"]["whitelist"],
