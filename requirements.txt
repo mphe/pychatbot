@@ -2,3 +2,4 @@ sortedcontainers
 appdirs
 discord.py==1.3.3
 parsedatetime==2.6
+pytz

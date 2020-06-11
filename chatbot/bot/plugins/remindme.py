@@ -1,24 +1,43 @@
 # -*- coding: utf-8 -*-
 
-from collections import namedtuple
 import asyncio
 import json
 from datetime import datetime, timedelta
-from typing import List, Set, Tuple
+from typing import List, Set, Tuple, NamedTuple
 import logging
 import parsedatetime
+import pytz
 from chatbot import api, bot, util
 from queue import PriorityQueue
 
-# isoformat should be the first item, to ensure correct sorting order
-Reminder = namedtuple("Reminder", [ "isoformat", "chatid", "userid", "msg", ])
+
+# Even though it is more like a normal class, it is still useful to treat this
+# as tuple, because:
+# - `date` (as first item) allows comparison and correct sorting order
+# - data is immutable
+class Reminder(NamedTuple):
+    date: datetime
+    chatid: str
+    userid: str
+    msg: str
+
+    @staticmethod
+    def from_json(self, node: List) -> "Reminder":
+        return Reminder(datetime.fromisoformat(node[0]), *node[1:])
+
+    def to_json_tuple(self):
+        return (self.date.isoformat(), *self[1:])
+
+    def get_remaining_seconds(self, timezone) -> float:
+        return (self.date - datetime.now(timezone)).total_seconds()
 
 
 class Plugin(bot.BotPlugin):
     def __init__(self, oldme: "Plugin", bot: bot.Bot):
         self._parsers = []  # type: List[parsedatetime.Calendar]
         self._timer = None  # type: asyncio.Task
-        self._reminders = PriorityQueue()
+        self._timezone = None  # type: pytz.BaseTzInfo
+        self._reminders = PriorityQueue()  # type: PriorityQueue[Reminder]
 
         super(Plugin, self).__init__(oldme, bot)
 
@@ -26,6 +45,15 @@ class Plugin(bot.BotPlugin):
 
     def reload(self):
         super(Plugin, self).reload()
+
+        try:
+            self._timezone = pytz.timezone(self.cfg["timezone"])
+        except pytz.UnknownTimeZoneError as e:
+            # Log exception if given timezone is not empty
+            if e.args[0]:
+                logging.exception(e)
+            logging.warning("Using system timezone")
+            self._timezone = None
 
         langs = self.cfg["langs"]
 
@@ -36,7 +64,7 @@ class Plugin(bot.BotPlugin):
             self._parsers = [ parsedatetime.Calendar(parsedatetime.Constants(i)) for i in langs ]
 
         for i in self.cfg["timers"]:
-            self._reminders.put(Reminder(*i))
+            self._schedule(Reminder.from_json(i), only_queue=True)
         self._restart_timer()
 
     def quit(self):
@@ -51,13 +79,16 @@ class Plugin(bot.BotPlugin):
 
         Extra text not containing any time information is ignored and can be used as message.
 
+        NOTE: Be aware that all dates/times are relative to the bot's timezone.
+
         Example: !remindme 5m 5 minutes have passed
         """
         text = " ".join(argv[1:])
 
         for i in self._parsers:
             logging.debug("Trying parser %s", i.ptc.localeID)
-            struct, result = i.parse(text)
+            date, result = i.parseDT(text, tzinfo=self._timezone)
+
             if result != 0:
                 break
 
@@ -65,17 +96,19 @@ class Plugin(bot.BotPlugin):
             await msg.reply("Failed to parse date/time.")
             return
 
-        date = datetime(*struct[:6])
-        self._schedule(Reminder(date.isoformat(), msg.chat.id, msg.author.id, msg.text))
-        await msg.reply("Reminding you on {}".format(date))
+        self._schedule(Reminder(date, msg.chat.id, msg.author.id, msg.text))
+        await msg.reply("Reminding you on {} (UTC+{})".format(
+            date, int(date.utcoffset().total_seconds() / 3600)))
 
-    def _schedule(self, reminder: Reminder):
-        self.cfg["timers"].append(reminder)  # is seemlessly serializable
-        self.cfg.write()
-
+    def _schedule(self, reminder: Reminder, only_queue: bool = False):
         self._reminders.put(reminder)
-        logging.debug("Scheduled %s", reminder.isoformat)
-        self._restart_timer()
+        logging.debug("Scheduled %s", reminder.date)
+
+        if not only_queue:
+            self.cfg["timers"].append(reminder.to_json_tuple())
+            self.cfg.write()
+
+            self._restart_timer()
 
     def _stop_timer(self):
         if self._timer and not self._timer.done():
@@ -94,7 +127,7 @@ class Plugin(bot.BotPlugin):
             return None, None
 
         reminder: Reminder = self._reminders.queue[0]
-        delta = (datetime.fromisoformat(reminder.isoformat) - datetime.today()).total_seconds()
+        delta = reminder.get_remaining_seconds(self._timezone)
         return delta, reminder
 
     async def _timer_callback(self):
@@ -138,13 +171,14 @@ class Plugin(bot.BotPlugin):
 
     def _pop_reminder(self, reminder: Reminder):
         self._reminders.get()
-        self.cfg["timers"] = list(self._reminders.queue)
+        self.cfg["timers"] = [ i.to_json_tuple() for i in self._reminders.queue ]
         self.cfg.write()
         logging.debug("Reminder removed: %s", reminder)
 
     @staticmethod
     def get_default_config():
         return {
+            "timezone": "",  # Empty for system default. See pytz.all_timezones.
             "message": "Reminding you!",
             "langs": [
                 "en_US",
