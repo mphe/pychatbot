@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import time
 from collections import namedtuple
 import asyncio
 import json
@@ -51,6 +52,8 @@ class Plugin(bot.BotPlugin):
 
         Extra text not containing any time information is ignored and can be used as message.
 
+        NOTE: Be aware that all dates/times are relative to the bot's system timezone.
+
         Example: !remindme 5m 5 minutes have passed
         """
         text = " ".join(argv[1:])
@@ -67,7 +70,9 @@ class Plugin(bot.BotPlugin):
 
         date = datetime(*struct[:6])
         self._schedule(Reminder(date.isoformat(), msg.chat.id, msg.author.id, msg.text))
-        await msg.reply("Reminding you on {}".format(date))
+
+        await msg.reply("Reminding you on {} (UTC+{})".format(
+            date, int(-time.timezone / 3600)))
 
     def _schedule(self, reminder: Reminder):
         self.cfg["timers"].append(reminder)  # is seemlessly serializable
