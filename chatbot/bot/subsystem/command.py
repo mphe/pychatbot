@@ -4,7 +4,7 @@ import asyncio
 import enum
 import logging
 import shlex
-from typing import Callable, List, Iterable, Any
+from typing import Callable, List, Iterable, Dict
 from collections import namedtuple
 from chatbot.api import MessageType, ChatMessage
 
@@ -59,13 +59,32 @@ class CommandPermError(CommandError):
         super(CommandPermError, self).__init__("Permission denied", command)
 
 
+class CommandHistory:
+    def __init__(self, max_entries: int):
+        self._max_entries = max_entries
+        self._entries: Dict[str, List[ChatMessage]] = {}
+
+    def add(self, msg: ChatMessage):
+        history: List[ChatMessage] = self._entries.setdefault(msg.author.id, [])
+        history.append(msg)
+
+        # Remove first element if overflowing
+        if len(history) > self._max_entries:
+            history.pop(0)
+
+    def get(self, userid: str) -> List[ChatMessage]:
+        return self._entries.get(userid, None)
+
+
 class CommandHandler:
     def __init__(self, prefix=("!",), admins=()):
         """Takes a list of command prefixes and admins."""
         self._prefix = prefix
+        self._repeat_cmd = "!!"
         self._admins = admins
-        self._cmds = {}
-        self._missing_cmds = {}
+        self._history = CommandHistory(1)  # Last command should be enough
+        self._cmds: Dict[str, CommandHandle] = {}
+        self._missing_cmds: Dict[str, CommandHandle] = {}
         self.register("help", self._help, argc=0)
         self.register("list", self._list, argc=0)
 
@@ -144,17 +163,25 @@ class CommandHandler:
         self.register("help", self._help, argc=0)
         self.register("list", self._list, argc=0)
 
-    async def execute(self, msg: ChatMessage):
+    async def execute(self, msg: ChatMessage) -> bool:
         """Execute a command from a message.
 
         Returns True if the message was a command, otherwise False.
-        Exceptions may be raised and have to be handled by the calling scope.
+        Exceptions may be raised and have to be handled in the calling scope.
         """
         if msg.type != MessageType.Normal:
             return False
 
-        argv = []
-        text = msg.text
+        text = msg.text.strip()
+
+        if self._repeat_cmd and text == self._repeat_cmd:
+            history = self._history.get(msg.author.id)
+            if not history:
+                raise CommandError("No previous commands", command=self._repeat_cmd)
+            await self.execute(history[-1])
+            return True
+
+        argv: List[str] = []
 
         # Check if the message is a command and fill argv with its arguments.
         for i in self._prefix:
@@ -166,6 +193,9 @@ class CommandHandler:
 
         if not argv:
             return False
+
+        # It is a command, so add to history
+        self._history.add(msg)
 
         command = self._cmds.get(argv[0], None)
         if command:
@@ -181,7 +211,7 @@ class CommandHandler:
         # Missing handlers
         # It's important to make a copy of the list to avoid
         # "dictionary changed size while iterating" errors
-        for i in list(v for v in self._missing_cmds.values()):
+        for i in list(self._missing_cmds.values()):
             try:
                 await self._exec_command(msg, i, argv)
                 return True
@@ -215,6 +245,7 @@ class CommandHandler:
 
         Shows the documentation of the given command.
         Use `list` to display a list of all available commands.
+        Use `!!` to repeat the last command.
 
         Arguments in <angular brackets> are required, those in
         [square brackets] are optional. | means "or", A|B means "A or B".
