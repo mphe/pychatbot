@@ -3,9 +3,8 @@
 import time
 from collections import namedtuple
 import asyncio
-import json
-from datetime import datetime, timedelta
-from typing import List, Set, Tuple
+from datetime import datetime
+from typing import List, Tuple
 import logging
 import parsedatetime
 from chatbot import api, bot, util
@@ -16,12 +15,12 @@ Reminder = namedtuple("Reminder", [ "isoformat", "chatid", "userid", "msg", ])
 
 
 class Plugin(bot.BotPlugin):
-    def __init__(self, oldme: "Plugin", bot: bot.Bot):
+    def __init__(self, oldme: "Plugin", bot_: bot.Bot):
         self._parsers = []  # type: List[parsedatetime.Calendar]
         self._timer = None  # type: asyncio.Task
-        self._reminders = PriorityQueue()
+        self._reminders = PriorityQueue()  # type: PriorityQueue[Reminder]
 
-        super(Plugin, self).__init__(oldme, bot)
+        super(Plugin, self).__init__(oldme, bot_)
 
         self.register_command("remindme", self._remindme)
 
@@ -45,18 +44,30 @@ class Plugin(bot.BotPlugin):
         super(Plugin, self).quit()
 
     async def _remindme(self, msg: api.ChatMessage, argv: List[str]):
-        """Syntax: remindme <date/time> [text]
+        """Syntax: remindme <date/time> [# text]
 
         Schedule a timer for the given date/time and send a message when the time has passed.
         <time> can be any human readable date/time string, e.g. "tomorrow", "5m", "22.7.2022", "1h 5m 30s", "15:30", etc.
 
-        Extra text not containing any time information is ignored and can be used as message.
-
         NOTE: Be aware that all dates/times are relative to the bot's system timezone.
 
-        Example: !remindme 5m 5 minutes have passed
+        Extra text not containing any time information is ignored and can be used as message.
+        To separate extra text from time information, in case it would be interpreted as such, use "#" as separator.
+
+        **Examples:**
+        `!remindme 5m some reminder text`
+            Sets a timer to 5 minutes.
+            "some reminder text" will be ignored since it does not contain any time information.
+
+        `!remindme 7.7. # tomorrow important date`
+            Sets a timer to 7. July of current year.
+            A "#" is required here because otherwise "tomorrow" would be interpreted as date.
         """
         text = " ".join(argv[1:])
+        comment_idx = text.find("#")
+
+        if comment_idx != -1:
+            text = text[:comment_idx]
 
         for i in self._parsers:
             logging.debug("Trying parser %s", i.ptc.localeID)
@@ -155,5 +166,5 @@ class Plugin(bot.BotPlugin):
                 "en_US",
                 "de_DE",
             ],
-            "timers": [],  # type: List[Reminder]
+            "timers": [],
         }
