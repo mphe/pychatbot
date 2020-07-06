@@ -7,5 +7,9 @@
 * don't save full config, but only deltas
 * on startup check for empty groups
 
+* API
+    * Chat
+        * supports_markdown() function
+
 * discord
-  * add support for invite links
+    * add support for invite links

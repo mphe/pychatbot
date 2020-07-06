@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import textwrap
 import asyncio
 import enum
 import logging
@@ -261,8 +262,18 @@ class CommandHandler:
             # calling not-found-handlers.
             raise CommandError("There is no such command.")
 
-        doc = cmd.callback.__doc__
-        await msg.reply(doc if doc else "No documentation found.")
+        doc: str = cmd.callback.__doc__
+        if doc:
+            firstline = doc.find("\n")
+            if firstline != -1:
+                doc = doc[:firstline] + textwrap.dedent(doc[firstline:])
+
+            # TODO: add a supports_markdown() function to api.Chat
+            # if doc.startswith("Syntax:"):
+            #     doc.replace("Syntax:", "**Syntax:**", 1)
+        else:
+            doc = "No documentation found."
+        await msg.reply(doc)
 
     async def _list(self, msg, _argv):
         """Syntax: list
