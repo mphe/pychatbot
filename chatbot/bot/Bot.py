@@ -19,6 +19,7 @@ class ExitCode:
     Normal = 0
     Error = 1
     Restart = 42  # Use a higher value so it stands out from usual exitcodes
+    RestartGitPull = 50  # ^
 
 
 class Bot:

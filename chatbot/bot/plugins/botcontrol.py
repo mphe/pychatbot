@@ -10,7 +10,8 @@ class Plugin(BotPlugin):
         self.register_admin_command("quit", self._quit, argc=0)
         self.register_admin_command("restart", self._restart, argc=0)
         self.register_admin_command("plugins", self._plugins, argc=2)
-        self.register_admin_command("test", self._test, argc=0)
+        self.register_admin_command("testapi", self._test, argc=0)
+        self.register_admin_command("update", self._update, argc=0)
         self.register_command("listplugins", self._listplugins, argc=0)
 
     async def _listplugins(self, msg, _argv):
@@ -20,8 +21,8 @@ class Plugin(BotPlugin):
         """
         await msg.reply(", ".join([ k for k, v in self.bot.iter_plugins() ]))
 
-    async def _test(self, msg: api.ChatMessage, argv):
-        """Syntax: test
+    async def _test(self, msg: api.ChatMessage, _argv):
+        """Syntax: testapi
 
         Runs code tests on this message.
         """
@@ -60,3 +61,11 @@ class Plugin(BotPlugin):
         """
         await msg.reply("Restarting...")
         await self.bot.close(ExitCode.Restart)
+
+    async def _update(self, msg, _argv):
+        """Syntax: update
+
+        Run `git pull` and restart bot.
+        """
+        await msg.reply("Running update and restarting...")
+        await self.bot.close(ExitCode.RestartGitPull)
