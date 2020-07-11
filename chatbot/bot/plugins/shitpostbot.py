@@ -18,7 +18,7 @@ class Plugin(BotPlugin):
         """Syntax: shitpost [random] [count]
 
         Get the most recent shitpost or a random one if "random" is given as first argument.
-        `count` is optional determines how many posts to fetch.
+        `count` is optional determines how many posts to fetch (max. 50 by default).
         Please mind anit-spam limits when using high count values, bots are affected, too.
         """
         count = 1
@@ -33,6 +33,7 @@ class Plugin(BotPlugin):
                 count = int(argv[1])
                 if count <= 0:
                     raise ValueError
+                count = min(count, self.cfg["max_posts"])
             except ValueError:
                 raise command.CommandSyntaxError("`count` is not a valid number.")
 
@@ -46,6 +47,7 @@ class Plugin(BotPlugin):
     def get_default_config():
         return {
             "split_messages": 1,  # Split in messages of N URLs
+            "max_posts": 50,
         }
 
 
