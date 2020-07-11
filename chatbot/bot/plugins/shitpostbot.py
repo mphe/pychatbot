@@ -1,45 +1,73 @@
 # -*- coding: utf-8 -*-
 
-import asyncio
 import random
-from concurrent.futures import ThreadPoolExecutor
-from chatbot.bot import BotPlugin
+from chatbot.bot import BotPlugin, command
 from urllib import request
 from xml.etree import ElementTree
 from chatbot import api, util
+from typing import List
 
 
 class Plugin(BotPlugin):
     def __init__(self, oldme, bot):
-
         super(Plugin, self).__init__(oldme, bot)
 
         self.register_command("shitpost", self._shitpost, argc=0)
 
-    @classmethod
-    async def _shitpost(cls, msg: api.ChatMessage, argv):
-        """Syntax: shitpost [random]
+    async def _shitpost(self, msg: api.ChatMessage, argv: List[str]):
+        """Syntax: shitpost [random] [count]
 
         Get the most recent shitpost or a random one if "random" is given as first argument.
+        `count` is optional determines how many posts to fetch.
+        Please mind anit-spam limits when using high count values, bots are affected, too.
         """
-        await msg.reply(await cls._get_shitpost_url(len(argv) > 1 and argv[1] == "random"))
+        count = 1
+        rand = False
 
-    @classmethod
-    async def _get_shitpost_url(cls, rand: bool = False):
-        def cb(rand: bool) -> str:
-            start = random.randint(0, cls._get_num_posts() - 1) if rand else 0
-            xml = cls._query_tumblr(1, start)
-            return xml.getroot().find("posts")[0].find("photo-url").text
+        if len(argv) > 1 and argv[1] == "random":
+            rand = True
+            argv = util.list_shifted(argv)
 
-        return await util.run_in_thread(cb, rand)
+        if len(argv) > 1:
+            try:
+                count = int(argv[1])
+                if count <= 0:
+                    raise ValueError
+            except ValueError:
+                raise command.CommandSyntaxError("`count` is not a valid number.")
 
-    @classmethod
-    def _get_num_posts(cls):
-        xml = cls._query_tumblr(0)
-        return int(xml.getroot().find("posts").get("total"))
+        urls = await get_shitpost_urls(count, rand)
+
+        # Split in multiple messages, because Discord only previews 5 URLs per message.
+        for chunk in util.iter_chunks(urls, self.cfg["split_messages"]):
+            await msg.reply("\n".join(chunk))
 
     @staticmethod
-    def _query_tumblr(num=1, start=0):
-        """Query for tumblr posts, by default top post."""
-        requesturl = "https://shitpostbot5k.tumblr.com/api/read?type=photo&num={}&start={}".format(num, start)
-        return ElementTree.parse(request.urlopen(requesturl))
+    def get_default_config():
+        return {
+            "split_messages": 1,  # Split in messages of N URLs
+        }
+
+
+async def get_shitpost_urls(num: int, rand: bool) -> List[str]:
+    def cb(rand: bool) -> List[str]:
+        start = random.randint(0, get_num_posts() - 1) if rand else 0
+        posts = query_tumblr_posts(num, start)
+        return extract_urls(posts)
+
+    return await util.run_in_thread(cb, rand)
+
+
+def get_num_posts() -> int:
+    xml = query_tumblr_posts(0)
+    return int(xml.getroot().find("posts").get("total"))
+
+
+def extract_urls(posts: ElementTree.ElementTree) -> List[str]:
+    return [ i.find("photo-url").text for i in posts.getroot().find("posts") ]
+
+
+def query_tumblr_posts(num=1, start=0) -> ElementTree.ElementTree:
+    """Query for tumblr posts, by default top post."""
+    requesturl = "https://shitpostbot5k.tumblr.com/api/read?type=photo&num={}&start={}".format(num, start)
+    return ElementTree.parse(request.urlopen(requesturl))
