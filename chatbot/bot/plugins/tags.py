@@ -48,4 +48,4 @@ class Plugin(BotPlugin):
                 if i and i.group(1) in self.cfg.data:
                     tags.append(i.group(1))
             if tags:
-                await msg.reply("\n".join([ "[ {} ]".format(self.cfg[t]) for t in tags ]))
+                await msg.reply("\n".join([ self.cfg[t] for t in tags ]))
