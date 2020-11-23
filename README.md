@@ -21,6 +21,10 @@ Additionally you will need python bindings for the chat protocols you want to us
     ```
     # pip install discord.py==1.3.3
     ```
+* **Telegram:**
+    ```
+    # pip install telethon
+    ```
 * **Tox:** No longer supported
 
 ## Usage
