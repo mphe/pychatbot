@@ -10,11 +10,16 @@ Install dependencies:
 # pip install -r requirements.txt
 ```
 
+Install optional dependencies needed by plugins and APIs:
+```shell
+# pip install -r requirements_optional.txt
+```
+
 Additionally you will need python bindings for the chat protocols you want to use.
 
 * **Discord:**
     ```
-    # pip install discord.py
+    # pip install discord.py==1.3.3
     ```
 * **Tox:** No longer supported
 
@@ -23,7 +28,6 @@ Additionally you will need python bindings for the chat protocols you want to us
 Run the bot using `run.sh`.
 
 Type `run.sh -h` for more information.
-
 
 ## Compatibility
 
