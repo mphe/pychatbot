@@ -224,8 +224,8 @@ class Bot:
         self._cmdhandler = command.CommandHandler(self._config["prefix"], self._config["admins"])
         self._pluginmgr = PluginManager(
             os.path.dirname(chatbot.bot.plugins.__file__),
-            whitelist=self._config["plugins"]["whitelist"],
-            blacklist=self._config["plugins"]["blacklist"])
+            whitelist=self._config["plugin_whitelist"],
+            blacklist=self._config["plugin_blacklist"])
 
         logging.info("Preparing API...")
         self._api = api.create_api_object(
@@ -277,10 +277,8 @@ class Bot:
             "api_config": {
                 "stub": False,
             },
-            "plugins": {
-                "whitelist": [],
-                "blacklist": [],
-            },
+            "plugin_whitelist": [],
+            "plugin_blacklist": [],
             "namespace": "",
             "prefix": [ "!bot", "@bot", "!" ],
             "admins": [],
