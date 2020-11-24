@@ -1,16 +1,21 @@
 # -*- coding: utf-8 -*-
 
+from dataclasses import dataclass
 import textwrap
 import asyncio
 import enum
 import logging
 import shlex
-from typing import Callable, List, Iterable, Dict
-from collections import namedtuple
+from typing import Callable, List, Iterable, Dict, Tuple
 from chatbot.api import MessageType, ChatMessage
 
 
-CommandHandle = namedtuple("CommandHandle", [ "callback", "argc", "flags" ])
+@dataclass
+class CommandHandle:
+    callback: Callable
+    argc: int
+    flags: int
+    types: Tuple
 
 
 class CommandFlag(enum.IntFlag):
@@ -77,6 +82,30 @@ class CommandHistory:
         return self._entries.get(userid, None)
 
 
+def get_argument_as_type(argument: str, type_):
+    """Try to cast `argument` to the given type or raise CommandSyntaxError."""
+    try:
+        return type_(argument)
+    except Exception as e:
+        if type_ is int:
+            basetext = "Argument is not an integral number"
+        elif type_ is float:
+            basetext = "Argument is not a number"
+        else:
+            basetext = "Argument is not of type {}".format(type_.__name__)
+
+        raise CommandSyntaxError("{}: {}".format(basetext, argument)) from e
+
+
+def get_argument(argv: List[str], index: int, default=None, type_=None):
+    """Get the nth argument or default, optionally casted to type or raise CommandSyntaxError."""
+    if index >= len(argv) or not argv[index]:
+        return default
+    if type_ is not None:
+        return get_argument_as_type(argv[index], type_)
+    return argv[index]
+
+
 class CommandHandler:
     def __init__(self, prefix=("!",), admins=()):
         """Takes a list of command prefixes and admins."""
@@ -93,7 +122,7 @@ class CommandHandler:
     def admins(self) -> Iterable[str]:
         return self._admins
 
-    def register(self, name: str, callback: Callable, argc=1, flags=0):
+    def register(self, name: str, callback: Callable, argc=1, flags=0, types=()):
         """Register a chat command.
 
         Args:
@@ -103,6 +132,7 @@ class CommandHandler:
             argc: The minimum amount of arguments needed for this command.
                   If there are less, a CommandArgcError is raised.
             flags: A list of flags or'ed together. See also `CommandFlag`.
+            types: A tuple of types to automatically cast arguments to or error.
 
         The callback must have one of the following signatures
         (return values are ignored):
@@ -142,7 +172,7 @@ class CommandHandler:
         group = self._missing_cmds if flags & CommandFlag.Missing else self._cmds
         if name in group:
             logging.warning("Overwriting existing command: %s", name)
-        group[name] = CommandHandle(callback, argc, flags)
+        group[name] = CommandHandle(callback, argc, flags, types)
         logging.debug("Registered command: %s", name)
 
     def unregister(self, name):
@@ -234,6 +264,10 @@ class CommandHandler:
 
         if len(argv) <= cmd.argc:
             raise CommandArgcError
+
+        if cmd.types:
+            for i, (arg, t) in enumerate(zip(argv[1:], cmd.types), 1):
+                argv[i] = get_argument_as_type(arg, t)
 
         if cmd.flags & CommandFlag.Expand:
             await cmd.callback(msg, *argv[1:cmd.argc + 1])

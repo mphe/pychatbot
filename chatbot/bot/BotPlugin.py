@@ -50,14 +50,18 @@ class BotPlugin(BasePlugin):
     def cfg(self) -> config.Config:
         return self.__cfg
 
-    def register_command(self, name, callback, argc=1, flags=0):
+    def register_command(self, name, callback, argc=1, flags=0, types=()):
         """Wrapper around Bot.register_command"""
-        self.bot.register_command(name, callback, argc, flags)
+        self.bot.register_command(name, callback, argc, flags, types)
         self.__commands.append(name)
 
-    def register_admin_command(self, name, callback, argc=1, flags=0):
+    def register_command_expand(self, name, callback, argc=1, flags=0, types=()):
+        """Wrapper around Bot.register_command with CommandFlag.Expand flag set"""
+        self.register_command(name, callback, argc, flags | command.CommandFlag.Expand, types)
+
+    def register_admin_command(self, name, callback, argc=1, flags=0, types=()):
         """Same as register_command() but with CMDFLAG_ADMIN flag set."""
-        self.register_command(name, callback, argc, flags | command.CommandFlag.Admin)
+        self.register_command(name, callback, argc, flags | command.CommandFlag.Admin, types)
 
     def register_event_handler(self, evname, callback, nice=event.EVENT_NORMAL):
         """Wrapper around Bot.register_event_handler"""

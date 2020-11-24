@@ -121,12 +121,12 @@ class Bot:
     def iter_plugins(self) -> Iterable[Tuple[str, "chatbot.bot.BotPlugin"]]:
         return self._pluginmgr.iter_plugins()
 
-    def register_command(self, name, callback, argc=1, flags=0) -> None:
+    def register_command(self, *args, **kwargs) -> None:
         """Register a command.
 
         See bot.subsystem.command.CommandHandler for further information.
         """
-        self._cmdhandler.register(name, callback, argc, flags)
+        self._cmdhandler.register(*args, **kwargs)
 
     def unregister_command(self, *names) -> None:
         """Unregister one or more commands.
