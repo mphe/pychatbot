@@ -278,7 +278,7 @@ class Bot:
                 "stub": False,
             },
             "plugin_whitelist": [],
-            "plugin_blacklist": [],
+            "plugin_blacklist": [ "markov" ],
             "namespace": "",
             "prefix": [ "!bot", "@bot", "!" ],
             "admins": [],
