@@ -40,46 +40,52 @@ class CommandFlag(enum.IntFlag):
 
 class CommandError(Exception):
     def __init__(self, msg="An error occurred", command=""):
-        super(CommandError, self).__init__(msg)
+        super().__init__(msg)
         self.command = command
 
 
 class CommandNotFoundError(CommandError):
     def __init__(self, command=""):
-        super(CommandNotFoundError, self).__init__("Command not found", command)
+        super().__init__("Command not found", command)
 
 
 class CommandSyntaxError(CommandError):
     def __init__(self, msg="", command=""):
         msg = "Syntax error: {}".format(msg) if msg else "Syntax error"
-        super(CommandSyntaxError, self).__init__(msg, command)
+        super().__init__(msg, command)
 
 
 class CommandArgcError(CommandSyntaxError):
     def __init__(self, command=""):
-        super(CommandArgcError, self).__init__("Wrong number of arguments", command)
+        super().__init__("Wrong number of arguments", command)
 
 
 class CommandPermError(CommandError):
     def __init__(self, command=""):
-        super(CommandPermError, self).__init__("Permission denied", command)
+        super().__init__("Permission denied", command)
 
 
 class CommandHistory:
     def __init__(self, max_entries: int):
         self._max_entries = max_entries
-        self._entries: Dict[str, List[ChatMessage]] = {}
+        self._entries: Dict[Tuple[str, str], List[ChatMessage]] = {}
 
     def add(self, msg: ChatMessage):
-        history: List[ChatMessage] = self._entries.setdefault(msg.author.id, [])
+        history = self.get_for_message(msg)
         history.append(msg)
 
         # Remove first element if overflowing
         if len(history) > self._max_entries:
             history.pop(0)
 
-    def get(self, userid: str) -> List[ChatMessage]:
-        return self._entries.get(userid, None)
+    def get_for_message(self, msg: ChatMessage) -> List[ChatMessage]:
+        """Wrapper around get()."""
+        return self.get(msg.author.id, msg.chat.id)
+
+    def get(self, userid: str, chatid: str) -> List[ChatMessage]:
+        """Returns a mutable list of recent commands of a given user in a given chat, with more recent entries last."""
+        # setdefault() returns the existing value at key or creates and returns it
+        return self._entries.setdefault((userid, chatid), [])
 
 
 def get_argument_as_type(argument: str, type_):
@@ -206,7 +212,7 @@ class CommandHandler:
         text = msg.text.strip()
 
         if self._repeat_cmd and text == self._repeat_cmd:
-            history = self._history.get(msg.author.id)
+            history = self._history.get_for_message(msg)
             if not history:
                 raise CommandError("No previous commands", command=self._repeat_cmd)
             await self.execute(history[-1])
@@ -280,7 +286,7 @@ class CommandHandler:
 
         Shows the documentation of the given command.
         Use `list` to display a list of all available commands.
-        Use `!!` to repeat the last command.
+        Use `!!` to repeat your last command in this channel.
 
         Arguments in <angular brackets> are required, those in
         [square brackets] are optional. | means "or", A|B means "A or B".
