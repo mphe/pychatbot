@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from typing import List
-import functools
 import asyncio
 import re
 import math
@@ -11,8 +9,8 @@ from chatbot import util, api, bot
 
 
 class Plugin(bot.BotPlugin):
-    def __init__(self, oldme, bot):
-        super(Plugin, self).__init__(oldme, bot)
+    def __init__(self, oldme, bot_):
+        super().__init__(oldme, bot_)
         self.register_command("clear", self._clear, argc=0)
         self.register_command("calc", self._calc)
         self.register_command("hex", self._hex)
@@ -22,7 +20,6 @@ class Plugin(bot.BotPlugin):
         self.register_command("blockspam", self._blockspam, argc=2)
         self.register_command("stretch", self._stretch, argc=2)
         self.register_command("slap", self._slap)
-        self.register_command("schlag", self._slap_german)
         self.register_command("explode", self._explode, argc=0)
         self.register_command("lenny", self._lenny, argc=0)
 
@@ -38,7 +35,7 @@ class Plugin(bot.BotPlugin):
     def _async_eval_proc(result, expr):
         mathlist = { k: math.__dict__[k] for k in math.__dict__ if not k.startswith("_") }
         try:
-            result.value = str(eval(expr, { "__builtins__": None }, mathlist)).encode("utf-8")
+            result.value = str(eval(expr, { "__builtins__": None }, mathlist)).encode("utf-8")  # pylint: disable=eval-used
         except Exception as e:
             result.value = ("Error: " + str(e))[:256].encode("utf-8")
 
@@ -106,10 +103,9 @@ class Plugin(bot.BotPlugin):
         Randomly choose a number between 0 and <a> or, if b is given, <a> and <b>.
         Both end points are included.
         """
-        if len(argv) == 2:
-            await msg.reply(str(random.randint(0, int(argv[1]))))
-        else:
-            await msg.reply(str(random.randint(int(argv[1]), int(argv[2]))))
+        a = bot.command.get_argument(argv, 1, type=int)
+        b = bot.command.get_argument(argv, 2, default=0, type=int)
+        await msg.reply(str(random.randint(min(a, b), max(a, b))))
 
     @staticmethod
     async def _blockspam(msg: api.ChatMessage, argv):
@@ -134,24 +130,22 @@ class Plugin(bot.BotPlugin):
 
     @staticmethod
     async def _slap(msg: api.ChatMessage, argv):
+        """Syntax: slap <user> [something]
+
+        Slap a user with something. By default: a fish.
+        """
         if len(argv) > 2:
             await msg.chat.send_action("slaps " + " ".join(argv[1:]))
         else:
             await msg.chat.send_action("slaps {} with a fish".format(argv[1]))
 
-    @staticmethod
-    async def _slap_german(msg: api.ChatMessage, argv):
-        if len(argv) > 2:
-            await msg.chat.send_action("schlägt " + " ".join(argv[1:]))
-        else:
-            await msg.chat.send_action("schlägt {} mit einem Fisch".format(argv[1]))
-
     async def _explode(self, msg, _argv):
-        await msg.chat.send_action("explodes\nRespawn in...")
-        for i in range(5, 0, -1):
-            await msg.reply(str(i))
+        await msg.chat.send_action("explodes\nRespawn in...\n5")
+        for i in range(4, 0, -1):
             await asyncio.sleep(1)
-        msg.chat.send_action("is back")
+            await msg.reply(str(i))
+        await asyncio.sleep(1)
+        await msg.chat.send_action("is back")
 
     @staticmethod
     async def _lenny(msg, _argv):

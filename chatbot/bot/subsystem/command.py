@@ -103,12 +103,12 @@ def get_argument_as_type(argument: str, type_):
         raise CommandSyntaxError("{}: {}".format(basetext, argument)) from e
 
 
-def get_argument(argv: List[str], index: int, default=None, type_=None):
+def get_argument(argv: List[str], index: int, default=None, type=None):  # pylint: disable=redefined-builtin
     """Get the nth argument or default, optionally casted to type or raise CommandSyntaxError."""
     if index >= len(argv) or not argv[index]:
         return default
-    if type_ is not None:
-        return get_argument_as_type(argv[index], type_)
+    if type is not None:
+        return get_argument_as_type(argv[index], type)
     return argv[index]
 
 
