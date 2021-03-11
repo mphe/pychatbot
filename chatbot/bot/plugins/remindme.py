@@ -20,12 +20,12 @@ class Plugin(bot.BotPlugin):
         self._timer = None  # type: asyncio.Task
         self._reminders = PriorityQueue()  # type: PriorityQueue[Reminder]
 
-        super(Plugin, self).__init__(oldme, bot_)
+        super().__init__(oldme, bot_)
 
         self.register_command("remindme", self._remindme)
 
     def reload(self):
-        super(Plugin, self).reload()
+        super().reload()
 
         langs = self.cfg["langs"]
 
@@ -41,7 +41,7 @@ class Plugin(bot.BotPlugin):
 
     def quit(self):
         self._stop_timer()
-        super(Plugin, self).quit()
+        super().quit()
 
     async def _remindme(self, msg: api.ChatMessage, argv: List[str]):
         """Syntax: remindme <date/time> [# text]

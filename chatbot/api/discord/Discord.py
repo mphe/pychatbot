@@ -12,7 +12,7 @@ from .Chat import create_chat
 
 class DiscordAPI(api.APIBase):
     def __init__(self, api_id, stub, opts):
-        super(DiscordAPI, self).__init__(api_id, stub)
+        super().__init__(api_id, stub)
         self._opts = opts
         self._discord = None  # type: DiscordClient
 
@@ -110,14 +110,14 @@ class DiscordAPI(api.APIBase):
 # functions (like close()).
 class DiscordClient(discordapi.Client):
     def __init__(self, apiobj, *args, **kwargs):
-        super(DiscordClient, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self._firstready = True
         self._api = apiobj
 
     async def close(self):
         if not self.is_closed():
             logging.info("Closing discord connection")
-            await super(DiscordClient, self).close()
+            await super().close()
             self._firstready = True
 
     # Events

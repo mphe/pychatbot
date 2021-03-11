@@ -7,7 +7,7 @@ from chatbot import api
 
 class Plugin(BotPlugin):
     def __init__(self, oldme, bot):
-        super(Plugin, self).__init__(oldme, bot)
+        super().__init__(oldme, bot)
         self.register_command("tags", self._list, argc=0)
         self.register_event_handler(api.APIEvents.Message, self._on_message)
 

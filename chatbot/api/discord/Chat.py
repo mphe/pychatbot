@@ -50,7 +50,7 @@ class PrivateChat(DiscordChat, api.Chat):
 
 class GuildChat(DiscordChat, api.GroupChat):
     def __init__(self, client, channel):
-        super(GuildChat, self).__init__(client, channel)
+        super().__init__(client, channel)
         self._guild = channel.guild
 
     async def leave(self):

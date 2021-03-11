@@ -8,7 +8,7 @@ import random
 
 class Plugin(BotPlugin):
     def __init__(self, oldme, bot):
-        super(Plugin, self).__init__(oldme, bot)
+        super().__init__(oldme, bot)
         self.register_command("zalgo", self._zalgo)
 
     @staticmethod

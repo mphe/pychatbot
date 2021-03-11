@@ -6,7 +6,7 @@ from chatbot.bot import BotPlugin, ExitCode, command
 
 class Plugin(BotPlugin):
     def __init__(self, oldme, bot):
-        super(Plugin, self).__init__(oldme, bot)
+        super().__init__(oldme, bot)
         self.register_admin_command("quit", self._quit, argc=0)
         self.register_admin_command("restart", self._restart, argc=0)
         self.register_admin_command("plugins", self._plugins, argc=2)

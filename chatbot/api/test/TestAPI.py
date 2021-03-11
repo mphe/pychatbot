@@ -8,7 +8,7 @@ from chatbot import api, util
 
 class TestAPI(api.APIBase):
     def __init__(self, api_id, stub, opts):
-        super(TestAPI, self).__init__(api_id, stub)
+        super().__init__(api_id, stub)
         # Fires a message received event every second
         self._timer = None  # type: asyncio.Task
         self._input_task = None  # type: asyncio.Task
@@ -126,7 +126,7 @@ class TestChat(api.Chat):
     _id_counter = 0
 
     def __init__(self, apiobj):
-        super(TestChat, self).__init__()
+        super().__init__()
         self._api = apiobj
         self._id = TestChat._id_counter
         TestChat._id_counter += 1

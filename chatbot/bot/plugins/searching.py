@@ -14,7 +14,7 @@ class Plugin(BotPlugin):
     }
 
     def __init__(self, oldme, bot):
-        super(Plugin, self).__init__(oldme, bot)
+        super().__init__(oldme, bot)
         for i in Plugin.urls:
             if i != "translate":
                 self.register_command(i, self._search)

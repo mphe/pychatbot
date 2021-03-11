@@ -6,7 +6,7 @@ import random
 
 class Plugin(BotPlugin):
     def __init__(self, oldme, bot):
-        super(Plugin, self).__init__(oldme, bot)
+        super().__init__(oldme, bot)
         self.register_command("missing_8ball", self._question, argc=0, flags=command.CommandFlag.Missing)
 
     @staticmethod

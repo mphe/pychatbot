@@ -35,11 +35,11 @@ class GroupInvite(Request):
         return ""
 
     def __str__(self):  # pylint: disable=signature-differs
-        return super(GroupInvite, self).__str__("Group-Invite")
+        return super().__str__("Group-Invite")
 
 
 class FriendRequest(Request):
     """Represents a friend request."""
 
     def __str__(self):  # pylint: disable=signature-differs
-        return super(FriendRequest, self).__str__("Friend-Request")
+        return super().__str__("Friend-Request")
