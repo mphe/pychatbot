@@ -23,6 +23,7 @@ class Plugin(bot.BotPlugin):
         super().__init__(oldme, bot_)
 
         self.register_command("remindme", self._remindme)
+        self.register_command("reminders", self._print_reminders, argc=0)
 
     def reload(self):
         super().reload()
@@ -42,6 +43,25 @@ class Plugin(bot.BotPlugin):
     def quit(self):
         self._stop_timer()
         super().quit()
+
+    async def _print_reminders(self, msg: api.ChatMessage, argv: List[str]):
+        """Syntax: reminders [all]
+
+        Lists all active reminders for the current user in the current chat.
+        If `all` is given, all reminders from all chats are listed.
+        """
+        listall = bot.command.get_argument(argv, 1, "") == "all"
+        l: List[Reminder] = []
+
+        r: Reminder
+        for r in self._reminders.queue:
+            if r.userid == msg.author.id and (listall or r.chatid == msg.chat.id):
+                l.append(r)
+
+        if not l:
+            await msg.reply("You have no active reminders.")
+        else:
+            await msg.reply("\n".join([ "{}) {}".format(i, r.msg) for i, r in enumerate(l, 1) ]))
 
     async def _remindme(self, msg: api.ChatMessage, argv: List[str]):
         """Syntax: remindme <date/time> [# text]

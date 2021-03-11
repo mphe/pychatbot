@@ -6,7 +6,7 @@ import asyncio
 import enum
 import logging
 import shlex
-from typing import Callable, List, Iterable, Dict, Tuple
+from typing import Callable, List, Iterable, Dict, Tuple, Any
 from chatbot.api import MessageType, ChatMessage
 
 
@@ -103,7 +103,7 @@ def get_argument_as_type(argument: str, type_):
         raise CommandSyntaxError("{}: {}".format(basetext, argument)) from e
 
 
-def get_argument(argv: List[str], index: int, default=None, type=None):  # pylint: disable=redefined-builtin
+def get_argument(argv: List[str], index: int, default=None, type=None) -> Any:  # pylint: disable=redefined-builtin
     """Get the nth argument or default, optionally casted to type or raise CommandSyntaxError."""
     if index >= len(argv) or not argv[index]:
         return default
