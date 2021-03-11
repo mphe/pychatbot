@@ -221,7 +221,11 @@ class Bot:
         logging.info("Loading configs")
         self._load_config(profile, apiname, namespace, api_kwargs)
 
-        self._cmdhandler = command.CommandHandler(self._config["prefix"], self._config["admins"])
+        self._cmdhandler = command.CommandHandler(
+            prefix=self._config["prefix"],
+            admins=self._config["admins"],
+            history_size=int(self._config["cmd_history_size"]))
+
         self._pluginmgr = PluginManager(
             os.path.dirname(chatbot.bot.plugins.__file__),
             whitelist=self._config["plugin_whitelist"],
@@ -287,4 +291,5 @@ class Bot:
             "autoaccept_friend": True,
             "autoaccept_invite": True,
             "autoleave": False,
+            "cmd_history_size": 5,
         }

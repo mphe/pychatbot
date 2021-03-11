@@ -6,6 +6,7 @@ import asyncio
 import enum
 import logging
 import shlex
+import re
 from typing import Callable, List, Iterable, Dict, Tuple, Any
 from chatbot.api import MessageType, ChatMessage
 
@@ -72,6 +73,13 @@ class CommandHistory:
 
     def add(self, msg: ChatMessage):
         history = self.get_for_message(msg)
+
+        # Remove old entry from history, if it already exists
+        for i, othermsg in enumerate(history):
+            if othermsg.text == msg.text:
+                history.pop(i)
+                break
+
         history.append(msg)
 
         # Remove first element if overflowing
@@ -113,16 +121,23 @@ def get_argument(argv: List[str], index: int, default=None, type=None) -> Any:  
 
 
 class CommandHandler:
-    def __init__(self, prefix=("!",), admins=()):
-        """Takes a list of command prefixes and admins."""
+    def __init__(self, prefix=("!",), admins=(), history_size: int = 5):
+        """CommandHandler constructor.
+
+        Args:
+            prefix: A collection of command prefixes used to mark messages as commands.
+            admins: A collection of user ID strings of administrator users.
+            history_size: The command history length for each user in each chat.
+        """
         self._prefix = prefix
-        self._repeat_cmd = "!!"
+        self._repeat_cmd_pattern = re.compile(r"!!-?([0-9]+)?")
         self._admins = admins
-        self._history = CommandHistory(1)  # Last command should be enough
+        self._history = CommandHistory(history_size)
         self._cmds: Dict[str, CommandHandle] = {}
         self._missing_cmds: Dict[str, CommandHandle] = {}
         self.register("help", self._help, argc=0)
         self.register("list", self._list, argc=0)
+        self.register("history", self._list_history, argc=0)
 
     @property
     def admins(self) -> Iterable[str]:
@@ -201,7 +216,7 @@ class CommandHandler:
         self.register("list", self._list, argc=0)
 
     async def execute(self, msg: ChatMessage) -> bool:
-        """Execute a command from a message.
+        """Try to execute a command from a message.
 
         Returns True if the message was a command, otherwise False.
         Exceptions may be raised and have to be handled in the calling scope.
@@ -211,11 +226,13 @@ class CommandHandler:
 
         text = msg.text.strip()
 
-        if self._repeat_cmd and text == self._repeat_cmd:
+        if self._repeat_cmd_pattern and (m := self._repeat_cmd_pattern.match(text)):
             history = self._history.get_for_message(msg)
             if not history:
-                raise CommandError("No previous commands", command=self._repeat_cmd)
-            await self.execute(history[-1])
+                raise CommandError("No previous commands", command=text)
+
+            num = max(1, min(int(m.group(1)), len(history))) if m.group(1) else 1
+            await self.execute(history[-num])
             return True
 
         argv: List[str] = []
@@ -286,7 +303,10 @@ class CommandHandler:
 
         Shows the documentation of the given command.
         Use `list` to display a list of all available commands.
+        Use `history` to show a list for your previous commands in this channel.
         Use `!!` to repeat your last command in this channel.
+        Use `!!N` to repeat your N last command in this channel, e.g. `!!2` to
+        repeat your second last command.
 
         Arguments in <angular brackets> are required, those in
         [square brackets] are optional. | means "or", A|B means "A or B".
@@ -324,3 +344,12 @@ class CommandHandler:
             ", ".join([ k for k, v in self._cmds.items() if not (v.flags & CommandFlag.Admin) ]),
             ", ".join([ k for k, v in self._cmds.items() if v.flags & CommandFlag.Admin ])
         ))
+
+    async def _list_history(self, msg: ChatMessage, _argv):
+        history = self._history.get_for_message(msg)
+        if not history:
+            await msg.reply("No previous commands")
+        else:
+            await msg.reply("\n".join(
+                [ "{}) {}".format(i, msg.text) for i, msg in enumerate(history[::-1], 1) ]
+            ))
