@@ -3,7 +3,7 @@
 import os
 import imp
 import logging
-from typing import List, Callable, Dict
+from typing import Callable, Dict, Iterable
 
 ExceptionCallback = Callable[[str, Exception], bool]
 
@@ -35,8 +35,7 @@ class PluginHandle:
 
 
 class PluginManager:
-    def __init__(self, searchpath, whitelist: List[str] = None,
-                 blacklist: List[str] = None):
+    def __init__(self, searchpath, whitelist: Iterable[str] = None, blacklist: Iterable[str] = None):
         """Constructor.
 
         Args:
@@ -50,8 +49,8 @@ class PluginManager:
         precedence.
         """
         self._searchpath = searchpath
-        self.blacklist = blacklist if blacklist else []
-        self.whitelist = whitelist if whitelist else []
+        self.blacklist = set(blacklist if blacklist else [])
+        self.whitelist = set(whitelist if whitelist else [])
         self._plugins: Dict[str, PluginHandle] = {}
         os.makedirs(searchpath, exist_ok=True)
 
