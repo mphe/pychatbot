@@ -61,7 +61,7 @@ class Plugin(bot.BotPlugin):
         if not l:
             await msg.reply("You have no active reminders.")
         else:
-            await msg.reply("\n".join([ "{}) {}".format(i, r.msg) for i, r in enumerate(l, 1) ]))
+            await msg.reply("\n".join([ f"{i}) {r.isoformat}\n> {r.msg}" for i, r in enumerate(l, 1) ]))
 
     async def _remindme(self, msg: api.ChatMessage, argv: List[str]):
         """Syntax: remindme <date/time> [# text]
