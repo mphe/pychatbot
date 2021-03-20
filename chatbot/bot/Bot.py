@@ -74,6 +74,10 @@ class Bot:
         try:
             await self._api.run()
         finally:
+            # At this point, the main loop already exited, hence another
+            # api.close() call is not necessary and only leads to more exceptions.
+            # Also, for some reason it is not possible to catch KeyboardInterrupt,
+            # probably due to some asyncio reasons.
             logging.info("Exiting...")
             self._cleanup()
 
@@ -264,14 +268,14 @@ class Bot:
 
     @staticmethod
     def _handle_plugin_exc(name, exc) -> bool:
+        logging.error("Exception in plugin: %s", name)
         logging.exception(exc)
-        logging.debug("Plugin: %s", name)
         return True
 
     @staticmethod
-    def _handle_event_exc(event, exc, *args, **kwargs) -> bool:
+    def _handle_event_exc(event: str, exc: Exception) -> bool:
+        logging.error("Exception in event: %s", event)
         logging.exception(exc)
-        logging.debug("Event: %s\nargs: %s\nkwargs: %s", event, args, kwargs)
         return True
 
     @staticmethod

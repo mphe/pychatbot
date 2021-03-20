@@ -1,23 +1,24 @@
 # -*- coding: utf-8 -*-
 
-from typing import Dict
+from typing import Dict, Callable
 import asyncio
 from functools import partial
 from chatbot.util.event import Event
+
+ExceptionCallback = Callable[[str, Exception], bool]
 
 
 class APIEventDispatcher:
     """Provides a dispatch system to allow multiple handlers per API event."""
 
-    def __init__(self, apiobj, exc_handler=None):
+    def __init__(self, apiobj, exc_handler: ExceptionCallback = None):
         """Constructor
 
-        apiobj is an API objects instance.
-        exc_handler is an optional callback with the signature
-            (event, Exception, *args, **kwargs) -> bool
+        `apiobj` is an API objects instance.
+        `exc_handler` is an optional callback with the signature
+            (str, Exception) -> bool
         that will be called when an exception occurs during event execution.
         The first argument is the event and second is the Exception object.
-        Any arguments passed to the event appear as *args or **kwargs.
         The return value indicates whether to treat the exception as caught
         or re-raise it: True -> caught, False -> re-raise.
         If exception_handler is None, exceptions will be re-raised
@@ -56,6 +57,7 @@ class APIEventDispatcher:
         self._api.register_event_handler(
             event, asyncio.coroutine(partial(self._dispatch_event, event)))
         ev = self._events[event] = Event()
+        ev.set_exception_handler(lambda e: self._exc_handler(event, e))
         return ev
 
     async def _dispatch_event(self, event, *args, **kwargs):
@@ -65,12 +67,7 @@ class APIEventDispatcher:
             return
 
         if len(ev) > 0:
-            try:
-                await ev.trigger(*args, **kwargs)
-            except Exception as e:
-                if self._exc_handler:
-                    if not self._exc_handler(event, e, *args, **kwargs):
-                        raise
+            await ev.trigger(*args, **kwargs)
         else:
             # Unregister if there are no callbacks left, so that debug stub
             # messages on unhandled events still come through.

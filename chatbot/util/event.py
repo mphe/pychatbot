@@ -2,6 +2,9 @@
 
 import asyncio
 from sortedcontainers import SortedList
+from typing import Callable
+
+ExceptionCallback = Callable[[Exception], bool]
 
 # Return values for callbacks to determine if event execution should be
 # continued or stopped.
@@ -9,9 +12,11 @@ EVENT_CONTINUE = 0  # continue
 EVENT_HANDLED  = 1  # stop
 
 # Predefined nice-values, not necessary but makes things cleaner
-EVENT_PRE    = -1000
-EVENT_NORMAL = 0
-EVENT_POST   = 1000
+EVENT_PRE_PRE   = -2000
+EVENT_PRE       = -1000
+EVENT_NORMAL    = 0
+EVENT_POST      = 1000
+EVENT_POST_POST = 2000
 
 
 class Handle:
@@ -67,6 +72,18 @@ class Event:
         self._waiting = []  # Callbacks waiting to get inserted
         self._dirty = 0     # counts how many handlers need to be removed
         self._running = False   # Whether or not trigger() is currently executed
+        self._exception_handler: ExceptionCallback = None
+
+    def set_exception_handler(self, exception_handler: ExceptionCallback):
+        """Register a callback function that will be called when an exception occurs during event chain execution.
+
+        If there is no exception handler, exceptions occuring during event execution
+        will be re-raised immediately, aborting the event chain.
+        The callback receives the Exception object as argument.
+        The return value indicates whether to treat the exception as
+        caught: True -> caught, False -> re-raise.
+        """
+        self._exception_handler = exception_handler
 
     def register(self, callback, nice=EVENT_NORMAL):
         """Adds a callback that will be called when the event is triggered.
@@ -122,19 +139,22 @@ class Event:
         The loop will stop if EVENT_HANDLED is returned by a callback or an
         Exception is thrown. In case of an exception, it won't be handled.
         """
-        self._running = True
-        for i in self._handlers:
-            if i and await i(*args, **kwargs) == EVENT_HANDLED:
-                break
-        self._running = False
-        self._update()
+        await self._execute(args, kwargs)
 
-    def trigger_all(self, *args, **kwargs):
+    async def trigger_all(self, *args, **kwargs):
         """The same as trigger() but calls every handler, regardless of return values."""
+        await self._execute(args, kwargs, trigger_all=True)
+
+    async def _execute(self, args, kwargs, trigger_all=False):
         self._running = True
         for i in self._handlers:
-            if i:
-                i(*args, **kwargs)
+            try:
+                if i and await i(*args, **kwargs) == EVENT_HANDLED and not trigger_all:
+                    break
+            except Exception as e:
+                if self._exception_handler and self._exception_handler(e):
+                    continue
+                raise
         self._running = False
         self._update()
 
