@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from chatbot import api, util
 from chatbot.bot import BotPlugin, ExitCode, command
 
 
@@ -10,7 +9,6 @@ class Plugin(BotPlugin):
         self.register_admin_command("quit", self._quit, argc=0)
         self.register_admin_command("restart", self._restart, argc=0)
         self.register_admin_command("plugins", self._plugins, argc=2)
-        self.register_admin_command("testapi", self._test, argc=0)
         self.register_admin_command("update", self._update, argc=0)
         self.register_command("listplugins", self._listplugins, argc=0)
 
@@ -20,14 +18,6 @@ class Plugin(BotPlugin):
         List mounted plugins.
         """
         await msg.reply(", ".join([ k for k, v in self.bot.iter_plugins() ]))
-
-    async def _test(self, msg: api.ChatMessage, _argv):
-        """Syntax: testapi
-
-        Runs code tests on this message.
-        """
-        await util.testing.test_message(msg, self.bot.api)
-        await msg.reply("Finished.")
 
     async def _plugins(self, msg, argv):
         """Syntax: plugins <mount|unmount|reload> <plugin name>

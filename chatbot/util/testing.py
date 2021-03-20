@@ -114,7 +114,8 @@ async def test_user(user: api.User, apiobj: api.APIBase = None):
             await test_user(founduser)
 
     if chat:
-        await test_chat(await user.get_chat(), apiobj)
+        await test_chat(chat, apiobj)
+        await test_mention(user, chat)
 
 
 @test("Message")
@@ -127,7 +128,15 @@ async def test_message(msg: api.ChatMessage, apiobj: api.APIBase = None):
     author = await test_property(msg, "author")
     chat = await test_property(msg, "chat")
 
+    await test_mention(author, chat)
+
     if author:
         await test_user(msg.author, apiobj)
     if chat:
         await test_chat(msg.chat, apiobj)
+
+
+async def test_mention(author: api.User, chat: api.Chat):
+    mention_str = await test_property(author, "mention")
+    if mention_str:
+        await test_function(chat.send_message, str(mention_str) + " test mention")
