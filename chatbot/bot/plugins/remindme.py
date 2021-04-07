@@ -14,6 +14,10 @@ from queue import PriorityQueue
 Reminder = namedtuple("Reminder", [ "isoformat", "chatid", "userid", "msg", ])
 
 
+def time_get_utc() -> int:
+    return int(-time.timezone / 3600)
+
+
 class Plugin(bot.BotPlugin):
     def __init__(self, oldme: "Plugin", bot_: bot.Bot):
         self._parsers = []  # type: List[parsedatetime.Calendar]
@@ -61,7 +65,7 @@ class Plugin(bot.BotPlugin):
         if not l:
             await msg.reply("You have no active reminders.")
         else:
-            await msg.reply("\n".join([ f"{i}) {r.isoformat}\n> {r.msg}" for i, r in enumerate(l, 1) ]))
+            await msg.reply("\n".join([ f"{i}) {r.isoformat} (UTC+{time_get_utc()})\n> {r.msg}" for i, r in enumerate(l, 1) ]))
 
     async def _remindme(self, msg: api.ChatMessage, argv: List[str]):
         """Syntax: remindme <date/time> [# text]
@@ -102,8 +106,7 @@ class Plugin(bot.BotPlugin):
         date = datetime(*struct[:6])
         self._schedule(Reminder(date.isoformat(), msg.chat.id, msg.author.id, msg.text))
 
-        await msg.reply("Reminding you on {} (UTC+{})".format(
-            date, int(-time.timezone / 3600)))
+        await msg.reply(f"Reminding you on {date} (UTC+{time_get_utc()})")
 
     def _schedule(self, reminder: Reminder):
         self.cfg["timers"].append(reminder)  # is seemlessly serializable
