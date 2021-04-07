@@ -52,20 +52,38 @@ class Plugin(bot.BotPlugin):
         """Syntax: reminders [all]
 
         Lists all active reminders for the current user in the current chat.
-        If `all` is given, all reminders from all chats are listed.
+        If `all` is given, or when in private chat with the bot, all reminders from all chats are listed.
         """
-        listall = bot.command.get_argument(argv, 1, "") == "all"
-        l: List[Reminder] = []
+        chat = await msg.author.get_chat()
+        listall = bot.command.get_argument(argv, 1, "") == "all" \
+            or chat.id == msg.chat.id
+        num_other_reminders = 0
+        output: List[str] = []
 
         r: Reminder
         for r in self._reminders.queue:
-            if r.userid == msg.author.id and (listall or r.chatid == msg.chat.id):
-                l.append(r)
+            if r.userid == msg.author.id:
+                if listall or r.chatid == msg.chat.id:
+                    date = datetime.fromisoformat(r.isoformat)
+                    num_reminders = len(output) + 1
+                    output.append(f"{num_reminders}) {date} (UTC+{time_get_utc()})\n> {r.msg}")
+                else:
+                    num_other_reminders += 1
 
-        if not l:
-            await msg.reply("You have no active reminders.")
+        if output:
+            # Add newline after reminders, if there are other reminders
+            if num_other_reminders:
+                output.append("")
         else:
-            await msg.reply("\n".join([ f"{i}) {r.isoformat} (UTC+{time_get_utc()})\n> {r.msg}" for i, r in enumerate(l, 1) ]))
+            if not num_other_reminders:
+                output.append("You have no active reminders.")
+            else:
+                output.append("You have no active reminders in this chat.")
+
+        if num_other_reminders > 0:
+            output.append(f"You have {num_other_reminders} more reminder(s) in other chats.")
+
+        await msg.reply("\n".join(output))
 
     async def _remindme(self, msg: api.ChatMessage, argv: List[str]):
         """Syntax: remindme <date/time> [# text]
