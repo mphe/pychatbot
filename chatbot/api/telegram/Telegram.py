@@ -131,10 +131,11 @@ class TelegramAPI(api.APIBase):
         await self._trigger(api.APIEvents.MessageSent, apimsg)
 
     async def _on_chat_action(self, event: telethon.events.ChatAction.Event):
-        for userid in event.user_ids:
-            user = await User.create(self, userid)
+        if event.user_ids:
+            for userid in event.user_ids:
+                user = await User.create(self, userid)
 
-            if event.user_added or event.user_joined:
-                await self._trigger(api.APIEvents.GroupMemberJoin, user)
-            elif event.user_kicked or event.user_left:
-                await self._trigger(api.APIEvents.GroupMemberLeave, user)
+                if event.user_added or event.user_joined:
+                    await self._trigger(api.APIEvents.GroupMemberJoin, user)
+                elif event.user_kicked or event.user_left:
+                    await self._trigger(api.APIEvents.GroupMemberLeave, user)
