@@ -38,7 +38,7 @@ class Plugin(bot.BotPlugin):
             logging.warning("%s: No languages specified -> using default.", self.name)
             self._parsers = [ parsedatetime.Calendar() ]
         else:
-            self._parsers = [ parsedatetime.Calendar(parsedatetime.Constants(i)) for i in langs ]
+            self._parsers = [ parsedatetime.Calendar(parsedatetime.Constants(i, usePyICU=False)) for i in langs ]
 
         for i in self.cfg["timers"]:
             self._reminders.put(Reminder(*i))
