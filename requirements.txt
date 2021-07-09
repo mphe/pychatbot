@@ -1,2 +1,6 @@
 sortedcontainers
 appdirs
+parsedatetime==2.6
+markovify
+discord.py==1.6.0
+Telethon==1.21.1
