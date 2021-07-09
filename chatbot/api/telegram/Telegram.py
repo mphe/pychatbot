@@ -25,11 +25,7 @@ class TelegramAPI(api.APIBase):
     def __init__(self, api_id, stub, opts: dict):
         super().__init__(api_id, stub)
         self._opts = opts
-        self._client = telethon.TelegramClient(session=opts["session_file"],
-                                               api_id=opts["api_id"],
-                                               api_hash=opts["api_hash"])
-        self._client.add_event_handler(self._on_receive, telethon.events.NewMessage)
-        self._client.add_event_handler(self._on_chat_action, telethon.events.ChatAction)
+        self._client: telethon.TelegramClient = None
         self._me: User = None
 
     @property
@@ -42,10 +38,16 @@ class TelegramAPI(api.APIBase):
 
     @property
     def is_ready(self) -> bool:
-        return self._client.is_connected()
+        return self._client and self._client.is_connected()
 
     async def start(self) -> None:
         logging.info("NOTE: To receive NewMessage events in groups, you must disable group privacy for your bot using @BotFather.")
+
+        self._client = telethon.TelegramClient(session=self._opts["session_file"],
+                                               api_id=self._opts["api_id"],
+                                               api_hash=self._opts["api_hash"])
+        self._client.add_event_handler(self._on_receive, telethon.events.NewMessage)
+        self._client.add_event_handler(self._on_chat_action, telethon.events.ChatAction)
 
         await self._client.start(bot_token=self._opts["bot_token"])
 
