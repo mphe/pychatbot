@@ -65,7 +65,7 @@ class Test:
 
     async def run_command(self, cmdstring, author="user"):
         msg = api.test.TestAPI.TestingMessage(  # type: ignore[attr-defined]
-            api.test.TestAPI.User(author, ""), cmdstring, self._chat)  # type: ignore[attr-defined]
+            api.test.TestAPI.User(author, "", None), cmdstring, self._chat)  # type: ignore[attr-defined]
         await self.cmd.execute(msg)
 
     async def _cmd_echo(self, _msg, argv):

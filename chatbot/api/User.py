@@ -40,11 +40,12 @@ class User:
 
 
 class GenericUser(User):
-    """Generic user with an ID and a name."""
+    """Generic user with an ID, name, and chat instance."""
 
-    def __init__(self, userid, name="Unknown"):
+    def __init__(self, userid: str, name: str, chat: "api.Chat"):
         self._id = userid
         self._name = name
+        self._chat = chat
 
     @property
     def id(self) -> str:
@@ -53,3 +54,6 @@ class GenericUser(User):
     @property
     def display_name(self) -> str:
         return self._name
+
+    async def get_chat(self) -> "api.Chat":
+        return self._chat

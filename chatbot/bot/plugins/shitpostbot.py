@@ -35,7 +35,7 @@ class Plugin(BotPlugin):
                     raise ValueError
                 count = min(count, self.cfg["max_posts"])
             except ValueError:
-                raise command.CommandSyntaxError("`count` is not a valid number.")
+                raise command.CommandSyntaxError("`count` is not a valid number.")  # pylint: disable=raise-missing-from
 
         urls = await get_shitpost_urls(count, rand)
 

@@ -1,11 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from typing import Union
-import telethon
 from chatbot import api
-from . import Telegram  # needed for type hints, pylint: disable=unused-import
-
-# AnyChat = Union[telethon.tl.types.User, telethon.tl.types.Chat, telethon.tl.types.Channel]
+from . import Telegram  # Needed for type hints, pylint: disable=unused-import
 
 
 class Chat(api.Chat):

@@ -6,7 +6,7 @@ import logging
 from chatbot import api, util
 
 
-class TestAPI(api.APIBase):
+class TestAPI(api.APIBase):  # pylint: disable=too-many-instance-attributes
     def __init__(self, api_id, stub, opts):
         super().__init__(api_id, stub)
         # Fires a message received event every second
@@ -15,8 +15,8 @@ class TestAPI(api.APIBase):
         self._interactive = opts["interactive"]
         self._msg = opts["message"]
         self._chat = TestChat(self)
-        self._user = User("testuser", "Test User")
-        self._otheruser = User("testfriend", "You")
+        self._user = User("testuser", "Test User", self._chat)
+        self._otheruser = User("testfriend", "You", self._chat)
         self._running = False
 
     async def start(self):
@@ -66,8 +66,15 @@ class TestAPI(api.APIBase):
     def api_name(self):
         return "Test API"
 
+    @property
+    def is_ready(self) -> bool:
+        return self._running
+
     async def get_user(self):
         return self._user
+
+    async def find_user(self, userid: str) -> "api.User":
+        raise NotImplementedError
 
     async def set_display_name(self, name):
         self._user._name = name
@@ -121,6 +128,9 @@ class TestingMessage(api.ChatMessage):
     def is_editable(self):
         return False
 
+    async def edit(self, newstr: str) -> None:
+        raise NotImplementedError
+
 
 class TestChat(api.Chat):
     _id_counter = 0
@@ -136,6 +146,10 @@ class TestChat(api.Chat):
         return self._id
 
     @property
+    def is_id_unique(self) -> bool:
+        return False
+
+    @property
     def type(self):
         return api.ChatType.Normal
 
@@ -143,7 +157,7 @@ class TestChat(api.Chat):
     def is_anonymous(self):
         return False
 
-    async def send_message(self, text, msgtype=api.MessageType.Normal):
+    async def send_message(self, text, msgtype=api.MessageType.Normal):  # pylint: disable=arguments-differ
         msg = TestingMessage(await self._api.get_user(), text, self, msgtype)
         logging.info(str(msg))
         await self._api._trigger(api.APIEvents.MessageSent, msg)

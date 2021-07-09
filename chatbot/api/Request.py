@@ -27,7 +27,7 @@ class Request:
             reqname, self.author, self.text)
 
 
-class GroupInvite(Request):
+class GroupInvite(Request):  # pylint: disable=abstract-method
     """Represents a group invite."""
 
     @property
@@ -38,7 +38,7 @@ class GroupInvite(Request):
         return super().__str__("Group-Invite")
 
 
-class FriendRequest(Request):
+class FriendRequest(Request):  # pylint: disable=abstract-method
     """Represents a friend request."""
 
     def __str__(self):  # pylint: disable=signature-differs

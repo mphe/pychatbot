@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import logging
 import telethon
 from telethon.tl.custom.message import Message as TelegramMessage
 from chatbot import api
