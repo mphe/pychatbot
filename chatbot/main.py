@@ -10,13 +10,22 @@ import chatbot.bot
 
 async def main():
     parser = argparse.ArgumentParser(
-        description="Run the bot using a given profile and/or a given API.",
-        epilog="At least one of -p/--profile or -a/--api has to be specified."
+        description="""
+Run the bot using a given profile and/or a given API.
+At least one of -p/--profile or -a/--api has to be specified.
+
+A profile is a configuration file located in the platform specific default
+directory, e.g. "~/.config" on Linux, or %appdata% on windows, containing Bot
+and API specific configuration, e.g. login credentials.
+If the given profile does not exist, it will be created, however you also need to specify the API in this case.
+
+Usually, in order to connect to chat protocols, you will need an account and/or a bot token to log in,
+hence, specifying only an API using -a/--api, will most likely fail due to missing login credentials.
+        """
     )
     parser.add_argument("-p", "--profile",    help="Profile name", default="")
     parser.add_argument("-a", "--api",        help="API name",     default="")
-    parser.add_argument("-d", "--profiledir", help="Profile directory (bot config). If not specified, the platform specific default directory is used.")
-    parser.add_argument("-n", "--namespace",  help="Config directory (plugin configs). If not specified, the profile directory is used..")
+    # parser.add_argument("-d", "--profiledir", help="Profile directory (bot config). If not specified, the platform specific default directory is used.")
     parser.add_argument("-v", "--verbose",    help="Show debug output", action="store_true")
     args = parser.parse_args()
 
@@ -24,9 +33,12 @@ async def main():
         parser.error("An API and/or a profile has to specified.")
         return 1
 
-    logging.basicConfig(level=logging.DEBUG,
-                        filemode="a", filename="chatbot.log",
-                        format="%(levelname)s: %(message)s")
+    profilemgr = chatbot.bot.BotProfileManager()
+    profile = profilemgr.load_or_create(args.profile, args.api)
+    profile.log_rotate()
+
+    logging.basicConfig(level=logging.DEBUG, format="%(levelname)s: %(message)s",
+                        filemode="a", filename=profile.get_log_path())
 
     handler = logging.StreamHandler(sys.stdout)
     handler.setLevel(logging.DEBUG if args.verbose else logging.INFO)
@@ -35,10 +47,10 @@ async def main():
 
     logging.debug("------------------------ MAIN ------------------------")
 
-    bot = chatbot.bot.Bot(args.profiledir)
+    bot = chatbot.bot.Bot(profile)
 
     try:
-        bot.init(profile=args.profile, apiname=args.api, namespace=args.namespace)
+        await bot.init()
         return await bot.run()
     except (KeyboardInterrupt, SystemExit) as e:
         logging.info(e)

@@ -24,8 +24,10 @@ class Test:
 
     def run(self):
         logging.info("Creating API object")
-        self._api = api.create_api_object("test", message="custom message text",
-                                          interactive=False)
+        self._api = api.create_api_object("test", {
+            "message": "custom message text",
+            "interactive": False
+        })
         logging.info(str(self._api))
 
         self._api.register_event_handler(api.APIEvents.Message, self._on_receive)

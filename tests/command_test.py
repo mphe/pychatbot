@@ -26,7 +26,8 @@ class Test:
                           flags=CommandFlag.Missing)
 
         # Import the module. We don't need the API object.
-        api.create_api_object("test", interactive=False)
+        api.create_api_object("test", { "interactive": False })
+        self._chat = api.test.TestAPI.TestChat(api)  # type: ignore[attr-defined]
 
     async def run(self):
         try:
@@ -63,8 +64,8 @@ class Test:
         logging.info("Done")
 
     async def run_command(self, cmdstring, author="user"):
-        msg = api.test.TestAPI.TestingMessage(                   # type: ignore
-            api.test.TestAPI.User(author, ""), cmdstring, None)  # type: ignore
+        msg = api.test.TestAPI.TestingMessage(  # type: ignore[attr-defined]
+            api.test.TestAPI.User(author, ""), cmdstring, self._chat)  # type: ignore[attr-defined]
         await self.cmd.execute(msg)
 
     async def _cmd_echo(self, _msg, argv):

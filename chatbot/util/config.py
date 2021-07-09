@@ -4,7 +4,10 @@ import os
 import errno
 import json
 import logging
+from typing import Dict, Any
 from chatbot.util import merge_dicts
+
+JsonDict = Dict[str, Any]
 
 
 class Config:
@@ -14,20 +17,20 @@ class Config:
     a simple wrapping around `dict`, e.g. Config["key"] = 4 .
     Use `Config.data` to access the json dict directly.
     """
-    def __init__(self, filename):
-        self._filename = filename
-        self.data = {}
+    def __init__(self, filename: str):
+        self._filename: str = filename
+        self.data: JsonDict = {}
 
     @property
-    def filename(self):
+    def filename(self) -> str:
         """The config filename."""
         return self._filename
 
-    def exists(self):
+    def exists(self) -> bool:
         return os.path.exists(self.filename)
 
-    def load(self, default=None, validate=True, write=False, create=False):
-        """(Re-)Load the config file.
+    def load(self, default: JsonDict = None, validate=True, write=False, create=False) -> "Config":
+        """(Re-)Load the config file and returns itself.
 
         default: The default config in case the file does not exist or
                  `validate` is true.
@@ -35,6 +38,7 @@ class Config:
                   add missing entries.
         write: Indicates whether or not the original file should be rewritten
                with the loaded config (validated/default).
+               Creates missing directories as necessary.
         create: Same as `write` but only if the file didn't exist before.
         """
         logging.debug("Loading json file: %s", self.filename)
@@ -45,6 +49,7 @@ class Config:
         except IOError as e:
             if e.errno == errno.ENOENT:  # file not found
                 validate = True  # Use default
+                logging.debug("File not found -> using default")
             else:
                 raise
 
@@ -56,14 +61,17 @@ class Config:
         elif create:
             self.create()
 
+        return self
+
     def create(self):
-        """Write config only if the file does not yet exist."""
+        """Write config only if the file does not yet exist, creating missing directories as necessary."""
         if not self.exists():
             self.write()
 
     def write(self):
-        """Write config to a file."""
+        """Write config to a file, creating missing directories as necessary."""
         logging.debug("Writing json file: %s", self.filename)
+        os.makedirs(os.path.dirname(self.filename), exist_ok=True)
         with open(self.filename, "w") as f:
             json.dump(self.data, f, indent=4)
 
@@ -83,22 +91,22 @@ class Config:
 class ConfigManager:
     """Provides functionality for loading and saving configs as json."""
 
-    def __init__(self, searchpath):
+    def __init__(self, searchpath: str):
         self._searchpath = ""
-        if searchpath:
-            self.set_searchpath(searchpath)
+        self.set_searchpath(searchpath)
 
-    def set_searchpath(self, searchpath):
+    def set_searchpath(self, searchpath: str):
+        assert searchpath, "Empty searchpath"
         self._searchpath = searchpath
         os.makedirs(searchpath, exist_ok=True)
 
-    def get_searchpath(self):
+    def get_searchpath(self) -> str:
         return self._searchpath
 
-    def get_config(self, basename) -> Config:
+    def get_config(self, basename: str) -> Config:
         """Returns a Config object for the respective file from searchpath.
 
         Only returns the object, but does not load it.
-        `basename` is not a path but the base-filename without extension.
+        `basename` is not a path but the base-filename, optionally with .json extension.
         """
-        return Config(os.path.join(self._searchpath, basename + ".json"))
+        return Config(os.path.join(self._searchpath, basename if basename.endswith(".json") else basename + ".json"))

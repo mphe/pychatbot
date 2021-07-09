@@ -14,7 +14,7 @@ class BotPlugin(BasePlugin):
         super().__init__(oldme, bot)
         self.__name: str = os.path.splitext(os.path.basename(getfile(self.__class__)))[0]
         self.__bot: "chatbot.bot.Bot" = bot
-        self.__cfg = bot.config_manager.get_config(self.name)
+        self.__cfg = bot.profile.get_plugin_config(self.name)
 
         # Keep track of registered commands and event handlers to unregister them automatically
         self.__commands: List[str] = []

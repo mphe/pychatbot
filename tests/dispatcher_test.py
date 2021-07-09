@@ -28,8 +28,10 @@ class Test:
 
     async def run(self):
         logging.info("Creating API object")
-        apiobj = api.create_api_object("test", message="custom message text",
-                                       interactive=False)
+        apiobj = api.create_api_object("test", {
+            "message": "custom message text",
+            "interactive": False
+        })
         dispatcher = APIEventDispatcher(apiobj)
         logging.info(str(apiobj))
 

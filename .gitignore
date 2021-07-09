@@ -1,7 +1,5 @@
 *.pyc
 tests/profile.tox
-tmp/
-config
-chatbot.log
+tests/test_profile
 .vim
 .mypy_cache

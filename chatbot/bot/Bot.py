@@ -1,17 +1,14 @@
 # -*- coding: utf-8 -*-
 
-import appdirs
 import logging
 import os
 from typing import Iterable, Tuple
 import chatbot
 from chatbot import api
-from chatbot.util import merge_dicts, config
+from chatbot.util import config
 from .subsystem import APIEventDispatcher, command
 from .subsystem.plugin import PluginManager
-
-
-CONFIG_DIR = appdirs.user_config_dir("pychatbot")
+from . import BotProfile
 
 
 class ExitCode:
@@ -23,20 +20,14 @@ class ExitCode:
 
 
 class Bot:
-    def __init__(self, profiledir=""):
+    def __init__(self, profile: BotProfile):
         self._exit = ExitCode.Normal
+        self._profile = profile
         self._config: config.Config = None
         self._api: api.APIBase = None
         self._dispatcher: APIEventDispatcher = None
         self._cmdhandler: command.CommandHandler = None
         self._pluginmgr: PluginManager = None
-
-        if profiledir:
-            self._cfgmgr = config.ConfigManager(profiledir)
-            logging.info("Using custom profile directory: %s", profiledir)
-        else:
-            self._cfgmgr = config.ConfigManager(CONFIG_DIR)
-            logging.info("Using default profile directory: %s", CONFIG_DIR)
 
     async def close(self, code=ExitCode.Normal) -> None:
         """Gives the signal to stop with the given exit code."""
@@ -44,22 +35,17 @@ class Bot:
         self._exit = code
         await self._api.close()
 
-    def init(self, profile="", apiname="", namespace="", api_kwargs: dict = None) -> None:
-        """Run initialization or throw Exception if something fails.
-
-        Args:
-            profile: A profile name to load.
-            apiname: An API to load.
-            api_kwargs: Dictionary of API options passed to the API object.
-
-        If neither `profile` nor `apiname` is specified, the initialization fails.
-        """
+    async def init(self) -> None:
+        """Run initialization or re-raise Exceptions if something fails."""
+        # NOTE: This is a coroutine, because plugins might rely on an asyncio event
+        # loop already running.
+        #
         # NOTE: init() is a separate function and not included in run()
         # so that it's possible to register some custom handlers before
         # starting the main loop.
         # See echobot test.
         try:
-            self._init(profile, apiname, namespace, api_kwargs)
+            self._init()
         except Exception as e:
             logging.exception(e)
             logging.error("Failed to initialize.")
@@ -98,8 +84,8 @@ class Bot:
         return self._api
 
     @property
-    def config_manager(self) -> config.ConfigManager:
-        return self._cfgmgr
+    def profile(self) -> BotProfile:
+        return self._profile
 
     # Wrappers
     # TODO: Consider using some hacks to set the docstrings to the wrapped
@@ -187,43 +173,12 @@ class Bot:
             await chat.leave()
 
     # Utility functions
-    def _load_config(self, profile="", apiname="", namespace="", api_kwargs: dict = None) -> None:
-        if not apiname and not profile:
-            raise ValueError("No API and no profile specified")
-
-        cfg = self._cfgmgr.get_config(profile)
-        cfg.load(self._get_default_config())
-
-        # Apply custom settings and overwrite existing
-        if namespace:
-            cfg["namespace"] = namespace
-
-        if apiname:
-            cfg["api"] = apiname
-        elif not cfg["api"]:
-            raise ValueError("No API specified")
-
-        if api_kwargs:
-            merge_dicts(cfg["api_config"], api_kwargs, True)
-
-        # Save if new profile
-        if profile and not cfg.exists():
-            # Add API specific defaults
-            merge_dicts(cfg["api_config"],
-                        api.get_api_class(cfg["api"]).get_default_options())
-            cfg.write()
-
-        if cfg["namespace"]:
-            self._cfgmgr.set_searchpath(
-                os.path.join(self._cfgmgr.get_searchpath(), cfg["namespace"]))
-            logging.info("Using custom config directory: %s", cfg["namespace"])
-
-        self._config = cfg
-
-    def _init(self, profile="", apiname="", namespace="", api_kwargs: dict = None) -> None:
+    def _init(self) -> None:
         logging.info("Initializing...")
         logging.info("Loading configs")
-        self._load_config(profile, apiname, namespace, api_kwargs)
+
+        self._config = self._profile.get_bot_config()
+        self._config.load(self.get_default_config())
 
         self._cmdhandler = command.CommandHandler(
             prefix=self._config["prefix"],
@@ -236,8 +191,8 @@ class Bot:
             blacklist=self._config["plugin_blacklist"])
 
         logging.info("Preparing API...")
-        self._api = api.create_api_object(
-            self._config["api"], **self._config["api_config"])
+        apicfg = self._profile.get_api_config().load()
+        self._api = api.create_api_object(self._config["api"], apicfg.data)
 
         self._dispatcher = APIEventDispatcher(self._api, self._handle_event_exc)
         self._dispatcher.register(api.APIEvents.Message, self._handle_command)
@@ -279,15 +234,11 @@ class Bot:
         return True
 
     @staticmethod
-    def _get_default_config():
+    def get_default_config():
         return {
-            "api": "",
-            "api_config": {
-                "stub": False,
-            },
+            "api": "",  # This key is also used in BotProfileManager
             "plugin_whitelist": [],
             "plugin_blacklist": [],
-            "namespace": "",
             "prefix": [ "!bot", "@bot", "!" ],
             "admins": [],
             "display_name": "Bot",

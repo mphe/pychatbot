@@ -22,9 +22,13 @@ async def on_ready():
     logging.info("Type !exit or !quit to exit.")
 
 
-def main():
-    b = bot.Bot(os.path.join(os.path.dirname(__file__), "test_profile"))
-    b.init(apiname="test")
+async def main():
+    profilemgr = bot.BotProfileManager(os.path.dirname(__file__))
+    profile = profilemgr.load_or_create("test_profile", "test")
+    profile.log_rotate()
+
+    b = bot.Bot(profile)
+    await b.init()
     b.register_event_handler(api.APIEvents.FriendRequest, on_friend_request)
     b.register_event_handler(api.APIEvents.Message, on_message)
     b.register_event_handler(api.APIEvents.Ready, on_ready)
@@ -35,8 +39,8 @@ def main():
     b.register_command("exit", exitcmd, argc=0)
     b.register_command("quit", exitcmd, argc=0)
 
-    asyncio.run(b.run())
+    await b.run()
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())

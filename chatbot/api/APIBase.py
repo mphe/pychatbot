@@ -18,7 +18,6 @@ class APIBase:
     |- skype
     |- tox
     |- irc
-    |  |
     |  |- __init__.py
     |  |- ircapi.py
 
@@ -29,7 +28,7 @@ class APIBase:
     or by directly renaming IRCAPI to API.
     """
 
-    def __init__(self, api_id, stub=True):
+    def __init__(self, api_id, stub=False):
         """Must be called by API implementations.
 
         The arguments for this function are usually passed to the
