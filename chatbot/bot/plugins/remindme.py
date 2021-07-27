@@ -15,7 +15,7 @@ Reminder = namedtuple("Reminder", [ "isoformat", "chatid", "userid", "msg", ])
 
 
 def time_get_utc() -> int:
-    return int(-time.timezone / 3600)
+    return int(time.localtime().tm_gmtoff / 3600)
 
 
 class Plugin(bot.BotPlugin):
