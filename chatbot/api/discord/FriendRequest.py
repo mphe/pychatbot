@@ -21,11 +21,10 @@ class FriendRequest(api.FriendRequest):
         return ""
 
     async def accept(self):
-        errstring = "Can't accept friend requests because it was blacklisted from the API.\nDoing so will not work but invalidate the account, thus requiring to revalidate the email address."
-        logging.error(errstring)
-        await (await self.author.get_chat()).send_message(errstring)
         await self.decline()
-        # await self._request.accept()
 
     async def decline(self):
-        await self._request.delete()
+        # Not available for bot accounts and no longer supported by the non-bot API.
+        errstring = "Friend requests are not availabe for bot accounts and are no longer supported by the non-bot API."
+        logging.error(errstring)
+        await (await self.author.get_chat()).send_message(errstring)

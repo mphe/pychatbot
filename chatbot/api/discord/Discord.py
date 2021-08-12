@@ -142,10 +142,8 @@ class DiscordClient(discordapi.Client):
             if msg.author == self.user:
                 await self._api._trigger(api.APIEvents.MessageSent, Message(self._api, msg, True))
             else:
-                if not self.user.bot:
-                    await msg.ack()
+                # msg.ack() is not available for bot accounts and no longer supported by the non-bot API.
                 await self._api._trigger(api.APIEvents.Message, Message(self._api, msg, False))
-                # await util.testing.test_message(Message(self._api, msg, False), self._api)
 
     async def on_relationship_add(self, relationship):
         if relationship.type == discordapi.RelationshipType.incoming_request:
