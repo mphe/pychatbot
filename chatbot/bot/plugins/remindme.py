@@ -1,17 +1,23 @@
 # -*- coding: utf-8 -*-
 
 import time
-from collections import namedtuple
 import asyncio
 from datetime import datetime
-from typing import List, Tuple
+from typing import List, Tuple, NamedTuple
 import logging
 import parsedatetime
 from chatbot import api, bot, util
 from queue import PriorityQueue
 
-# isoformat should be the first item, to ensure correct sorting order
-Reminder = namedtuple("Reminder", [ "isoformat", "chatid", "userid", "msg", ])
+
+# DON'T CHANGE ATTRIBUTE ORDER!
+# Changing order will break serialization.
+# isoformat should be the first item, to ensure correct sorting order.
+class Reminder(NamedTuple):
+    isoformat: str
+    chatid: str
+    userid: str
+    msg: str
 
 
 def time_get_utc() -> int:
@@ -20,9 +26,9 @@ def time_get_utc() -> int:
 
 class Plugin(bot.BotPlugin):
     def __init__(self, oldme: "Plugin", bot_: bot.Bot):
-        self._parsers = []  # type: List[parsedatetime.Calendar]
-        self._timer = None  # type: asyncio.Task
-        self._reminders = PriorityQueue()  # type: PriorityQueue[Reminder]
+        self._parsers: List[parsedatetime.Calendar] = []
+        self._timer: asyncio.Task = None
+        self._reminders: PriorityQueue[Reminder] = PriorityQueue()
 
         super().__init__(oldme, bot_)
 
