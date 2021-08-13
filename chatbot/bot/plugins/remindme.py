@@ -1,17 +1,24 @@
 # -*- coding: utf-8 -*-
 
 import time
-from collections import namedtuple
 import asyncio
 from datetime import datetime
-from typing import List, Tuple
+from typing import List, Tuple, NamedTuple, Callable, Awaitable
 import logging
 import parsedatetime
 from chatbot import api, bot, util
 from queue import PriorityQueue
 
-# isoformat should be the first item, to ensure correct sorting order
-Reminder = namedtuple("Reminder", [ "isoformat", "chatid", "userid", "msg", ])
+
+# DON'T CHANGE ATTRIBUTE ORDER!
+# Changing order will break serialization.
+# isoformat should be the first item, to ensure correct sorting order.
+class Reminder(NamedTuple):
+    isoformat: str
+    chatid: str
+    userid: str
+    msg: str
+    callback: Callable[["Reminder"], Awaitable[None]] = None  # type: ignore[misc]
 
 
 def time_get_utc() -> int:
@@ -20,9 +27,12 @@ def time_get_utc() -> int:
 
 class Plugin(bot.BotPlugin):
     def __init__(self, oldme: "Plugin", bot_: bot.Bot):
-        self._parsers = []  # type: List[parsedatetime.Calendar]
-        self._timer = None  # type: asyncio.Task
-        self._reminders = PriorityQueue()  # type: PriorityQueue[Reminder]
+        self._parsers: List[parsedatetime.Calendar] = []
+        self._timer: asyncio.Task = None
+        self._reminders: PriorityQueue[Reminder] = PriorityQueue()
+
+        if oldme:
+            self._reminders = oldme._reminders  # Carry over callback timers
 
         super().__init__(oldme, bot_)
 
@@ -39,6 +49,13 @@ class Plugin(bot.BotPlugin):
             self._parsers = [ parsedatetime.Calendar() ]
         else:
             self._parsers = [ parsedatetime.Calendar(parsedatetime.Constants(i, usePyICU=False)) for i in langs ]
+
+        # Remove all non-callback reminders
+        callbacks = [ i for i in self._reminders.queue if i.callback ]
+        self._reminders.queue.clear()
+
+        for i in callbacks:
+            self._reminders.put(i)
 
         for i in self.cfg["timers"]:
             self._reminders.put(Reminder(*i))
@@ -62,6 +79,9 @@ class Plugin(bot.BotPlugin):
 
         r: Reminder
         for r in self._reminders.queue:
+            if r.callback:
+                continue
+
             if r.userid == msg.author.id:
                 if listall or r.chatid == msg.chat.id:
                     date = datetime.fromisoformat(r.isoformat)
@@ -127,10 +147,9 @@ class Plugin(bot.BotPlugin):
         await msg.reply(f"Reminding you on {date} (UTC+{time_get_utc()})")
 
     def _schedule(self, reminder: Reminder):
-        self.cfg["timers"].append(reminder)  # is seemlessly serializable
-        self.cfg.write()
-
         self._reminders.put(reminder)
+        if not reminder.callback:
+            self._update_config()
         logging.debug("Scheduled %s", reminder.isoformat)
         self._restart_timer()
 
@@ -186,18 +205,28 @@ class Plugin(bot.BotPlugin):
         if user is None:
             logging.error("Failed to retrieve user %s", reminder.userid)
 
-        if chat:
+        if reminder.callback:
+            await reminder.callback(reminder)
+
+        elif chat:
             userping = "@Unknown" if user is None else user.mention
             await chat.send_message("{}\n{}: {}".format(
                 util.string_prepend("> ", reminder.msg), userping, self.cfg["message"]))
 
-        self._pop_reminder(reminder)
+        self._remove_reminder(reminder)
 
-    def _pop_reminder(self, reminder: Reminder):
-        self._reminders.get()
-        self.cfg["timers"] = list(self._reminders.queue)
-        self.cfg.write()
+    def _remove_reminder(self, reminder: Reminder):
+        if reminder == self._reminders.queue[0]:
+            self._reminders.get()
+        else:
+            self._reminders.queue.remove(reminder)
+        if not reminder.callback:
+            self._update_config()
         logging.debug("Reminder removed: %s", reminder)
+
+    def _update_config(self):
+        self.cfg["timers"] = [ i for i in self._reminders.queue if not i.callback ]
+        self.cfg.write()
 
     @staticmethod
     def get_default_config():
