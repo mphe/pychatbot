@@ -39,14 +39,22 @@ class Plugin(BotPlugin):
 
         urls = await get_shitpost_urls(count, rand)
 
-        # Split in multiple messages, because Discord only previews 5 URLs per message.
-        for chunk in util.iter_chunks(urls, self.cfg["split_messages"]):
+        # Split in multiple messages, because Discord only previews 5 URLs per message, Telegram only 1,  etc..
+        for chunk in util.iter_chunks(urls, self._get_split_messages()):
             await msg.reply("\n".join(chunk))
+
+    def _get_split_messages(self) -> int:
+        urls = self.cfg["urls_per_message"]
+        if urls <= 0:
+            if self.bot.api.api_id == "discord":
+                return 5
+            return 1
+        return urls
 
     @staticmethod
     def get_default_config():
         return {
-            "split_messages": 1,  # Split in messages of N URLs
+            "urls_per_message": 0,  # Split in messages of N URLs, 0 for auto
             "max_posts": 50,
         }
 
