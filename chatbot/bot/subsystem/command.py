@@ -138,6 +138,7 @@ class CommandHandler:
         self.register("help", self._help, argc=0)
         self.register("list", self._list, argc=0)
         self.register("history", self._list_history, argc=0)
+        self.register("echo", self._echo)
 
     @property
     def admins(self) -> Iterable[str]:
@@ -353,3 +354,10 @@ class CommandHandler:
             await msg.reply("\n".join(
                 [ "{}) {}".format(i, msg.text) for i, msg in enumerate(history[::-1], 1) ]
             ))
+
+    async def _echo(self, msg: ChatMessage, argv: List[str]):
+        """Syntax: echo <text>
+
+        Say the given text.
+        """
+        await msg.reply(" ".join(argv[1:]))
