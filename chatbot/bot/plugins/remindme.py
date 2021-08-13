@@ -1,17 +1,25 @@
 # -*- coding: utf-8 -*-
 
 import time
-from collections import namedtuple
 import asyncio
 from datetime import datetime
-from typing import List, Tuple
+from typing import List, Tuple, NamedTuple
 import logging
 import parsedatetime
 from chatbot import api, bot, util
 from queue import PriorityQueue
 
-# isoformat should be the first item, to ensure correct sorting order
-Reminder = namedtuple("Reminder", [ "isoformat", "chatid", "userid", "msg", ])
+
+# DON'T CHANGE ATTRIBUTE ORDER!
+# Changing order will break serialization.
+# isoformat should be the first item, to ensure correct sorting order.
+class Reminder(NamedTuple):
+    isoformat: str
+    chatid: str
+    userid: str
+    msg: str
+    is_command: bool = False  # Treat msg as command
+    is_recurrent: bool = False
 
 
 def time_get_utc() -> int:
@@ -20,12 +28,13 @@ def time_get_utc() -> int:
 
 class Plugin(bot.BotPlugin):
     def __init__(self, oldme: "Plugin", bot_: bot.Bot):
-        self._parsers = []  # type: List[parsedatetime.Calendar]
-        self._timer = None  # type: asyncio.Task
-        self._reminders = PriorityQueue()  # type: PriorityQueue[Reminder]
+        self._parsers: List[parsedatetime.Calendar] = []
+        self._timer: asyncio.Task = None
+        self._reminders: PriorityQueue[Reminder] = PriorityQueue()
 
         super().__init__(oldme, bot_)
 
+        self.register_command("schedule", self._schedule_cmd)
         self.register_command("remindme", self._remindme)
         self.register_command("reminders", self._print_reminders, argc=0)
 
@@ -85,11 +94,33 @@ class Plugin(bot.BotPlugin):
 
         await msg.reply("\n".join(output))
 
+    async def _schedule_cmd(self, msg: api.ChatMessage, argv: List[str]):
+        """Syntax: schedule [every] <date/time> [#] <command>
+
+        Schedule a timer for the given date/time and execute a command when the time has passed.
+        See `remindme` command for further usage instructions.
+
+        **Examples:**
+        `!schedule 5m help`
+            Sets a timer to 5 minutes and executes the `!help` command.
+
+        `!schedule 7.7. # choose today tomorrow
+            Sets a timer to 7. July of current year and executes `!choose today tomorrow`.
+            A "#" is required here because otherwise "today" and "tomorrow" would be interpreted as date.
+
+        `!schedule every 1 day 9:00 # echo Good morning!`
+            Sets a repeating timer to 9:00 every day and executes `!echo Good morning!`.
+            A "#" is required here because otherwise "morning" would be interpreted as date.
+        """
+        pass
+
     async def _remindme(self, msg: api.ChatMessage, argv: List[str]):
-        """Syntax: remindme <date/time> [# text]
+        """Syntax: remindme [every] <date/time> [#] [text]
 
         Schedule a timer for the given date/time and send a message when the time has passed.
         <time> can be any human readable date/time string, e.g. "tomorrow", "5m", "22.7.2022", "1h 5m 30s", "15:30", etc.
+
+        If "every" is specified, the timer will repeat with the same date/time information, as if the user would execute the command again.
 
         NOTE: Be aware that all dates/times are relative to the bot's system timezone.
 
@@ -104,6 +135,10 @@ class Plugin(bot.BotPlugin):
         `!remindme 7.7. # tomorrow important date`
             Sets a timer to 7. July of current year.
             A "#" is required here because otherwise "tomorrow" would be interpreted as date.
+
+        `!remindme every 1 day 9:00 # Good morning!`
+            Sets a repeating timer to 9:00 every day.
+            A "#" is required here because otherwise "morning" would be interpreted as date.
         """
         text = " ".join(argv[1:])
         comment_idx = text.find("#")
@@ -125,6 +160,9 @@ class Plugin(bot.BotPlugin):
         self._schedule(Reminder(date.isoformat(), msg.chat.id, msg.author.id, msg.text))
 
         await msg.reply(f"Reminding you on {date} (UTC+{time_get_utc()})")
+
+    def _parse_command(self, msg: api.ChatMessage, argv: List[str]):
+        pass
 
     def _schedule(self, reminder: Reminder):
         self.cfg["timers"].append(reminder)  # is seemlessly serializable
