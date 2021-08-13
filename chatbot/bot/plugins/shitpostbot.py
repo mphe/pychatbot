@@ -5,14 +5,29 @@ from chatbot.bot import BotPlugin, command
 from urllib import request
 from xml.etree import ElementTree
 from chatbot import api, util
-from typing import List
+from typing import List, Set
+import logging
+import asyncio
 
 
 class Plugin(BotPlugin):
     def __init__(self, oldme, bot):
+        self._autochats: Set[str] = set()
+        self._timer: asyncio.Task = None
+
         super().__init__(oldme, bot)
 
         self.register_command("shitpost", self._shitpost, argc=0)
+        self.register_command("autoshitpost", self._auto_shitpost, argc=0)
+
+    def reload(self):
+        super().reload()
+        self._autochats = set(self.cfg["autochats"])
+        self._start_timer()
+
+    def quit(self):
+        self._stop_timer()
+        super().quit()
 
     async def _shitpost(self, msg: api.ChatMessage, argv: List[str]):
         """Syntax: shitpost [random] [count]
@@ -21,27 +36,56 @@ class Plugin(BotPlugin):
         `count` is optional determines how many posts to fetch (max. 50 by default).
         Please mind anit-spam limits when using high count values, bots are affected, too.
         """
-        count = 1
-        rand = False
+        rand = len(argv) > 1 and argv[1] == "random"
+        count = min(command.get_argument(argv, 1 if not rand else 2, 1, int), self.cfg["max_posts"])
+        await self._send_shitpost(msg.chat, count, rand)
 
-        if len(argv) > 1 and argv[1] == "random":
-            rand = True
-            argv = util.list_shifted(argv)
+    async def _auto_shitpost(self, msg: api.ChatMessage, _argv: List[str]):
+        """Syntax: autoshitpost
 
-        if len(argv) > 1:
-            try:
-                count = int(argv[1])
-                if count <= 0:
-                    raise ValueError
-                count = min(count, self.cfg["max_posts"])
-            except ValueError:
-                raise command.CommandSyntaxError("`count` is not a valid number.")  # pylint: disable=raise-missing-from
+        Toggle automatically posting the most recent shitpost to the current chat every 30 minutes.
+        """
+        chatid = msg.chat.id
 
+        try:
+            self._autochats.remove(chatid)
+            if not self._autochats:
+                self._stop_timer()
+            await msg.reply("Auto-Shitposting deactivated!")
+        except KeyError:
+            self._autochats.add(chatid)
+            self._start_timer()
+            await msg.reply("Auto-Shitposting activated!")
+
+        # Update config
+        self.cfg["autochats"] = list(self._autochats)
+        self.cfg.write()
+
+    async def _timer_callback(self):
+        while True:
+            await asyncio.sleep(30 * 60)
+            for chatid in self._autochats:
+                chat = await self.bot.api.find_chat(chatid)
+                if chat:
+                    await self._send_shitpost(chat, 1, False)
+
+    async def _send_shitpost(self, chat: api.Chat, count: int, rand: bool):
         urls = await get_shitpost_urls(count, rand)
 
         # Split in multiple messages, because Discord only previews 5 URLs per message, Telegram only 1,  etc..
         for chunk in util.iter_chunks(urls, self._get_split_messages()):
-            await msg.reply("\n".join(chunk))
+            await chat.send_message("\n".join(chunk))
+
+    def _start_timer(self):
+        if not self._timer:
+            self._timer = asyncio.create_task(self._timer_callback())
+            logging.debug("Auto-Shitpost task started")
+
+    def _stop_timer(self):
+        if self._timer and not self._timer.done():
+            self._timer.cancel()
+            logging.debug("Auto-Shitpost task stopped")
+        self._timer = None
 
     def _get_split_messages(self) -> int:
         urls = self.cfg["urls_per_message"]
@@ -56,6 +100,7 @@ class Plugin(BotPlugin):
         return {
             "urls_per_message": 0,  # Split in messages of N URLs, 0 for auto
             "max_posts": 50,
+            "autochats": [],
         }
 
 
