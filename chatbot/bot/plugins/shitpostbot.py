@@ -62,17 +62,26 @@ class Plugin(BotPlugin):
         self.cfg.write()
 
     async def _timer_callback(self):
+        last_url = ""
+
         while True:
             await asyncio.sleep(30 * 60)
-            for chatid in self._autochats:
-                chat = await self.bot.api.find_chat(chatid)
-                if chat:
-                    await self._send_shitpost(chat, 1, False)
+
+            # Fetch URL and check if it is not the same as before
+            urls = await get_shitpost_urls(1, False)
+
+            if urls[0] != last_url:
+                last_url = urls[0]
+                for chatid in self._autochats:
+                    if chat := await self.bot.api.find_chat(chatid):
+                        await self._send_urls(chat, urls)
 
     async def _send_shitpost(self, chat: api.Chat, count: int, rand: bool):
         urls = await get_shitpost_urls(count, rand)
+        self._send_urls(chat, urls)
 
-        # Split in multiple messages, because Discord only previews 5 URLs per message, Telegram only 1,  etc..
+    async def _send_urls(self, chat: api.Chat, urls: List[str]):
+        """Split in multiple messages, because Discord only previews 5 URLs per message, Telegram only 1,  etc."""
         for chunk in util.iter_chunks(urls, self._get_split_messages()):
             await chat.send_message("\n".join(chunk))
 
