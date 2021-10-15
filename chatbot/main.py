@@ -23,11 +23,15 @@ Usually, in order to connect to chat protocols, you will need an account and/or 
 hence, specifying only an API using -a/--api, will most likely fail due to missing login credentials.
         """
     )
-    parser.add_argument("-p", "--profile",    help="Profile name", default="")
-    parser.add_argument("-a", "--api",        help="API name",     default="")
-    # parser.add_argument("-d", "--profiledir", help="Profile directory (bot config). If not specified, the platform specific default directory is used.")
-    parser.add_argument("-v", "--verbose",    help="Show debug output", action="store_true")
+    parser.add_argument("-p", "--profile",       help="Profile name", default="")
+    parser.add_argument("-a", "--api",           help="API name",     default="")
+    parser.add_argument("-l", "--list-profiles", help="List available profiles", action="store_true")
+    parser.add_argument("-v", "--verbose",       help="Show debug output", action="store_true")
     args = parser.parse_args()
+
+    if args.list_profiles:
+        print("Available profiles:", ", ".join(chatbot.bot.BotProfileManager().get_profiles()))
+        return 0
 
     if not args.profile and not args.api:
         parser.error("An API and/or a profile has to specified.")

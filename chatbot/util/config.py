@@ -13,6 +13,9 @@ JsonDict = Dict[str, Any]
 class Config:
     """Provides functionality for loading, saving, and accessing json configs.
 
+    Does not load or create any files automatically, unless explicitly
+    requested in load(), write(), or create().
+
     Implements __len__, __setitem__, __getitem__, and __delitem__ to provide
     a simple wrapping around `dict`, e.g. Config["key"] = 4 .
     Use `Config.data` to access the json dict directly.
@@ -89,19 +92,26 @@ class Config:
 
 
 class ConfigManager:
-    """Provides functionality for loading and saving configs as json."""
+    """Provides functionality for loading and saving configs as json.
+
+    It does not create any files or directories. It provides a simple way to
+    retrieve configs from a specific searchpath.
+    """
 
     def __init__(self, searchpath: str):
-        self._searchpath = ""
+        self._searchpath = "."
         self.set_searchpath(searchpath)
 
     def set_searchpath(self, searchpath: str):
-        assert searchpath, "Empty searchpath"
-        self._searchpath = searchpath
-        os.makedirs(searchpath, exist_ok=True)
+        self._searchpath = searchpath or "."
 
     def get_searchpath(self) -> str:
+        """Return current searchpath or '.' if empty."""
         return self._searchpath
+
+    def get_file(self, fname: str) -> str:
+        """Returns a filename relative to the searchpath."""
+        return os.path.join(self._searchpath, fname)
 
     def get_config(self, basename: str) -> Config:
         """Returns a Config object for the respective file from searchpath.
@@ -109,4 +119,4 @@ class ConfigManager:
         Only returns the object, but does not load it.
         `basename` is not a path but the base-filename, optionally with .json extension.
         """
-        return Config(os.path.join(self._searchpath, basename if basename.endswith(".json") else basename + ".json"))
+        return Config(self.get_file(basename if basename.endswith(".json") else basename + ".json"))
