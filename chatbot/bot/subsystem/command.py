@@ -150,6 +150,7 @@ class CommandHandler:
         Args:
             name: The name of the command. If a command with the same name
                   already exists, it will be overwritten.
+                  Commands are case-insensitive.
             callback: A coroutine callback function.
             argc: The minimum amount of arguments needed for this command.
                   If there are less, a CommandArgcError is raised.
@@ -192,12 +193,14 @@ class CommandHandler:
         """
         assert asyncio.iscoroutinefunction(callback), "Callback must be a coroutine"
         group = self._missing_cmds if flags & CommandFlag.Missing else self._cmds
+        name = name.lower()
         if name in group:
             logging.warning("Overwriting existing command: %s", name)
         group[name] = CommandHandle(callback, argc, flags, types)
         logging.debug("Registered command: %s", name)
 
     def unregister(self, name):
+        name = name.lower()
         try:
             self._cmds.pop(name)
         except KeyError:
@@ -249,11 +252,10 @@ class CommandHandler:
         if not argv:
             return False
 
-        # It is a command, so add to history
-        self._history.add(msg)
+        argv[0] = argv[0].lower()  # Case-insensitive command matching
+        self._history.add(msg)  # It is a command, so add to history
 
-        command = self._cmds.get(argv[0], None)
-        if command:
+        if command := self._cmds.get(argv[0], None):
             try:
                 await self._exec_command(msg, command, argv)
                 return True

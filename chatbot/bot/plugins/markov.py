@@ -41,7 +41,7 @@ class Plugin(BotPlugin):
         self.cfg.load(self.get_default_config(), validate=False, create=True)
 
         for name, settings in self.cfg.data.items():
-            name              = name.strip()
+            name              = name.strip().lower()
             filename          = settings.get("filename", "")
             state_size        = settings.get("state_size", DEFAULT_STATE_SIZE)
             max_tries         = settings.get("max_tries", DEFAULT_MAX_TRIES)
@@ -50,6 +50,10 @@ class Plugin(BotPlugin):
 
             if not name:
                 logging.error("Empty markov model name")
+                continue
+
+            if name in self._models:
+                logging.warning("Model with that name already loaded: %s -> Skipped", name)
                 continue
 
             if not filename or not os.path.isfile(filename):
@@ -85,7 +89,7 @@ class Plugin(BotPlugin):
         count = command.get_argument(argv, 2, 1, int)
         count = min(max(1, count), MAX_SENTENCE_COUNT)
 
-        model: MarkovModel = self._models.get(argv[1], None)
+        model: MarkovModel = self._models.get(argv[1].lower(), None)
         if not model:
             raise command.CommandError("The model does not exist")
 
