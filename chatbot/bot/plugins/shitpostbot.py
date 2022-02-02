@@ -78,7 +78,7 @@ class Plugin(BotPlugin):
 
     async def _send_shitpost(self, chat: api.Chat, count: int, rand: bool):
         urls = await get_shitpost_urls(count, rand)
-        self._send_urls(chat, urls)
+        await self._send_urls(chat, urls)
 
     async def _send_urls(self, chat: api.Chat, urls: List[str]):
         """Split in multiple messages, because Discord only previews 5 URLs per message, Telegram only 1,  etc."""

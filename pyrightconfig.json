@@ -3,5 +3,6 @@
     "chatbot", "tests"
   ],
   "reportGeneralTypeIssues": false,
-  "reportOptionalMemberAccess": false
+  "reportOptionalMemberAccess": false,
+  "reportOptionalIterable": false
 }
