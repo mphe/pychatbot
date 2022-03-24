@@ -3,7 +3,8 @@
 import os
 import imp
 import logging
-from typing import Callable, Dict, Iterable
+from typing import Callable, Dict, Iterable, Tuple
+from dataclasses import dataclass
 
 ExceptionCallback = Callable[[str, Exception], bool]
 
@@ -11,27 +12,45 @@ ExceptionCallback = Callable[[str, Exception], bool]
 class BasePlugin:
     """Base class for plugins."""
 
-    def __init__(self, _oldme, *_argv, **_kwargs):
-        """Initialize plugin.
+    async def init(self, _old_instance: "BasePlugin") -> bool:
+        """Initialize the plugin.
 
-        If the plugin was remounted, then `oldme` is the old instance of this
-        plugin, otherwise None. This is useful to exchange data from the old
-        instance to the new one before it gets deleted.
+        If the plugin was remounted, then `old_instance` is the old instance of
+        this plugin, otherwise None. This is useful to exchange data from the
+        old instance to the new one before it gets deleted.
         """
-
-    def reload(self):
-        """Reload the plugin's config."""
         raise NotImplementedError
 
-    def quit(self):
+    async def quit(self):
         """Will be called when a plugin is unmounted."""
         raise NotImplementedError
 
 
+@dataclass
 class PluginHandle:
-    def __init__(self):
-        self.plugin = None
-        self.module = None
+    plugin: BasePlugin = None
+    module: object = None
+
+    def __bool__(self) -> bool:
+        return self.plugin is not None and self.module is not None
+
+
+# @dataclass
+# class PluginHandle:
+#     def __init__(self):
+#         self._plugin: BasePlugin = None
+#         self._module: object = None
+#
+#     def get_plugin(self) -> BasePlugin:
+#         return self._plugin
+#
+#     def get_module(self) -> object:
+#         return self._module
+#
+#     def load
+#
+#     def __bool__(self) -> bool:
+#         return self._plugin is not None and self._module is not None
 
 
 class PluginManager:
@@ -54,7 +73,7 @@ class PluginManager:
         self._plugins: Dict[str, PluginHandle] = {}
         os.makedirs(searchpath, exist_ok=True)
 
-    def mount_plugin(self, name, *argv, **kwargs):
+    async def mount_plugin(self, name: str, *args, **kwargs):
         """(Re-)Mount a plugin.
 
         `name` is the plugin's name without the .py extension.
@@ -69,35 +88,35 @@ class PluginManager:
         If an exception occurs during the loading process, the plugin is
         guaranteed to be removed from the system.
         """
-        if name in self._plugins:
-            handle = self._plugins[name]
-            self.unmount_plugin(name)
-        else:
-            handle = PluginHandle()
+        oldplugin = None
 
-        self._load_module(handle, name)
-        self._init_plugin(handle, *argv, **kwargs)
-        self._plugins[name] = handle
+        if old_handle := self._plugins.get(name, None):
+            oldplugin = old_handle.plugin
+            await self.unmount_plugin(name)
+
+        new_handle = self._load_plugin(name, *args, **kwargs)
+        await new_handle.plugin.init(oldplugin)
+        self._plugins[name] = new_handle
         logging.info("Plugin (re-)mounted: %s", name)
 
-    def unmount_plugin(self, name):
+    async def unmount_plugin(self, name: str):
         """Unmount a plugin.
 
         The plugin is guaranteed to be removed, even if an exception occurs.
         Exceptions will be re-raised.
         """
-        plugin = self._plugins.get(name, None)
+        handle = self._plugins.get(name, None)
 
-        if plugin is None:
+        if handle is None:
             logging.warning("Trying to unmount non-mounted plugin: %s", name)
         else:
             try:
-                plugin.plugin.quit()
+                await handle.plugin.quit()
             finally:
                 del self._plugins[name]
                 logging.info("Plugin unmounted: %s", name)
 
-    def mount_all(self, exception_handler: ExceptionCallback, *args, **kwargs):
+    async def mount_all(self, exception_handler: ExceptionCallback, *args, **kwargs):
         """Mount all plugins in searchpath while regarding black/whitelists.
 
         Args:
@@ -129,13 +148,13 @@ class PluginManager:
                         continue
 
                 try:
-                    self.mount_plugin(name, *args, **kwargs)
+                    await self.mount_plugin(name, *args, **kwargs)
                 except Exception as e:
                     if exception_handler and exception_handler(name, e):
                         continue
                     raise
 
-    def unmount_all(self, exception_handler: ExceptionCallback):
+    async def unmount_all(self, exception_handler: ExceptionCallback):
         """Unmount all plugins.
 
         See mount_all() on how to use exception_handler.
@@ -143,25 +162,13 @@ class PluginManager:
         # Create a copy so the source dict doesn't change while iterating
         for i in list(self._plugins):
             try:
-                self.unmount_plugin(i)
+                await self.unmount_plugin(i)
             except Exception as e:
                 if exception_handler and exception_handler(i, e):
                     continue
                 raise
 
-    def reload_plugin(self, name):
-        """Reload a plugin's config.
-
-        This is only used for config reloading, for remounting use
-        mount_plugin().
-        """
-        if name not in self._plugins:
-            logging.warning("Trying to reload non-mounted plugin: %s", name)
-        else:
-            self._plugins[name].plugin.reload()
-            logging.info("Plugin reloaded: %s", name)
-
-    def iter_plugins(self):
+    def iter_plugins(self) -> Iterable[Tuple[str, BasePlugin]]:
         """Iterate through mounted plugins.
 
         Yields a tuple (name, plugin), where name is a string and plugin
@@ -170,24 +177,17 @@ class PluginManager:
         for k, v in self._plugins.items():
             yield (k, v.plugin)
 
-    def plugin_exists(self, name):
+    def plugin_exists(self, name: str):
         return name in self._plugins
 
-    def _load_module(self, handle, name):
-        """(Re-)Loads a module from the plugin search path."""
-        fname = "{}/{}.py".format(self._searchpath, name)
-        try:
-            handle.module = imp.load_source(name, fname)
-        except:  # noqa
-            handle.module = None
-            raise
-        logging.debug("Module loaded: %s", fname)
+    def _load_plugin(self, name: str, *args, **kwargs) -> PluginHandle:
+        """Loads a module from the plugin search path and instantiates it."""
+        fname = f"{self._searchpath}/{name}.py"
 
-    @staticmethod
-    def _init_plugin(handle, *argv, **kwargs):
-        try:
-            oldinst = handle.plugin
-            handle.plugin = handle.module.Plugin(oldinst, *argv, **kwargs)
-        except:  # noqa
-            handle.plugin = None
-            raise
+        logging.debug("Loading module: %s", fname)
+        module = imp.load_source(name, fname)
+
+        logging.debug("Creating plugin instance: %s", name)
+        plugin = module.Plugin(*args, **kwargs)
+
+        return PluginHandle(plugin, module)

@@ -22,7 +22,7 @@ else
     runtest command_test.py
     runtest dispatcher_test.py
     runtest event_test.py
-    runtest plugintest.py
+    runtest plugin_manager.py
     runtest testapi_test.py
     runtest configtest.py
 fi
