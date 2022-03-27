@@ -1,2 +1,2 @@
-from . import plugin, command, async_plugin
+from . import command, async_plugin
 from .dispatcher import APIEventDispatcher
