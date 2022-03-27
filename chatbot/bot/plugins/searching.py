@@ -13,8 +13,8 @@ class Plugin(BotPlugin):
         "translate": "https://translate.google.com/#{}"
     }
 
-    def __init__(self, oldme, bot):
-        super().__init__(oldme, bot)
+    def __init__(self, bot):
+        super().__init__(bot)
         for i in Plugin.urls:
             if i != "translate":
                 self.register_command(i, self._search)

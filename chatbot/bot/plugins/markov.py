@@ -28,16 +28,14 @@ class MarkovModel:
 
 
 class Plugin(BotPlugin):
-    def __init__(self, oldme, bot):
+    def __init__(self, bot):
+        super().__init__(bot)
         self._models: Dict[str, MarkovModel] = {}
-
-        super().__init__(oldme, bot)
-
         self.register_command("markov", self._markov, argc=0)
 
     # This plugin needs a custom reload function so that the default
     # example entry gets overwritten if the user wants to.
-    def reload(self):
+    async def reload(self):
         self.cfg.load(self.get_default_config(), validate=False, create=True)
 
         for name, settings in self.cfg.data.items():

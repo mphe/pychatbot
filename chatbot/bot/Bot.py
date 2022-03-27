@@ -2,12 +2,12 @@
 
 import logging
 import os
-from typing import Iterable, Tuple
+from typing import Iterable, Tuple, cast
 import chatbot
 from chatbot import api
 from chatbot.util import config
 from .subsystem import APIEventDispatcher, command
-from .subsystem.plugin import PluginManager
+from .subsystem.async_plugin import PluginManager
 from . import BotProfile
 
 
@@ -45,7 +45,7 @@ class Bot:
         # starting the main loop.
         # See echobot test.
         try:
-            self._init()
+            await self._init()
         except Exception as e:
             logging.exception(e)
             logging.error("Failed to initialize.")
@@ -65,7 +65,7 @@ class Bot:
             # Also, for some reason it is not possible to catch KeyboardInterrupt,
             # probably due to some asyncio reasons.
             logging.info("Exiting...")
-            self._cleanup()
+            await self._cleanup()
 
         logging.info("Exited with code %s", str(self._exit))
         return self._exit
@@ -99,17 +99,14 @@ class Bot:
         """
         return self._dispatcher.register(event, callback, nice)
 
-    def mount_plugin(self, name: str) -> None:
-        self._pluginmgr.mount_plugin(name, self)
+    async def mount_plugin(self, name: str) -> None:
+        await self._pluginmgr.mount_plugin(name, self)
 
-    def unmount_plugin(self, name: str) -> None:
-        self._pluginmgr.unmount_plugin(name)
-
-    def reload_plugin(self, name: str) -> None:
-        self._pluginmgr.reload_plugin(name)
+    async def unmount_plugin(self, name: str) -> None:
+        await self._pluginmgr.unmount_plugin(name)
 
     def iter_plugins(self) -> Iterable[Tuple[str, "chatbot.bot.BotPlugin"]]:
-        return self._pluginmgr.iter_plugins()
+        return cast(Iterable[Tuple[str, "chatbot.bot.BotPlugin"]], self._pluginmgr.iter_plugins())
 
     def register_command(self, *args, **kwargs) -> None:
         """Register a command.
@@ -173,7 +170,7 @@ class Bot:
             await chat.leave()
 
     # Utility functions
-    def _init(self) -> None:
+    async def _init(self) -> None:
         logging.info("Initializing...")
         logging.info("Loading configs")
 
@@ -206,14 +203,14 @@ class Bot:
             self._dispatcher.register(api.APIEvents.GroupMemberLeave, self._autoleave)
 
         logging.info("Mounting plugins...")
-        self._pluginmgr.mount_all(self._handle_plugin_exc, self)
+        await self._pluginmgr.mount_all(self._handle_plugin_exc, self)
 
         logging.info("Done")
 
-    def _cleanup(self) -> None:
+    async def _cleanup(self) -> None:
         """Performs actual cleanup after exiting the main loop."""
         logging.info("Umounting plugins...")
-        self._pluginmgr.unmount_all(self._handle_plugin_exc)
+        await self._pluginmgr.unmount_all(self._handle_plugin_exc)
 
         logging.info("Unregistering commands...")
         self._cmdhandler.clear()

@@ -9,8 +9,8 @@ from chatbot import util, api, bot
 
 
 class Plugin(bot.BotPlugin):
-    def __init__(self, oldme, bot_):
-        super().__init__(oldme, bot_)
+    def __init__(self, bot_):
+        super().__init__(bot_)
         self.register_command("clear", self._clear, argc=0)
         self.register_command("calc", self._calc)
         self.register_command("hex", self._hex)
@@ -139,7 +139,8 @@ class Plugin(bot.BotPlugin):
         else:
             await msg.chat.send_action("slaps {} with a fish".format(argv[1]))
 
-    async def _explode(self, msg, _argv):
+    @staticmethod
+    async def _explode(msg, _argv):
         await msg.chat.send_action("explodes\nRespawn in...\n5")
         for i in range(4, 0, -1):
             await asyncio.sleep(1)

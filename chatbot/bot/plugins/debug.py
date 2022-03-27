@@ -11,8 +11,8 @@ from chatbot.bot import BotPlugin
 
 
 class Plugin(BotPlugin):
-    def __init__(self, oldme, bot):
-        super().__init__(oldme, bot)
+    def __init__(self, bot):
+        super().__init__(bot)
         self._events: Dict[str, bool] = {}  # Store which events were triggered
 
         self.register_admin_command("testapi", self._test, argc=0)

@@ -25,18 +25,17 @@ def time_get_utc() -> int:
 
 
 class Plugin(bot.BotPlugin):
-    def __init__(self, oldme: "Plugin", bot_: bot.Bot):
+    def __init__(self, bot_: bot.Bot):
+        super().__init__(bot_)
         self._parsers: List[parsedatetime.Calendar] = []
         self._timer: asyncio.Task = None
         self._reminders: PriorityQueue[Reminder] = PriorityQueue()
 
-        super().__init__(oldme, bot_)
-
         self.register_command("remindme", self._remindme)
         self.register_command("reminders", self._print_reminders, argc=0)
 
-    def reload(self):
-        super().reload()
+    async def reload(self):
+        await super().reload()
 
         langs = self.cfg["langs"]
 
@@ -50,9 +49,9 @@ class Plugin(bot.BotPlugin):
             self._reminders.put(Reminder(*i))
         self._restart_timer()
 
-    def quit(self):
+    async def quit(self):
         self._stop_timer()
-        super().quit()
+        await super().quit()
 
     async def _print_reminders(self, msg: api.ChatMessage, argv: List[str]):
         """Syntax: reminders [all]
@@ -120,17 +119,14 @@ class Plugin(bot.BotPlugin):
         for i in self._parsers:
             logging.debug("Trying parser %s", i.ptc.localeID)
             struct, result = i.parse(text)
+
             if result != 0:
-                break
+                date = datetime(*struct[:6])
+                self._schedule(Reminder(date.isoformat(), msg.chat.id, msg.author.id, msg.text))
+                await msg.reply(f"Reminding you on {date} (UTC+{time_get_utc()})")
+                return
 
-        if result == 0:
-            await msg.reply("Failed to parse date/time.")
-            return
-
-        date = datetime(*struct[:6])
-        self._schedule(Reminder(date.isoformat(), msg.chat.id, msg.author.id, msg.text))
-
-        await msg.reply(f"Reminding you on {date} (UTC+{time_get_utc()})")
+        await msg.reply("Failed to parse date/time.")
 
     def _schedule(self, reminder: Reminder):
         self.cfg["timers"].append(reminder)  # is seemlessly serializable

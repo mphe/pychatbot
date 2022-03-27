@@ -84,7 +84,7 @@ async def wait_until_true(callback: Callable, *args, **kwargs):
     """
     while True:
         if asyncio.iscoroutine(callback):
-            if await callback(*args, **kwargs):
+            if await callback(*args, **kwargs):  # type: ignore[operator]
                 break
         else:
             if callback(*args, **kwargs):

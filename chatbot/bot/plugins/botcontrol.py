@@ -4,8 +4,8 @@ from chatbot.bot import BotPlugin, ExitCode, command
 
 
 class Plugin(BotPlugin):
-    def __init__(self, oldme, bot):
-        super().__init__(oldme, bot)
+    def __init__(self, bot):
+        super().__init__(bot)
         self.register_admin_command("quit", self._quit, argc=0)
         self.register_admin_command("restart", self._restart, argc=0)
         self.register_admin_command("plugins", self._plugins, argc=2)
@@ -17,7 +17,7 @@ class Plugin(BotPlugin):
 
         List mounted plugins.
         """
-        await msg.reply(", ".join([ k for k, v in self.bot.iter_plugins() ]))
+        await msg.reply(", ".join([ k for k, _ in self.bot.iter_plugins() ]))
 
     async def _plugins(self, msg, argv):
         """Syntax: plugins <mount|unmount|reload> <plugin name>
@@ -25,14 +25,13 @@ class Plugin(BotPlugin):
         Mount/remount, unmount, or reload a plugin.
         Mounting an already mounted plugin remounts it.
         """
-        f = {
-            "reload":  (self.bot.reload_plugin,  "Plugin reloaded"),
-            "mount":   (self.bot.mount_plugin,   "Plugin (re)mounted"),
-            "unmount": (self.bot.unmount_plugin, "Plugin unmounted"),
-        }
-        if argv[1] in f:
-            f[argv[1]][0](argv[2])
-            await msg.reply(f[argv[1]][1])
+        plugin = argv[2]
+        if argv[1] == "mount":
+            await self.bot.mount_plugin(plugin)
+            await msg.reply(f"Plugin {plugin} (re)mounted.")
+        elif argv[1] == "unmount":
+            await self.bot.unmount_plugin(plugin)
+            await msg.reply(f"Plugin {plugin} unmounted.")
         else:
             raise command.CommandSyntaxError
 

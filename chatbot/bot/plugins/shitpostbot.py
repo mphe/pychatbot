@@ -11,23 +11,22 @@ import asyncio
 
 
 class Plugin(BotPlugin):
-    def __init__(self, oldme, bot):
+    def __init__(self, bot):
+        super().__init__(bot)
         self._autochats: Set[str] = set()
         self._timer: asyncio.Task = None
-
-        super().__init__(oldme, bot)
 
         self.register_command("shitpost", self._shitpost, argc=0)
         self.register_command("autoshitpost", self._auto_shitpost, argc=0)
 
-    def reload(self):
-        super().reload()
+    async def reload(self):
+        await super().reload()
         self._autochats = set(self.cfg["autochats"])
         self._start_timer()
 
-    def quit(self):
+    async def quit(self):
         self._stop_timer()
-        super().quit()
+        await super().quit()
 
     async def _shitpost(self, msg: api.ChatMessage, argv: List[str]):
         """Syntax: shitpost [random] [count]

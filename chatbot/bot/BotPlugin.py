@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from typing import List
-from .subsystem.plugin import BasePlugin
+from .subsystem.async_plugin import BasePlugin
 import chatbot  # Used for type hints, pylint: disable=unused-import
 from chatbot.util import event, config
 from chatbot.bot import command
@@ -10,8 +10,8 @@ import os
 
 
 class BotPlugin(BasePlugin):
-    def __init__(self, oldme, bot: "chatbot.bot.Bot"):
-        super().__init__(oldme, bot)
+    def __init__(self, bot: "chatbot.bot.Bot"):
+        super().__init__()
         self.__name: str = os.path.splitext(os.path.basename(getfile(self.__class__)))[0]
         self.__bot: "chatbot.bot.Bot" = bot
         self.__cfg = bot.profile.get_plugin_config(self.name)
@@ -20,15 +20,17 @@ class BotPlugin(BasePlugin):
         self.__commands: List[str] = []
         self.__handles: List[event.Handle] = []
 
-        self.reload()
+    async def init(self, _old_instance: "BasePlugin") -> bool:
+        await self.reload()
+        return True
 
-    def reload(self):
+    async def reload(self):
         self.cfg.load(self.get_default_config(), create=True)
 
     def save_config(self):
         self.cfg.write()
 
-    def quit(self):
+    async def quit(self):
         self.bot.unregister_command(*self.__commands)
         for i in self.__handles:
             i.unregister()

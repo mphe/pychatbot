@@ -6,14 +6,14 @@ from chatbot import api
 
 
 class Plugin(BotPlugin):
-    def __init__(self, oldme, bot):
-        super().__init__(oldme, bot)
+    def __init__(self, bot):
+        super().__init__(bot)
         self.register_command("tags", self._list, argc=0)
         self.register_event_handler(api.APIEvents.Message, self._on_message)
 
     # This plugin actually needs a custom reload function so that the default
     # example entry gets overwritten if the user wants to.
-    def reload(self):
+    async def reload(self):
         self.cfg.load(self.get_default_config(), validate=False, create=True)
 
     @staticmethod
