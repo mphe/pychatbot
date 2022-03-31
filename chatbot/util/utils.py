@@ -83,10 +83,20 @@ async def wait_until_true(callback: Callable, *args, **kwargs):
     `callback` can be a normal function or a coroutine.
     """
     while True:
-        if asyncio.iscoroutine(callback):
+        if asyncio.iscoroutinefunction(callback):
             if await callback(*args, **kwargs):  # type: ignore[operator]
                 break
         else:
             if callback(*args, **kwargs):
                 break
         await asyncio.sleep(1)
+
+
+async def call_maybe_async(callback: Callable, *args, **kwargs):
+    """Call `callback` if it is a coroutine, otherwise return the result.
+
+    `callback` can be a normal function or a coroutine.
+    """
+    if asyncio.iscoroutinefunction(callback):
+        return await callback(*args, **kwargs)  # type: ignore[operator]
+    return callback(*args, **kwargs)
