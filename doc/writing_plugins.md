@@ -8,21 +8,34 @@ Create a new file "myplugin.py" and add this snippet:
 
 from typing import List
 from chatbot import bot, api
+from .subsystem.async_plugin import BasePlugin
 
 
 class Plugin(bot.BotPlugin):
-    def __init__(self, oldme: "Plugin", bot: bot.Bot):
-        super(Plugin, self).__init__(oldme, bot)
+    def __init__(self, bot: bot.Bot):
+        super().__init__(bot)
 
-    def quit(self):
-        # Custom cleanup here
-        super(Plugin, self).quit()
+    async def init(self, old_instance) -> bool:
+        # Initialization _before_ loading configs
+        return await super().init()
+
+    async def reload(self) -> None:
+        await super().reload()
+        # Initialization _after_ loading configs
+
+    async def _on_ready(self) -> None:
+        await super()._on_ready()
+        # Called after the API became ready or, if it already is, after reload() finished.
+
+    async def quit(self) -> None:
+        # Cleanup
+        await super().quit()
 ```
 
-This is the basic structure of a plugin.
+This is the basic structure of a plugin, however, you will only need to overwrite `__init__()` and `reload()` in most cases.
 Note that your plugin class must be called "Plugin", otherwise it can't be loaded.
 The `bot` parameter in `__init__` is a reference to the Bot instance loading this plugin.
-`oldme` is either `None` or the previous instance of your plugin, if it was reloaded, and can be used to move data over to the new instance.
+`old_instance` in `init()` is either `None` or the previous instance of your plugin if it was reloaded. It can be used to move data over to the new instance.
 
 The `BotPlugin` base class provides a bunch of functions for registering/unregistering commands, loading configs, and hooking/unhooking event handlers.
 
@@ -35,9 +48,9 @@ The `BotPlugin` class provides wrappers for registering commands or hooking even
 
 Here's how it looks like:
 
-```
-def __init__(self, oldme: "Plugin", bot: bot.Bot):
-    super(Plugin, self).__init__(oldme, bot)
+```python
+def __init__(self, bot: bot.Bot):
+    super().__init__(bot)
     self.register_command("echo", self._echo)
 
 async def _echo(self, msg: api.ChatMessage, argv: List[str]):
@@ -49,11 +62,13 @@ Note that command callbacks must be coroutines.
 
 
 ### Documentation
+
 Every command should have a docstring in the following format:
-```
-Syntax: mycommand <arg1> [arg2] [arg3]
+```python
+"""Syntax: mycommand <arg1> [arg2] [arg3]
 
 Description.
+"""
 ```
 
 The builtin `help` command reads the docstring and prints it to the user.
@@ -81,8 +96,8 @@ Here's an example:
 ```python
 from chatbot.bot.subsystem import command
 
-def __init__(self, oldme: "Plugin", bot: bot.Bot):
-    super(Plugin, self).__init__(oldme, bot)
+def __init__(self, bot: bot.Bot):
+    super().__init__(bot)
     self.register_command("missing_test", self._handler,
                           argc=0, flags=command.CommandFlag.Missing)
 
@@ -109,8 +124,8 @@ For example, this will hook the "message received" event:
 ```python
 from chatbot.util import event
 
-def __init__(self, oldme: "Plugin", bot: bot.Bot):
-    super(Plugin, self).__init__(oldme, bot)
+def __init__(self, bot: bot.Bot):
+    super().__init__(bot)
     self.register_event_handler(api.APIEvents.Message, self._on_message)
 
 async def _on_message(self, msg: api.ChatMessage):
@@ -121,8 +136,11 @@ async def _on_message(self, msg: api.ChatMessage):
 
 ## Loading and storing configs
 
-`BotPlugin` automatically loads the respective config file when instantiated. It also provides a `reload` function that (re-)loads the config file.
-The config object can be accessed using the `BotPlugin.cfg` property.
+`BotPlugin` provides a `reload()` function that (re-)loads the respective config file when called.
+It is called automatically in `init()` (not `__init__()`) when the plugin is initialized.
+Hence, if you need to perform initialization based on config entries, you should do that by overriding `reload()`.
+
+The config object can be accessed using the `cfg` property.
 All configs are stored as json files.
 
 The `get_default_config` function should return the default config dict.
@@ -133,9 +151,8 @@ Example:
 ```python
 import logging
 
-def __init__(self, oldme: "Plugin", bot: bot.Bot):
-    super(Plugin, self).__init__(oldme, bot)
-
+async def reload(self) -> None:
+    await super().reload()
     logging.info(self.cfg["some_option"])
 
 @staticmethod

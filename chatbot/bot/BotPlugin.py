@@ -20,11 +20,19 @@ class BotPlugin(BasePlugin):
         self.__commands: List[str] = []
         self.__handles: List[event.Handle] = []
 
-    async def init(self, _old_instance: "BasePlugin") -> bool:
+        self.bot.register_event_handler(chatbot.api.APIEvents.Ready, self._on_ready)
+
+    async def init(self, _old_instance: BasePlugin) -> bool:
         await self.reload()
+        if self.bot.api.is_ready:
+            await self._on_ready()
         return True
 
+    async def _on_ready(self) -> None:
+        """Called when the API becomes ready or, if it already is, after reload() finished."""
+
     async def reload(self):
+        """Reloads the plugin configuration. Called by BotPlugin.init() automatically."""
         self.cfg.load(self.get_default_config(), create=True)
 
     def save_config(self):
