@@ -69,8 +69,8 @@ class BotProfile:
         """
         if not api_name:
             raise ValueError("No API specified")
-        if not os.path.isdir(self.get_path()):
-            raise ValueError("Not a directory: " + self.get_path())
+        if os.path.exists(self.get_path()) and not os.path.isdir(self.get_path()):
+            raise ValueError("Path exists but is not a directory: " + self.get_path())
 
         os.makedirs(self.get_path(), exist_ok=True)
         os.makedirs(self._manager.get_file(PLUGIN_DIR), exist_ok=True)
