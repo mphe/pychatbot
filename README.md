@@ -8,6 +8,9 @@ Requires Python 3.8+.
 ```shell
 # Install required dependencies
 sudo pip install -r requirements.txt
+
+# Optionally install additional dependencies required for certain plugins
+sudo pip install -r additional_requirements.txt
 ```
 
 ## Quick Start

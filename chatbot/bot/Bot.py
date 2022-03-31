@@ -235,7 +235,7 @@ class Bot:
         return {
             "api": "",  # This key is also used in BotProfileManager
             "plugin_whitelist": [],
-            "plugin_blacklist": [],
+            "plugin_blacklist": [ "gw2" ],
             "prefix": [ "!bot", "@bot", "!" ],
             "admins": [],
             "display_name": "Bot",
