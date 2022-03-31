@@ -26,7 +26,7 @@ class DiscordAPI(api.APIBase):
 
     @property
     def is_ready(self) -> bool:
-        return self._discord.is_ready()
+        return self._discord is not None and self._discord.is_ready()
 
     async def start(self) -> None:
         if not self._discord:
