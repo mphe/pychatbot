@@ -125,11 +125,6 @@ class Bot:
 
     # Callbacks
     async def _on_ready(self) -> None:
-        displayname = self._config["display_name"]
-        if displayname:
-            logging.info("Setting display name to: %s", displayname)
-            await self._api.set_display_name(displayname)
-
         logging.info(str(self._api))
         user = await self._api.get_user()
         logging.info("User handle: %s", user.id)
@@ -238,7 +233,6 @@ class Bot:
             "plugin_blacklist": [ "gw2" ],
             "prefix": [ "!bot", "@bot", "!" ],
             "admins": [],
-            "display_name": "Bot",
             "echo": False,
             "autoaccept_friend": True,
             "autoaccept_invite": True,
