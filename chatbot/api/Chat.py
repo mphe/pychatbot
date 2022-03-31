@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from enum import IntEnum
+from .Identifiable import Identifiable
 
 
 class ChatType(IntEnum):
@@ -8,7 +9,7 @@ class ChatType(IntEnum):
     Normal, Group = range(2)
 
 
-class Chat:
+class Chat(Identifiable):
     """Represents a chat of any type (normal and groupchats).
 
     If normal chats and groupchats have different functionality, use this
@@ -59,11 +60,11 @@ class Chat:
         """
         raise NotImplementedError
 
-    async def send_message(self, text: str) -> None:
+    async def send_message(self, _text: str) -> None:
         """Sends a message with the given text to this chatroom."""
         raise NotImplementedError
 
-    async def send_action(self, text: str) -> None:
+    async def send_action(self, _text: str) -> None:
         """Sends an action (/me ...) with the given text to this chatroom."""
         raise NotImplementedError
 
@@ -92,7 +93,7 @@ class GroupChat(Chat):
         """
         raise NotImplementedError
 
-    async def invite(self, user) -> None:
+    async def invite(self, _user) -> None:
         """Invite the given User to the groupchat."""
         raise NotImplementedError
 

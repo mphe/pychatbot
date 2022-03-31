@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 
 from chatbot import api  # Needed for typehints. pylint: disable=unused-import
+from .Identifiable import Identifiable
 
 
-class User:
+class User(Identifiable):
     @property
     def id(self) -> str:
         """Returns the user ID.

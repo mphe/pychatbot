@@ -7,6 +7,7 @@ from .ChatMessage import ChatMessage, MessageType
 from .User import User, GenericUser
 from .Chat import GroupChat, Chat, ChatType
 from .Request import Request, FriendRequest, GroupInvite
+from .Identifiable import Identifiable
 
 
 def create_api_object(apiname: str, options: Dict[str, Any] = None, stub=True) -> APIBase:
