@@ -3,4 +3,5 @@ appdirs
 parsedatetime==2.6
 markovify
 discord.py==1.7.3
-Telethon==1.21.1
+Telethon==1.24.0
+
