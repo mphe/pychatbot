@@ -56,7 +56,7 @@ class Plugin(BotPlugin):
         if self._notifier.size() == 0:
             self._timer.stop()
         else:
-            self._timer.start(self._timer_func, 24 * 60 * 60, datetime.now().replace(hour=1, minute=10, second=0))
+            self._timer.start(self._timer_func, 24 * 60 * 60, datetime.now().replace(hour=12, minute=0, second=0))
 
     async def _timer_func(self) -> None:
         if await is_daily_coin():
