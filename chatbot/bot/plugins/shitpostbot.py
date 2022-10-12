@@ -66,11 +66,17 @@ class Plugin(BotPlugin):
         while True:
             await asyncio.sleep(30 * 60)
 
-            # Fetch URL and check if it is not the same as before
+            # Fetch newest post URL
             urls = await get_shitpost_urls(1, False)
 
-            if urls[0] != last_url:
+            # Check if it is not the same as before. If there is no new post, use a random one,
+            # but don't update last_url, so we can still track if there is a new post in the future.
+            if len(urls) == 0 or urls[0] == last_url:
+                urls = await get_shitpost_urls(1, True)
+            else:
                 last_url = urls[0]
+
+            if len(urls) > 0:
                 for chatid in self._autochats:
                     if chat := await self.bot.api.find_chat(chatid):
                         await self._send_urls(chat, urls)
