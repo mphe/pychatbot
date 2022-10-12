@@ -29,15 +29,15 @@ class Plugin(BotPlugin):
         await super().quit()
 
     async def _shitpost(self, msg: api.ChatMessage, argv: List[str]):
-        """Syntax: shitpost [random] [count]
+        """Syntax: shitpost [newest] [count]
 
-        Get the most recent shitpost or a random one if "random" is given as first argument.
-        `count` is optional determines how many posts to fetch (max. 50 by default).
+        Get a random shitpost or the most recent one if "newest" is given as first argument.
+        `count` is optional and determines how many posts to fetch (max. 50 by default).
         Please mind anit-spam limits when using high count values, bots are affected, too.
         """
-        rand = len(argv) > 1 and argv[1] == "random"
-        count = min(command.get_argument(argv, 1 if not rand else 2, 1, int), self.cfg["max_posts"])
-        await self._send_shitpost(msg.chat, count, rand)
+        newest = len(argv) > 1 and argv[1] == "newest"
+        count = min(command.get_argument(argv, 1 if not newest else 2, 1, int), self.cfg["max_posts"])
+        await self._send_shitpost(msg.chat, count, not newest)
 
     async def _auto_shitpost(self, msg: api.ChatMessage, _argv: List[str]):
         """Syntax: autoshitpost
