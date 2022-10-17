@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 
 import discord as discordapi
-import chatbot.api as api
-from typing import Union
+from chatbot import api
+from typing import Union, cast
 
 
 def create_chat(client, channel):
-    if isinstance(channel, discordapi.abc.GuildChannel):
+    if isinstance(channel, discordapi.TextChannel):
         return GuildChat(client, channel)
     if isinstance(channel, discordapi.DMChannel):
         return PrivateChat(client, channel)
@@ -15,9 +15,9 @@ def create_chat(client, channel):
     return None
 
 
-class DiscordChat:
+class DiscordChat():
     """Base-class for Discord chats."""
-    def __init__(self, client: api.APIBase, chat: Union[discordapi.abc.GuildChannel, discordapi.abc.PrivateChannel]):
+    def __init__(self, client: api.APIBase, chat: Union[discordapi.TextChannel, discordapi.DMChannel, discordapi.GroupChannel]):
         assert chat is not None
         assert client is not None
 
@@ -60,7 +60,7 @@ class GuildChat(DiscordChat, api.GroupChat):
             await self._guild.leave()
 
     async def invite(self, user):
-        invite = await self._chat.create_invite()
+        invite = await cast(discordapi.TextChannel, self._chat).create_invite()
         await user._user.send(content=invite.url)
 
     @property
@@ -70,11 +70,12 @@ class GuildChat(DiscordChat, api.GroupChat):
 
 class PrivateGroup(DiscordChat, api.GroupChat):
     async def leave(self):
-        await self._chat.leave()
+        await cast(discordapi.GroupChannel, self._chat).leave()
 
-    async def invite(self, user):
-        await self._chat.add_recipients(user)
+    async def invite(self, _user):
+        # This seems to be not available anymore
+        raise NotImplementedError
 
     @property
     def size(self):
-        return len(self._chat.recipients) + 1
+        return len(cast(discordapi.GroupChannel, self._chat).recipients) + 1

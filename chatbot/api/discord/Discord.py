@@ -5,7 +5,6 @@ import logging
 import discord as discordapi
 from chatbot import api
 from .User import User
-from .FriendRequest import FriendRequest
 from .ChatMessage import Message
 from .Chat import create_chat
 
@@ -31,8 +30,7 @@ class DiscordAPI(api.APIBase):
     async def start(self) -> None:
         if not self._discord:
             self._discord = DiscordClient(self, loop=asyncio.get_running_loop())
-
-        await self._discord.start(self._opts["token"], bot=self._opts["bot"])
+        await self._discord.start(self._opts["token"])
 
     async def cleanup(self) -> None:
         pass
@@ -82,25 +80,14 @@ class DiscordAPI(api.APIBase):
     def get_default_options():
         return {
             "token": "",
-            "bot": True
         }
 
     # extra stuff
-    async def create_server(self, users=()):
+    async def create_server(self, _users=()):
         raise NotImplementedError
-        # TODO: needs testing
-        # server = await self._discord.create_guild("New Server")
-        # chat = create_chat(self, server.text_channels[0])
-        # for i in users:
-        #     chat.invite(i)
-        # return chat
 
-    async def create_dmgroup(self, users=()):
+    async def create_dmgroup(self, _users=()):
         raise NotImplementedError
-        # TODO: needs testing
-        # assert len(users) >= 2 and len(users) < 10
-        # return create_chat(
-        #     self, await self._discord.user.create_group(*[ i._user for i in users ]))
 
     def get_invite_link(self):
         return "https://discordapp.com/api/oauth2/authorize?client_id={}&scope=bot&permissions=0".format(str(self._discord.user.id))
@@ -110,7 +97,11 @@ class DiscordAPI(api.APIBase):
 # functions (like close()).
 class DiscordClient(discordapi.Client):
     def __init__(self, apiobj, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        intents = discordapi.Intents.default()
+        intents.message_content = True  # pylint: disable=assigning-non-slot
+        intents.messages = True  # pylint: disable=assigning-non-slot
+        intents.members = True  # pylint: disable=assigning-non-slot
+        super().__init__(*args, intents=intents, **kwargs)
         self._firstready = True
         self._api = apiobj
 
@@ -133,10 +124,6 @@ class DiscordClient(discordapi.Client):
             logging.info("Username: %s", (await self._api.get_user()).username)
         await self._api._trigger(api.APIEvents.Ready)
 
-        # Process pending friend requests
-        for i in self.user.relationships:
-            await self.on_relationship_add(i)
-
     async def on_message(self, msg: discordapi.Message):
         if msg.type == discordapi.MessageType.default:
             if msg.author == self.user:
@@ -144,10 +131,6 @@ class DiscordClient(discordapi.Client):
             else:
                 # msg.ack() is not available for bot accounts and no longer supported by the non-bot API.
                 await self._api._trigger(api.APIEvents.Message, Message(self._api, msg, False))
-
-    async def on_relationship_add(self, relationship):
-        if relationship.type == discordapi.RelationshipType.incoming_request:
-            await self._api._trigger(api.APIEvents.FriendRequest, FriendRequest(self._api, relationship))
 
     async def on_member_join(self, member):
         await self._api._trigger(api.APIEvents.GroupMemberJoin, User(self._api, member))

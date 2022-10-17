@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import discord as discordapi
-import chatbot.api as api
+from chatbot import api
 from .Chat import create_chat
 from .User import User
 import logging
