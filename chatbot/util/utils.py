@@ -4,7 +4,8 @@ import logging
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
 from chatbot import api
-from typing import Callable, List
+from typing import Callable, List, Optional
+from urllib import request
 
 
 def merge_dicts(srcdict: dict, mergedict: dict, overwrite=False):
@@ -75,6 +76,14 @@ async def run_in_thread(callback, *args):
     loop = asyncio.get_running_loop()
     with ThreadPoolExecutor(max_workers=1) as pool:
         return await loop.run_in_executor(pool, callback, *args)
+
+
+async def async_urlopen(url, *args, encoding: Optional[str] = "utf-8", **kwargs):
+    def cb():
+        with request.urlopen(url, *args, **kwargs) as r:
+            data = r.read()
+            return data.decode(encoding) if encoding else data
+    return await run_in_thread(cb)
 
 
 async def wait_until_true(callback: Callable, *args, **kwargs):
