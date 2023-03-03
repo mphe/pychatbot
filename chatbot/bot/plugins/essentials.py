@@ -7,6 +7,8 @@ import random
 from multiprocessing import Array, Process
 from chatbot import util, api, bot
 
+RE_ROLL = re.compile(r"(\d*)\s*d\s*(\d+)")
+
 
 class Plugin(bot.BotPlugin):
     def __init__(self, bot_):
@@ -22,6 +24,7 @@ class Plugin(bot.BotPlugin):
         self.register_command("slap", self._slap)
         self.register_command("explode", self._explode, argc=0)
         self.register_command("lenny", self._lenny, argc=0)
+        self.register_command("roll", self._roll, argc=1)
 
     @staticmethod
     async def _clear(msg, _argv):
@@ -151,3 +154,29 @@ class Plugin(bot.BotPlugin):
     @staticmethod
     async def _lenny(msg, _argv):
         await msg.reply("( ͡° ͜ʖ ͡°)")
+
+    @staticmethod
+    async def _roll(msg: api.ChatMessage, argv):
+        """Syntax: roll [x]d<N>
+                   roll [x] d <N>
+
+        Roll an N-sided dice x times. Whitespace is ignored.
+        Example:
+            `!roll 2d6`: Roll two 8-sided dices.
+            `!roll d20`: Roll one 20-sided dice.
+            `!roll 3 d8`: Roll three 8-sided dices.
+            `!roll 5 d 6`: Roll five 6-sided dices.
+        """
+        text = "".join(argv[1:])
+        match = RE_ROLL.match(text)
+        if not match:
+            raise bot.command.CommandSyntaxError("Invalid roll command")
+
+        dice = int(match.group(2))
+        num = int(match.group(1) or 1)
+        values = [ random.randint(1, dice) for _ in range(num) ]
+
+        if num > 1:
+            await msg.reply("{} = {}".format(" + ".join(map(str, values)), sum(values)))
+        else:
+            await msg.reply(str(values[0]))
