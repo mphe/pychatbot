@@ -136,13 +136,14 @@ class Bot:
             if not await self._cmdhandler.execute(msg) and self._config["echo"]:
                 await msg.reply("Echo: " + msg.text)
         except command.CommandSyntaxError as e:
-            await msg.reply("Error: {}.\nSee `help {}` for usage instructions.".format(e, e.command))
+            await msg.reply(f"{e}.\nSee `help {e.command}` for usage instructions.")
         except command.CommandNotFoundError as e:
-            await msg.reply("Error: {}.\nType `list` for a list of available commands.".format(e))
+            await msg.reply(f"{e}.\nType `list` for a list of available commands.")
+        except command.CommandError as e:
+            await msg.reply(str(e))
         except Exception as e:
-            if not isinstance(e, command.CommandError):
-                self._handle_plugin_exc("", e)
-            await msg.reply("Error: {}.".format(e))
+            self._handle_plugin_exc("", e)
+            await msg.reply(f"Error: {e}.")
 
     @staticmethod
     async def _autoaccept(request: chatbot.api.FriendRequest) -> None:
