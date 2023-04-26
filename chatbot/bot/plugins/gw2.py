@@ -81,7 +81,7 @@ class Plugin(BotPlugin):
     def get_default_config():
         return {
             "chats": [],
-            "gem_threshold": 29.0,
+            "gem_threshold": 32.0,
         }
 
 
@@ -156,5 +156,6 @@ class GemPriceInfo(InfoProvider):
 
     @staticmethod
     async def get_coins_for_100_gems() -> int:
-        data = json.loads(await util.async_urlopen("http://www.gw2spidy.com/api/v0.9/json/gem-price"))
-        return data["result"]["gold_to_gem"]
+        data: Dict = json.loads(await util.async_urlopen("https://api.guildwars2.com/v2/commerce/exchange/coins?quantity=1000000"))
+        coins_per_gem = int(data["coins_per_gem"])
+        return coins_per_gem * 100
