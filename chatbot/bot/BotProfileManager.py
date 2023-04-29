@@ -3,7 +3,7 @@
 
 import os
 import appdirs
-from chatbot.util import config
+from chatbot.util import config, Storage
 import chatbot
 from typing import List
 
@@ -23,13 +23,14 @@ from typing import List
 
 CONFIG_DIR = appdirs.user_config_dir("pychatbot")
 PLUGIN_DIR = "plugins"
+STORAGE_DIR = "storage"
 BOT_CONFIG_NAME = "bot.json"
 API_CONFIG_NAME = "api.json"
 LOGFILE_NAME = "chatbot.log"
 LOGFILE_NAME_OLD = "chatbot.old.log"
 
 
-# TODO: Cache Config objects?
+# TODO: Cache Config and Storage objects?
 class BotProfile:
     """A helper class to access config files in a simple, centralized way.
 
@@ -42,6 +43,9 @@ class BotProfile:
 
     def get_plugin_config(self, plugin_name: str) -> config.Config:
         return self._manager.get_config(os.path.join(PLUGIN_DIR, plugin_name))
+
+    def get_plugin_storage(self, plugin_name: str) -> Storage:
+        return Storage(self._manager.get_config(os.path.join(STORAGE_DIR, plugin_name)))
 
     def get_bot_config(self) -> config.Config:
         return self._manager.get_config(BOT_CONFIG_NAME)

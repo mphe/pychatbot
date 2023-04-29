@@ -25,4 +25,5 @@ else
     runtest plugin_manager.py
     runtest testapi_test.py
     runtest configtest.py
+    ./test_storage.py
 fi

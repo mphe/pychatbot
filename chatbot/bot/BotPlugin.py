@@ -3,7 +3,7 @@
 from typing import List
 from .subsystem.async_plugin import BasePlugin
 import chatbot  # Used for type hints, pylint: disable=unused-import
-from chatbot.util import event, config
+from chatbot.util import event, config, Storage
 from chatbot.bot import command
 from inspect import getfile
 import os
@@ -15,6 +15,7 @@ class BotPlugin(BasePlugin):
         self.__name: str = os.path.splitext(os.path.basename(getfile(self.__class__)))[0]
         self.__bot: "chatbot.bot.Bot" = bot
         self.__cfg = bot.profile.get_plugin_config(self.name)
+        self.__storage = bot.profile.get_plugin_storage(self.name)
 
         # Keep track of registered commands and event handlers to unregister them automatically
         self.__commands: List[str] = []
@@ -24,6 +25,7 @@ class BotPlugin(BasePlugin):
 
     async def init(self, _old_instance: BasePlugin) -> bool:
         await self.reload()
+
         if self.bot.api.is_ready:
             await self._on_ready()
         return True
@@ -34,9 +36,11 @@ class BotPlugin(BasePlugin):
     async def reload(self):
         """Reloads the plugin configuration. Called by BotPlugin.init() automatically."""
         self.cfg.load(self.get_default_config(), create=True)
+        self.storage.load()
 
     def save_config(self):
         self.cfg.write()
+        self.storage.write()
 
     async def quit(self):
         self.bot.unregister_command(*self.__commands)
@@ -59,6 +63,10 @@ class BotPlugin(BasePlugin):
     @property
     def cfg(self) -> config.Config:
         return self.__cfg
+
+    @property
+    def storage(self) -> Storage:
+        return self.__storage
 
     def register_command(self, name, callback, argc=1, flags=0, types=()):
         """Wrapper around Bot.register_command"""
