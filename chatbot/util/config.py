@@ -74,7 +74,11 @@ class Config:
     def write(self):
         """Write config to a file, creating missing directories as necessary."""
         logging.debug("Writing json file: %s", self.filename)
-        os.makedirs(os.path.dirname(self.filename), exist_ok=True)
+
+        dirname = os.path.dirname(self.filename)
+        if dirname:
+            os.makedirs(dirname, exist_ok=True)
+
         with open(self.filename, "w") as f:
             json.dump(self.data, f, indent=4)
 
