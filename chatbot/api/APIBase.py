@@ -160,11 +160,14 @@ class APIBase:
         """
         self.register_event_handler(event, None)
 
-    async def _trigger(self, event, *args, **kwargs) -> Optional[asyncio.Task]:
+    def _trigger(self, event, *args, **kwargs) -> Optional[asyncio.Task]:
         """Triggers the given event with the given arguments.
 
         Runs the associated callback as a new asyncio task and returns the
-        Task object. Returns None, if no callback registered.
+        Task object.
+        The task will not be finished, yet when this function returns.
+
+        Returns None, if no callback registered.
 
         Should be used instead of accessing self._events directly.
         """

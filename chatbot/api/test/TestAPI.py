@@ -23,7 +23,7 @@ class TestAPI(api.APIBase):  # pylint: disable=too-many-instance-attributes
         if not self._interactive:
             self._timer = asyncio.create_task(self._timer_func())
         self._running = True
-        await self._trigger(api.APIEvents.Ready)
+        self._trigger(api.APIEvents.Ready)
 
         while self._running:
             if self._interactive:
@@ -87,10 +87,10 @@ class TestAPI(api.APIBase):  # pylint: disable=too-many-instance-attributes
         }
 
     # Testing functions
-    async def trigger_receive(self, text, msgtype=api.MessageType.Normal):
+    def trigger_receive(self, text, msgtype=api.MessageType.Normal):
         msg = TestingMessage(self._otheruser, text, self._chat, msgtype)
         logging.info(str(msg))
-        await self._trigger(api.APIEvents.Message, msg)
+        self._trigger(api.APIEvents.Message, msg)
 
     async def trigger_sent(self, text):
         await self._chat.send_message(text)
@@ -160,7 +160,7 @@ class TestChat(api.Chat):
     async def send_message(self, text, msgtype=api.MessageType.Normal):  # pylint: disable=arguments-differ
         msg = TestingMessage(await self._api.get_user(), text, self, msgtype)
         logging.info(str(msg))
-        await self._api._trigger(api.APIEvents.MessageSent, msg)
+        self._api._trigger(api.APIEvents.MessageSent, msg)
 
     async def send_action(self, text):
         await self.send_message(text, api.MessageType.Action)

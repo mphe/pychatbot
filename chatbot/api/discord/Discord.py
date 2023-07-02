@@ -122,25 +122,25 @@ class DiscordClient(discordapi.Client):
             logging.info("Invite link: %s", self._api.get_invite_link())
         else:
             logging.info("Username: %s", (await self._api.get_user()).username)
-        await self._api._trigger(api.APIEvents.Ready)
+        self._api._trigger(api.APIEvents.Ready)
 
     async def on_message(self, msg: discordapi.Message):
         if msg.type == discordapi.MessageType.default:
             if msg.author == self.user:
-                await self._api._trigger(api.APIEvents.MessageSent, Message(self._api, msg, True))
+                self._api._trigger(api.APIEvents.MessageSent, Message(self._api, msg, True))
             else:
                 # msg.ack() is not available for bot accounts and no longer supported by the non-bot API.
-                await self._api._trigger(api.APIEvents.Message, Message(self._api, msg, False))
+                self._api._trigger(api.APIEvents.Message, Message(self._api, msg, False))
 
     async def on_member_join(self, member):
-        await self._api._trigger(api.APIEvents.GroupMemberJoin, User(self._api, member))
+        self._api._trigger(api.APIEvents.GroupMemberJoin, User(self._api, member))
 
     async def on_member_remove(self, member):
-        await self._api._trigger(api.APIEvents.GroupMemberLeave, User(self._api, member))
+        self._api._trigger(api.APIEvents.GroupMemberLeave, User(self._api, member))
 
     # private channel
     async def on_group_join(self, _channel, member):
-        await self._api._trigger(api.APIEvents.GroupMemberJoin, User(self._api, member))
+        self._api._trigger(api.APIEvents.GroupMemberJoin, User(self._api, member))
 
     async def on_group_remove(self, _channel, member):
-        await self._api._trigger(api.APIEvents.GroupMemberLeave, User(self._api, member))
+        self._api._trigger(api.APIEvents.GroupMemberLeave, User(self._api, member))

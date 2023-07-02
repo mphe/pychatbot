@@ -114,7 +114,7 @@ class TelegramAPI(api.APIBase):
 
     # Events
     async def _on_ready(self):
-        await self._trigger(api.APIEvents.Ready)
+        self._trigger(api.APIEvents.Ready)
 
     async def _on_receive(self, event: telethon.events.NewMessage.Event):
         msg: telethon.tl.custom.Message = event.message
@@ -123,14 +123,14 @@ class TelegramAPI(api.APIBase):
 
         if not msg.out:
             apimsg = await ChatMessage.create(self, msg)
-            await self._trigger(api.APIEvents.Message, apimsg)
+            self._trigger(api.APIEvents.Message, apimsg)
         else:
             await self._on_sent(msg)
 
     async def _on_sent(self, msg: telethon.tl.custom.Message):
         # logging.info("sent %s", msg.stringify())
         apimsg = await ChatMessage.create(self, msg)
-        await self._trigger(api.APIEvents.MessageSent, apimsg)
+        self._trigger(api.APIEvents.MessageSent, apimsg)
 
     async def _on_chat_action(self, event: telethon.events.ChatAction.Event):
         if event.user_ids:
@@ -138,6 +138,6 @@ class TelegramAPI(api.APIBase):
                 user = await User.create(self, userid)
 
                 if event.user_added or event.user_joined:
-                    await self._trigger(api.APIEvents.GroupMemberJoin, user)
+                    self._trigger(api.APIEvents.GroupMemberJoin, user)
                 elif event.user_kicked or event.user_left:
-                    await self._trigger(api.APIEvents.GroupMemberLeave, user)
+                    self._trigger(api.APIEvents.GroupMemberLeave, user)

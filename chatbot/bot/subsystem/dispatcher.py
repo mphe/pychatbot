@@ -57,8 +57,13 @@ class APIEventDispatcher:
         self._api.register_event_handler(
             event, asyncio.coroutine(partial(self._dispatch_event, event)))
         ev = self._events[event] = Event()
-        ev.set_exception_handler(lambda e: self._exc_handler(event, e))
+        ev.set_exception_handler(lambda e: self._handle_exc(event, e))
         return ev
+
+    def _handle_exc(self, event: str, e: Exception) -> bool:
+        if self._exc_handler:
+            return self._exc_handler(event, e)
+        return False
 
     async def _dispatch_event(self, event, *args, **kwargs):
         """Generic function to dispatch an event to all registered callbacks."""
@@ -79,4 +84,4 @@ class APIEventDispatcher:
             del self._events[event]
             self._api.unregister_event_handler(event)
             # Trigger without anything registered (as it should have been)
-            await self._api._trigger(event, *args, **kwargs)
+            self._api._trigger(event, *args, **kwargs)
