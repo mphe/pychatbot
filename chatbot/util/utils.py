@@ -31,8 +31,10 @@ def merge_dicts(srcdict: dict, mergedict: dict, overwrite=False):
 
 
 def merge_dicts_copy(srcdict, mergedict, overwrite=False):
-    """Same as _merge_dicts but returns a shallow copy instead of merging directly into srcdict."""
-    return merge_dicts(dict(srcdict), mergedict, overwrite)
+    """Same as merge_dicts() but returns a shallow copy (lists and dicts) instead of merging directly into srcdict."""
+    out = merge_dicts({}, srcdict)
+    merge_dicts(out, mergedict, overwrite)
+    return out
 
 
 def string_prepend(prefix: str, string: str):

@@ -13,6 +13,7 @@ class TestAPI(api.APIBase):  # pylint: disable=too-many-instance-attributes
         self._timer = None  # type: asyncio.Task
         self._input_task = None  # type: asyncio.Task
         self._interactive = opts["interactive"]
+        self._automsg = opts["auto_message"]
         self._msg = opts["message"]
         self._chat = TestChat(self)
         self._user = User("testuser", "Test User", self._chat)
@@ -20,8 +21,9 @@ class TestAPI(api.APIBase):  # pylint: disable=too-many-instance-attributes
         self._running = False
 
     async def start(self):
-        if not self._interactive:
+        if not self._interactive and self._automsg:
             self._timer = asyncio.create_task(self._timer_func())
+
         self._running = True
         self._trigger(api.APIEvents.Ready)
 
@@ -30,6 +32,8 @@ class TestAPI(api.APIBase):  # pylint: disable=too-many-instance-attributes
                 def input_cb():
                     time.sleep(0.1)  # Simple fix text overlapping
                     return input("Enter message: ").strip()
+
+                text = ""
 
                 # Run input() in a thread to prevent blocking
                 if self._input_task is None or self._input_task.done():
@@ -73,7 +77,7 @@ class TestAPI(api.APIBase):  # pylint: disable=too-many-instance-attributes
     async def get_user(self):
         return self._user
 
-    async def find_user(self, userid: str) -> "api.User":
+    async def find_user(self, _userid: str) -> "api.User":
         raise NotImplementedError
 
     async def set_display_name(self, name):
@@ -83,7 +87,8 @@ class TestAPI(api.APIBase):  # pylint: disable=too-many-instance-attributes
     def get_default_options():
         return {
             "message": "Test message",
-            "interactive": True
+            "interactive": True,
+            "auto_message": False,
         }
 
     # Testing functions
@@ -94,6 +99,12 @@ class TestAPI(api.APIBase):  # pylint: disable=too-many-instance-attributes
 
     async def trigger_sent(self, text):
         await self._chat.send_message(text)
+
+    def create_message(self, author: "User", text: str, chat: "TestChat", msgtype=api.MessageType.Normal) -> "TestingMessage":
+        return TestingMessage(author, text, chat, msgtype)
+
+    def create_chat(self) -> "TestChat":
+        return TestChat(self)
 
     async def _timer_func(self):
         while True:
@@ -128,7 +139,7 @@ class TestingMessage(api.ChatMessage):
     def is_editable(self):
         return False
 
-    async def edit(self, newstr: str) -> None:
+    async def edit(self, _newstr: str) -> None:
         raise NotImplementedError
 
 
