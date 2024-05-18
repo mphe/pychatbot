@@ -19,8 +19,6 @@ class Plugin(bot.BotPlugin):
         self.register_command("binary", self._binary)
         self.register_command("choose", self._choose)
         self.register_command("random", self._random)
-        self.register_command("blockspam", self._blockspam, argc=2)
-        self.register_command("stretch", self._stretch, argc=2)
         self.register_command("slap", self._slap)
         self.register_command("explode", self._explode, argc=0)
         self.register_command("lenny", self._lenny, argc=0)
@@ -109,27 +107,6 @@ class Plugin(bot.BotPlugin):
         a = bot.command.get_argument(argv, 1, type=int)
         b = bot.command.get_argument(argv, 2, default=0, type=int)
         await msg.reply(str(random.randint(min(a, b), max(a, b))))
-
-    @staticmethod
-    async def _blockspam(msg: api.ChatMessage, argv):
-        """Syntax: blockspam <text> <amount>
-
-        Create a block of text by repeating it for a specific amount of times.
-        If supported by the chat protocol it will replace the user's message.
-        """
-        await util.edit_or_reply(msg, int(argv[2]) * argv[1])
-
-    @staticmethod
-    async def _stretch(msg: api.ChatMessage, argv):
-        """Syntax: stretch <text> <strength> [offset]
-
-        Repeats every character in <text> after position [offset] <strength> times.
-        If supported by the chat protocol it will replace the user's message.
-        """
-        off = int(argv[3]) if len(argv) > 3 else 0
-        strength = int(argv[2])
-        out = argv[1][:off] + "".join([strength * i for i in argv[1][off:]])
-        await util.edit_or_reply(msg, out)
 
     @staticmethod
     async def _slap(msg: api.ChatMessage, argv):
