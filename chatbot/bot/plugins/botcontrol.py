@@ -20,9 +20,9 @@ class Plugin(BotPlugin):
         await msg.reply(", ".join([ k for k, _ in self.bot.iter_plugins() ]))
 
     async def _plugins(self, msg, argv):
-        """Syntax: plugins <mount|unmount|reload> <plugin name>
+        """Syntax: plugins <mount|unmount> <plugin name>
 
-        Mount/remount, unmount, or reload a plugin.
+        Mount/remount or unmount a plugin.
         Mounting an already mounted plugin remounts it.
         """
         plugin = argv[2]
