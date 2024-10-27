@@ -21,7 +21,7 @@ class Plugin(BotPlugin):
         await super()._on_ready()
         await self._notifier.load(self.cfg["chats"])
         self._info_providers = [
-            MysticForgerInfo(),
+            # MysticForgerInfo(),
             GemPriceInfo(self.cfg["gem_threshold"])
         ]
         self._update_timer()
@@ -99,42 +99,42 @@ class InfoProvider:
         raise NotImplementedError
 
 
-class MysticForgerInfo(InfoProvider):
-    def __init__(self) -> None:
-        self._is_mystic_forger: bool = False
-
-    async def update(self) -> None:
-        self._is_mystic_forger = await self.is_daily_coin()
-
-    def should_notify(self) -> bool:
-        return self._is_mystic_forger
-
-    def get_notification_text(self) -> str:
-        return self.get_status_text()
-
-    def get_status_text(self) -> str:
-        if self._is_mystic_forger:
-            return "Today is Daily Mystic Forger"
-        return "Today is not Daily Mystic Forger"
-
-    @staticmethod
-    async def is_daily_coin() -> bool:
-        DAILY_MYSTIC_FORGER_ID = 500
-
-        def check_daily_coin() -> bool:
-            client = GuildWars2Client()
-            assert client.achievements.get(id=DAILY_MYSTIC_FORGER_ID)["name"] == "Daily Mystic Forger"  # type: ignore # pylint: disable=no-member
-
-            logging.debug("Retrieving GW2 dailys...")
-            dailys: Dict[str, List[Dict[str, Any]]] = client.achievementsdaily.get()  # type: ignore # pylint: disable=no-member
-            flat_dailies = ( i for ach_list in dailys.values() for i in ach_list )
-
-            for i in flat_dailies:
-                if i["id"] == DAILY_MYSTIC_FORGER_ID:
-                    return True
-            return False
-
-        return await util.run_in_thread(check_daily_coin)
+# class MysticForgerInfo(InfoProvider):
+#     def __init__(self) -> None:
+#         self._is_mystic_forger: bool = False
+#
+#     async def update(self) -> None:
+#         self._is_mystic_forger = await self.is_daily_coin()
+#
+#     def should_notify(self) -> bool:
+#         return self._is_mystic_forger
+#
+#     def get_notification_text(self) -> str:
+#         return self.get_status_text()
+#
+#     def get_status_text(self) -> str:
+#         if self._is_mystic_forger:
+#             return "Today is Daily Mystic Forger"
+#         return "Today is not Daily Mystic Forger"
+#
+#     @staticmethod
+#     async def is_daily_coin() -> bool:
+#         DAILY_MYSTIC_FORGER_ID = 500
+#
+#         def check_daily_coin() -> bool:
+#             client = GuildWars2Client()
+#             assert client.achievements.get(id=DAILY_MYSTIC_FORGER_ID)["name"] == "Daily Mystic Forger"  # type: ignore # pylint: disable=no-member
+#
+#             logging.debug("Retrieving GW2 dailys...")
+#             dailys: Dict[str, List[Dict[str, Any]]] = client.achievementsdaily.get()  # type: ignore # pylint: disable=no-member
+#             flat_dailies = ( i for ach_list in dailys.values() for i in ach_list )
+#
+#             for i in flat_dailies:
+#                 if i["id"] == DAILY_MYSTIC_FORGER_ID:
+#                     return True
+#             return False
+#
+#         return await util.run_in_thread(check_daily_coin)
 
 
 class GemPriceInfo(InfoProvider):
