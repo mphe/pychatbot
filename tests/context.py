@@ -14,10 +14,7 @@ from chatbot import api, util, bot  # noqa  # pylint: disable=unused-import
 # Import these so test cases can import them directly from here
 # from chatbot import api, bot, util  # pylint: disable=unused-import
 
-logging.basicConfig(level=logging.DEBUG, format="%(levelname)s:%(message)s")
-
-if len(sys.argv) > 1 and sys.argv[1] == "--test":
-    logging.disable(logging.CRITICAL)
+logging.basicConfig(level=logging.INFO, format="%(levelname)s:%(message)s")
 
 
 def print_message(msg: chatbot.api.ChatMessage, prefix):
