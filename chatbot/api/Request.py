@@ -22,9 +22,8 @@ class Request:
     async def decline(self) -> None:
         raise NotImplementedError
 
-    def __str__(self, reqname="Request"):
-        return "{} by user '{}': {}".format(
-            reqname, self.author, self.text)
+    def __str__(self):
+        return f"{self.__class__.__name__} by user '{self.author}': {self.text}"
 
 
 class GroupInvite(Request):  # pylint: disable=abstract-method
@@ -34,12 +33,6 @@ class GroupInvite(Request):  # pylint: disable=abstract-method
     def text(self) -> str:
         return ""
 
-    def __str__(self):  # pylint: disable=signature-differs
-        return super().__str__("Group-Invite")
-
 
 class FriendRequest(Request):  # pylint: disable=abstract-method
     """Represents a friend request."""
-
-    def __str__(self):  # pylint: disable=signature-differs
-        return super().__str__("Friend-Request")

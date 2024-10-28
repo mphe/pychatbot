@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from asyncio import coroutine
 from functools import partial
 import logging
 from typing import Dict
@@ -19,7 +18,7 @@ class Plugin(BotPlugin):
 
         for event in api.APIEvents:
             self.register_event_handler(
-                event, coroutine(partial(self._handle_event, event)), util.event.EVENT_PRE_PRE)
+                event, partial(self._handle_event, event), util.event.EVENT_PRE_PRE)
             self._events[event] = False
 
     async def _test(self, msg: api.ChatMessage, _argv):

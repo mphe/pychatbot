@@ -60,7 +60,7 @@ class Plugin(bot.BotPlugin):
                 p.terminate()
                 p.join()
                 return "Expression took too long to evaluate."
-            return result.value.decode("utf-8")
+            return result.value.decode("utf-8")  # type: ignore[attr-defined]
 
         # Start a new thread and from there run a new process for calculation.
         # We need to do this, because a ProcessPoolExecutor can't be killed

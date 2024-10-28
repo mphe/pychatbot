@@ -3,3 +3,5 @@ tests/profile.tox
 tests/test_profile
 .vim
 .mypy_cache
+.metals
+venv

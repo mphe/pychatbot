@@ -1,5 +1,5 @@
 [MASTER]
-init-hook="from pylint.config import find_pylintrc; import os, sys; sys.path.append(os.path.dirname(find_pylintrc()))"
+init-hook="from pylint.config import find_default_config_files; import sys; sys.path.append(next(find_default_config_files()).parent.as_posix()); sys.path.append(next(find_default_config_files()).parent.as_posix() + '/chatbot/bot/plugins'); "
 jobs=0
 
 [MESSAGES CONTROL]
@@ -13,7 +13,10 @@ disable=C,
       too-many-branches,
       too-many-arguments,
       protected-access,
-      chained-comparison
+      chained-comparison,
+      duplicate-code,
+      cyclic-import,
+      unspecified-encoding
 
 [REPORTS]
 output-format=colorized

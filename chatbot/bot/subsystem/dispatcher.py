@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 from typing import Dict, Callable
-import asyncio
 from functools import partial
 from chatbot.util.event import Event
 
@@ -54,8 +53,7 @@ class APIEventDispatcher:
 
     # Utility functions
     def _setup_dispatch(self, event):
-        self._api.register_event_handler(
-            event, asyncio.coroutine(partial(self._dispatch_event, event)))
+        self._api.register_event_handler(event, partial(self._dispatch_event, event))
         ev = self._events[event] = Event()
         ev.set_exception_handler(lambda e: self._handle_exc(event, e))
         return ev

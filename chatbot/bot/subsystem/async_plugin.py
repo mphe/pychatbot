@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 
 import os
-import imp
+import importlib.util
+import importlib.machinery
 import logging
 from typing import Callable, Dict, Iterable, Tuple
 from dataclasses import dataclass
+
 
 ExceptionCallback = Callable[[str, Exception], bool]
 
@@ -185,9 +187,21 @@ class PluginManager:
         fname = f"{self._searchpath}/{name}.py"
 
         logging.debug("Loading module: %s", fname)
-        module = imp.load_source(name, fname)
+        module = load_source(name, fname)
 
         logging.debug("Creating plugin instance: %s", name)
         plugin = module.Plugin(*args, **kwargs)
 
         return PluginHandle(plugin, module)
+
+
+def load_source(modname, filename):
+    """Replacement for imp.load_source() for Python 3.12 compatibility. See also https://docs.python.org/3/whatsnew/3.12.html#imp."""
+    loader = importlib.machinery.SourceFileLoader(modname, filename)
+    spec = importlib.util.spec_from_file_location(modname, filename, loader=loader)
+    module = importlib.util.module_from_spec(spec)
+    # The module is always executed and not cached in sys.modules.
+    # Uncomment the following line to cache the module.
+    # sys.modules[module.__name__] = module
+    loader.exec_module(module)
+    return module
