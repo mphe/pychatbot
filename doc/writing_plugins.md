@@ -1,4 +1,16 @@
 # Writing Plugins
+
+## Searchpath
+
+The default plugin searchpath is `chatbot/bot/plugins/`.
+The filenames act as a unique identifier to identify each plugin.
+Only directories and `.py` files are considered. All files starting with a `.` or `_` are ignored.
+
+A plugin can be contained in a singular `.py` file or in a package.
+When provided as package, a directory must be created containing an `__init__.py` file.
+
+The plugin's main entry-point is a class named `Plugin` which must be defined in the plugin's `.py` or `__init__.py` file and inherit from `bot.BotPlugin`.
+
 ## Basic structure
 
 Create a new file "myplugin.py" and add this snippet:

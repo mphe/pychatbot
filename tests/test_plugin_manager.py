@@ -22,20 +22,36 @@ class Test(unittest.IsolatedAsyncioTestCase):
         del self.pm
 
     async def test_mount(self):
-        await self.pm.mount_plugin("testplugin", 42)
-        self.assertTrue(self.pm.plugin_exists("testplugin"))
+        await self._mount_and_unmount_plugin("testplugin", 42)
 
-        await self.pm.unmount_plugin("testplugin")
-        self.assertFalse(self.pm.plugin_exists("testplugin"))
+    async def test_mount_package(self):
+        await self._mount_and_unmount_plugin("plugin_package")
+
+    async def test_mount_ignored(self):
+        # These are ignored by mount_all() but can be mounted manually.
+        await self._mount_and_unmount_plugin("_ignored_plugin")
+        await self._mount_and_unmount_plugin(".ignored_plugin")
 
     async def test_mount_all(self):
         await self.pm.mount_all(handle_exception, 42)
         self.assertTrue(self.pm.plugin_exists("testplugin"))
+        self.assertTrue(self.pm.plugin_exists("plugin_package"))
         self.assertFalse(self.pm.plugin_exists("failingplugin"))
+        self.assertFalse(self.pm.plugin_exists(".ignored_plugin"))
+        self.assertFalse(self.pm.plugin_exists("_ignored_plugin"))
+        self.assertFalse(self.pm.plugin_exists("asdfasdfasfd"))
 
         await self.pm.unmount_all(handle_exception)
         self.assertFalse(self.pm.plugin_exists("testplugin"))
+        self.assertFalse(self.pm.plugin_exists("plugin_package"))
         self.assertFalse(self.pm.plugin_exists("failingplugin"))
+
+    async def _mount_and_unmount_plugin(self, name: str, *args):
+        await self.pm.mount_plugin(name, *args)
+        self.assertTrue(self.pm.plugin_exists(name))
+
+        await self.pm.unmount_plugin(name)
+        self.assertFalse(self.pm.plugin_exists(name))
 
 
 if __name__ == "__main__":

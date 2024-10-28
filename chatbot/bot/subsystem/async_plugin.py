@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 
+import sys
 import os
 import importlib.util
 import importlib.machinery
 import logging
-from typing import Callable, Dict, Iterable, Tuple
+from typing import Callable, Dict, Iterable, Tuple, Any
 from dataclasses import dataclass
+from pathlib import Path
 
 
 ExceptionCallback = Callable[[str, Exception], bool]
@@ -56,7 +58,7 @@ class PluginHandle:
 
 
 class PluginManager:
-    def __init__(self, searchpath, whitelist: Iterable[str] = None, blacklist: Iterable[str] = None):
+    def __init__(self, searchpath: str, whitelist: Iterable[str] = None, blacklist: Iterable[str] = None):
         """Constructor.
 
         Args:
@@ -69,7 +71,7 @@ class PluginManager:
         If both blacklist and whitelist contain entries, whitelist has
         precedence.
         """
-        self._searchpath = searchpath
+        self._searchpath = Path(searchpath)
         self.blacklist = set(blacklist if blacklist else [])
         self.whitelist = set(whitelist if whitelist else [])
         self._plugins: Dict[str, PluginHandle] = {}
@@ -121,6 +123,9 @@ class PluginManager:
     async def mount_all(self, exception_handler: ExceptionCallback, *args, **kwargs):
         """Mount all plugins in searchpath while regarding black/whitelists.
 
+        Only directories and *.py files are considered. All files starting with a '.' or '_' are ignored.
+        However, they can be mounted with a direct call to mount_plugin().
+
         Args:
             exception_handler: Gets called if an exception occurs.
             *args: Passed to plugin's constructor
@@ -135,26 +140,32 @@ class PluginManager:
         No matter if the exception was caught or re-raised, the responsible
         plugin will be skipped.
         """
-        for i in os.listdir(self._searchpath):
-            if not os.path.isdir(i) and i.endswith(".py")   \
-                    and os.path.basename(i) != "__init__.py":
-                name = i[:-3]
+        for i in self._searchpath.iterdir():
+            # Filter hidden files
+            if i.name.startswith("_") or i.name.startswith("."):
+                continue
 
-                if self.whitelist:
-                    if name not in self.whitelist:
-                        logging.debug("Plugin not whitelisted, skipping: %s", name)
-                        continue
-                elif self.blacklist:
-                    if name in self.blacklist:
-                        logging.debug("Plugin blacklisted, skipping: %s", name)
-                        continue
+            # Filter unrelated files
+            if not i.name.endswith(".py") and not i.is_dir():
+                continue
 
-                try:
-                    await self.mount_plugin(name, *args, **kwargs)
-                except Exception as e:
-                    if exception_handler and exception_handler(name, e):
-                        continue
-                    raise
+            plugin_name = i.name[:-3] if i.name.endswith(".py") else i.name
+
+            if self.whitelist:
+                if plugin_name not in self.whitelist:
+                    logging.debug("Plugin not whitelisted, skipping: %s", plugin_name)
+                    continue
+            elif self.blacklist:
+                if plugin_name in self.blacklist:
+                    logging.debug("Plugin blacklisted, skipping: %s", plugin_name)
+                    continue
+
+            try:
+                await self.mount_plugin(plugin_name, *args, **kwargs)
+            except Exception as e:
+                if exception_handler and exception_handler(plugin_name, e):
+                    continue
+                raise
 
     async def unmount_all(self, exception_handler: ExceptionCallback):
         """Unmount all plugins.
@@ -184,10 +195,19 @@ class PluginManager:
 
     def _load_plugin(self, name: str, *args, **kwargs) -> PluginHandle:
         """Loads a module from the plugin search path and instantiates it."""
-        fname = f"{self._searchpath}/{name}.py"
+
+        dir_path = self._searchpath / name
+        py_path = dir_path.with_suffix(".py")
+
+        if py_path.is_file():
+            fname = py_path
+        elif dir_path.is_dir():
+            fname = dir_path / "__init__.py"
+        else:
+            raise ImportError("Plugin not found")
 
         logging.debug("Loading module: %s", fname)
-        module = load_source(name, fname)
+        module = load_source(name, str(fname))
 
         logging.debug("Creating plugin instance: %s", name)
         plugin = module.Plugin(*args, **kwargs)
@@ -195,13 +215,11 @@ class PluginManager:
         return PluginHandle(plugin, module)
 
 
-def load_source(modname, filename):
+def load_source(modname: str, filename: str) -> Any:
     """Replacement for imp.load_source() for Python 3.12 compatibility. See also https://docs.python.org/3/whatsnew/3.12.html#imp."""
     loader = importlib.machinery.SourceFileLoader(modname, filename)
-    spec = importlib.util.spec_from_file_location(modname, filename, loader=loader)
+    spec = importlib.util.spec_from_file_location(modname, filename, loader=loader, submodule_search_locations=[])
     module = importlib.util.module_from_spec(spec)
-    # The module is always executed and not cached in sys.modules.
-    # Uncomment the following line to cache the module.
-    # sys.modules[module.__name__] = module
+    sys.modules[module.__name__] = module  # Register the module to cache it and to make it work with the inspect module.
     loader.exec_module(module)
     return module
