@@ -48,10 +48,14 @@ class Test(unittest.IsolatedAsyncioTestCase):
 
     async def _mount_and_unmount_plugin(self, name: str, *args):
         await self.pm.mount_plugin(name, *args)
+        plugin = self.pm.get_plugin(name)
+        self.assertIsNotNone(plugin)
+        self.assertEqual(plugin.name, name)
         self.assertTrue(self.pm.plugin_exists(name))
 
         await self.pm.unmount_plugin(name)
         self.assertFalse(self.pm.plugin_exists(name))
+        self.assertIsNone(self.pm.get_plugin(name))
 
 
 if __name__ == "__main__":

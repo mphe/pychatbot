@@ -6,6 +6,8 @@ import logging
 
 class Plugin(BasePlugin):
     def __init__(self, x):
+        super().__init__()
+        assert self.name == "testplugin", "Correct plugin name should be available here"
         logging.info("Received parameter x=%s", str(x))
 
     async def init(self, _old_instance):

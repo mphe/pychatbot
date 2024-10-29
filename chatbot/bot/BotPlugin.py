@@ -5,14 +5,11 @@ from .subsystem.async_plugin import BasePlugin
 import chatbot  # Used for type hints, pylint: disable=unused-import
 from chatbot.util import event, config, Storage
 from chatbot.bot import command
-from inspect import getfile
-import os
 
 
 class BotPlugin(BasePlugin):
     def __init__(self, bot: "chatbot.bot.Bot"):
         super().__init__()
-        self.__name: str = os.path.splitext(os.path.basename(getfile(self.__class__)))[0]
         self.__bot: "chatbot.bot.Bot" = bot
         self.__cfg = bot.profile.get_plugin_config(self.name)
         self.__storage = bot.profile.get_plugin_storage(self.name)
@@ -43,7 +40,9 @@ class BotPlugin(BasePlugin):
         self.storage.write()
 
     async def quit(self):
+        self.save_config()
         self.bot.unregister_command(*self.__commands)
+
         for i in self.__handles:
             i.unregister()
 
@@ -55,10 +54,6 @@ class BotPlugin(BasePlugin):
     @property
     def bot(self) -> "chatbot.bot.Bot":
         return self.__bot
-
-    @property
-    def name(self) -> str:
-        return self.__name
 
     @property
     def cfg(self) -> config.Config:

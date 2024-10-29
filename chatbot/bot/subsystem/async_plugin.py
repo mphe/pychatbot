@@ -5,9 +5,10 @@ import os
 import importlib.util
 import importlib.machinery
 import logging
-from typing import Callable, Dict, Iterable, Tuple, Any
+from typing import Callable, Dict, Iterable, Tuple, Any, Optional
 from dataclasses import dataclass
 from pathlib import Path
+from inspect import getfile
 
 
 ExceptionCallback = Callable[[str, Exception], bool]
@@ -15,6 +16,15 @@ ExceptionCallback = Callable[[str, Exception], bool]
 
 class BasePlugin:
     """Base class for plugins."""
+
+    def __init__(self):
+        # Auto-deduce the plugin name.
+        # We cannot easily let the PluginManager set the name, because we could be dealing with any
+        # derivation of BasePlugin that performs logic in __init__() that includes the plugin's
+        # name. Hence, the name must have already been set before.
+        # It could be added as constructor argument passed by the PluginManager, but various code
+        # needs to be updated accordingly, which is a little tedious.
+        self.__name: str = self.__deduce_name()
 
     async def init(self, _old_instance: "BasePlugin") -> bool:
         """Initialize the plugin.
@@ -29,6 +39,19 @@ class BasePlugin:
         """Will be called when a plugin is unmounted."""
         raise NotImplementedError
 
+    @property
+    def name(self) -> str:
+        """Name of the plugin."""
+        return self.__name
+
+    def __deduce_name(self) -> str:
+        file_path = Path(getfile(self.__class__))
+
+        if file_path.stem == "__init__":
+            return file_path.parent.name
+
+        return file_path.stem
+
 
 @dataclass
 class PluginHandle:
@@ -37,24 +60,6 @@ class PluginHandle:
 
     def __bool__(self) -> bool:
         return self.plugin is not None and self.module is not None
-
-
-# @dataclass
-# class PluginHandle:
-#     def __init__(self):
-#         self._plugin: BasePlugin = None
-#         self._module: object = None
-#
-#     def get_plugin(self) -> BasePlugin:
-#         return self._plugin
-#
-#     def get_module(self) -> object:
-#         return self._module
-#
-#     def load
-#
-#     def __bool__(self) -> bool:
-#         return self._plugin is not None and self._module is not None
 
 
 class PluginManager:
@@ -193,6 +198,12 @@ class PluginManager:
     def plugin_exists(self, name: str):
         return name in self._plugins
 
+    def get_plugin(self, name: str) -> Optional[BasePlugin]:
+        handle = self._plugins.get(name)
+        if handle:
+            return handle.plugin
+        return None
+
     def _load_plugin(self, name: str, *args, **kwargs) -> PluginHandle:
         """Loads a module from the plugin search path and instantiates it."""
 
@@ -210,7 +221,7 @@ class PluginManager:
         module = load_source(name, str(fname))
 
         logging.debug("Creating plugin instance: %s", name)
-        plugin = module.Plugin(*args, **kwargs)
+        plugin: BasePlugin = module.Plugin(*args, **kwargs)
 
         return PluginHandle(plugin, module)
 
