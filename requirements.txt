@@ -2,8 +2,8 @@ sortedcontainers
 appdirs
 parsedatetime==2.6
 markovify
-discord.py==2.0.1
-Telethon==1.24.0
+discord.py==2.4.0
+Telethon==1.37.0
 python-chefkoch==2.0.0
 ourgroceries @ git+https://github.com/mphe/py-our-groceries@improvements_and_new_functions
 cryptography
