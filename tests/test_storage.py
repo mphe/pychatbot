@@ -79,12 +79,15 @@ class TestStorage(unittest.TestCase):
         self._test_fallback(USER_ID, None, None)
         self._test_fallback(None, None, None)
 
-    # etc
     def test_erase(self):
         scope = self.storage.scope(USER_ID, CHAT_ID)
         scope.set("test", VALUE_USER_CHAT)
         scope.erase("test")
         self.assertIsNone(scope.get("test"))
+
+    def test_erase_non_existing(self):
+        # This should simply do nothing
+        self.storage.erase("non_existing_key", USER_ID, CHAT_ID)
 
     def test_write(self):
         scope = self.storage.scope(USER_ID, CHAT_ID)

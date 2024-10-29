@@ -30,6 +30,7 @@ class Config:
         return self._filename
 
     def exists(self) -> bool:
+        """Returns whether the config file exists."""
         return os.path.exists(self.filename)
 
     def load(self, default: JsonDict = None, validate=True, write=False, create=False) -> "Config":
@@ -81,6 +82,9 @@ class Config:
 
         with open(self.filename, "w") as f:
             json.dump(self.data, f, indent=4)
+
+    def __contains__(self, item: str) -> bool:
+        return item in self.data
 
     def __len__(self):
         return len(self.data)

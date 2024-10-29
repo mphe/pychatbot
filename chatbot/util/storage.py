@@ -45,7 +45,11 @@ class Storage:
         self._cfg[self._build_storage_key(key, user, chat)] = value
 
     def erase(self, key: str, user: UserReference, chat: ChatReference) -> None:
-        del self._cfg[self._build_storage_key(key, user, chat)]
+        """Removes the given entry from storage. Does nothing when the key does not exist."""
+        key = self._build_storage_key(key, user, chat)
+
+        if key in self._cfg:
+            del self._cfg[key]
 
     def load(self):
         """Reload storage file. See also config.Config.load()."""
