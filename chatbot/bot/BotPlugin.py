@@ -40,7 +40,12 @@ class BotPlugin(BasePlugin):
         self.storage.write()
 
     async def quit(self):
-        self.save_config()
+        # Storage is intended to be used by code only, hence it should be safe to overwrite the file
+        # without discarding any potential manual changes.
+        # Configs on the other hand are intended to be manipulated by hand. Saving the config here
+        # could cause manual changes while the bot is running to get lost.
+        self.storage.write()
+
         self.bot.unregister_command(*self.__commands)
 
         for i in self.__handles:
