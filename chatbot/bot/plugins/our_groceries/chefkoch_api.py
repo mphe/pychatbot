@@ -42,7 +42,7 @@ def parse_ingredients(recipe: chefkoch.Recipe) -> List[Ingredient]:
             amount = parsetools.non_us_to_us_number(amount)
             amount_float = parsetools.unicode_fraction_to_float(amount)
         else:
-            amount_float = 0
+            amount_float = 0.0
 
         ingredients.append(Ingredient(ingredient, amount_float, unit))
 

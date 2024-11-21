@@ -29,6 +29,10 @@ class Ingredient:
     amount: float
     unit: str
 
+    def ___post_init__(self):
+        # Passing an int might happen accidentally, so we silently fix it.
+        self.amount = float(self.amount)
+
     def get_discrete_amount(self) -> Optional[int]:
         """Returns the discrete amount or None if not applicable.
 
