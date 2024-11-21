@@ -1,9 +1,9 @@
 import re
-from typing import List, Tuple, Callable, Awaitable
-from chatbot import api, bot
+from typing import List, Tuple, Callable, Awaitable, Optional
+from chatbot import api, bot, util
 from chatbot.bot.subsystem.command import CommandError, CommandSyntaxError
 from ourgroceries import OurGroceries, InvalidLoginException
-from . import chefkoch_api
+from . import chefkoch_api, wprm_api, datamodel
 
 import secrets
 from base64 import urlsafe_b64encode as b64e, urlsafe_b64decode as b64d
@@ -23,8 +23,9 @@ class Plugin(bot.BotPlugin):
 
         self.register_command("ourgroceries", self._ourgroceries, argc=1)
 
-        self.SUPPORTED_PAGES: List[Tuple[re.Pattern, Callable[[OurGroceries, str, int], Awaitable[None]]]] = [
-            (re.compile(r".*chefkoch.de/.*", re.IGNORECASE), create_recipe_from_chefkoch),
+        self.SUPPORTED_PAGES: List[Callable[[str], datamodel.RecipeFetcher]] = [
+            chefkoch_api.ChefkochFetcher,
+            wprm_api.WPRMFetcher,
         ]
 
     async def _ourgroceries(self, msg: api.ChatMessage, argv: List[str]) -> None:
@@ -92,15 +93,17 @@ class Plugin(bot.BotPlugin):
         url: str = bot.command.get_argument(argv, 1, "")
         num_servings: int = bot.command.get_argument(argv, 2, DEFAULT_NUM_SERVINGS, int)
 
-        for pattern, callback in self.SUPPORTED_PAGES:
-            if pattern.match(url):
+        for callback in self.SUPPORTED_PAGES:
+            fetcher: datamodel.RecipeFetcher = callback(url)
+
+            if await fetcher.supports_url():
                 og = self._get_credentials(msg)
                 await msg.reply("Processing...")
-                await callback(og, url, num_servings)
+                await self.create_recipe_from_url(og, fetcher, num_servings)
                 await msg.reply("Recipe successfully added")
                 return
 
-        raise CommandError("The given URL is not supported")
+        raise CommandError("Website is not supported")
 
     def _get_credentials(self, msg: api.ChatMessage) -> OurGroceries:
         encrypted = self.storage.get_with_fallback(STORAGE_AUTH_KEY, msg.author, msg.chat)
@@ -123,9 +126,32 @@ class Plugin(bot.BotPlugin):
         self.storage.set(STORAGE_AUTH_KEY, encrypted, msg.author, None)
         self.storage.write()
 
+    async def create_recipe_from_url(self, og: OurGroceries, fetcher: datamodel.RecipeFetcher, num_servings: int) -> None:
+        recipe = await fetcher.fetch_recipe()
+
+        if not recipe:
+            raise CommandError("Failed to fetch recipe")
+
+        recipe.set_num_servings(num_servings)
+
+        list_id = await create_og_recipe(og, recipe.title)
+
+        if list_id is None:
+            raise CommandError(f"There are already {MAX_RECIPE_NAME_RETRIES} OurGroceries recipes with the same name.")
+
+        items = [ ingredient_to_og_item(i, self.cfg["output_locale"]) for i in recipe.ingredients ]
+        await og.add_items_to_list(list_id, items)
+
+        instructions = "\n\n".join(recipe.instructions)
+        servings = self.cfg["num_servings_text"].format(num_servings)
+        await og.set_list_notes(list_id, f"{recipe.url}\n\n{servings}\n\n{instructions}")
+
     @staticmethod
     def get_default_config():
-        return {}
+        return {
+            "num_servings_text": "Serves {}.",
+            "output_locale": "en_US.utf8",
+        }
 
 
 def _derive_key(password: str, salt: bytes, iterations: int) -> bytes:
@@ -156,36 +182,39 @@ def password_decrypt(token: bytes, password: str) -> str:
     return Fernet(key).decrypt(token).decode()
 
 
-def ingredient_to_og_item(ingredient: str, discrete_amount: int, unit_and_amount: str) -> Tuple[str, str, str]:
-    if discrete_amount > 1:
-        # Discrete amounts are handled simply by appending them in braces to the ingredient name
-        return (f"{unit_and_amount} {ingredient} ({discrete_amount})", "", "")
-    return (ingredient, "", unit_and_amount)
+async def create_og_recipe(og: OurGroceries, name: str) -> Optional[str]:
+    """Creates an OurGroceries recipe with the given name and returns the corresponding list ID.
 
-
-async def create_recipe_from_chefkoch(og: OurGroceries, chefkoch_url: str, num_servings: int) -> None:
-    recipe = chefkoch_api.ExtendedRecipe(chefkoch_url, num_servings)
-
-    if not recipe:
-        raise CommandError("Failed to fetch recipe from chefkoch.de")
-
+    If a recipe with the same name already exists, retries the same name with (2), (3), ... appended.
+    Returns None if the maximum number of retries were reached.
+    If the request fails, an exception is raised by the OurGroceries API.
+    """
     for i in range(1, MAX_RECIPE_NAME_RETRIES):
-        list_id = await og.create_recipe(recipe.title if i <= 1 else f"{recipe.title} ({i})")
+        list_id = await og.create_recipe(name if i <= 1 else f"{name} ({i})")
 
         if list_id is not None:
-            break
+            return list_id
 
-    if list_id is None:
-        raise CommandError(f"There are already {MAX_RECIPE_NAME_RETRIES} OurGroceries recipes with the same name.")
+    return None
 
-    items = [ ingredient_to_og_item(i.ingredient, i.discrete_amount, i.amount_and_unit) for i in recipe.extended_ingredients ]
-    await og.add_items_to_list(list_id, items)
 
-    instructions = ""
+def ingredient_to_og_item(ingredient: datamodel.Ingredient, locale: str = "") -> Tuple[str, str, str]:
+    discrete_amount = ingredient.get_discrete_amount()
+    unit = ingredient.unit
+    unit_pad = " " if unit else ""
+    amount = ingredient.format_amount(locale)
+    name = util.string_capitalize(ingredient.name)
 
-    if isinstance(recipe.instructions, str):
-        instructions = recipe.instructions
-    elif isinstance(recipe.instructions, list):
-        instructions = "\n\n".join(recipe.instructions)
+    if discrete_amount is None:
+        # TODO: Consider whether ingredients like Ingredient("Onions", 3.5, "") should be formatted
+        # differently, e.g. "3.5 Onions" rather than "Onions" and "3.5" as note.
+        return (name, "", f"{amount}{unit_pad}{unit}")
 
-    await og.set_list_notes(list_id, f"{recipe.url}\n\nFür {num_servings} Portionen.\n\n{instructions}")
+    # Only capitalize if it is placed in the beginning
+    unit = util.string_capitalize(unit)
+
+    if discrete_amount <= 1:
+        return (f"{unit}{unit_pad}{name}", "", "")
+
+    # Discrete amounts are handled simply by appending them in braces to the ingredient name
+    return (f"{unit}{unit_pad}{name} ({discrete_amount})", "", "")

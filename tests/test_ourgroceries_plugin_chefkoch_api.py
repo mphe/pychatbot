@@ -3,88 +3,75 @@
 
 import unittest
 import context  # pylint: disable=unused-import
-from our_groceries import chefkoch_api
-from our_groceries.chefkoch_api import ExtendedIngredient
+from our_groceries import chefkoch_api, datamodel
+from our_groceries.datamodel import Ingredient
 
 
-class ChefkochTest(unittest.TestCase):
-    def test_fetch_url(self):
-        base_url = "https://www.chefkoch.de/rezepte/1844061298739441/Mozzarella-Haehnchen-in-Basilikum-Sahnesauce.html"
-        expected_num_servings = 1  # Recipe default is 4
-
-        tests = {
-            base_url,
-            base_url + "?",
-            base_url + "?&",
-            base_url + "?portionen=4",  # Test replacement
-            base_url + "?portionen=4&portionen=825",  # Test replacement
-            base_url + "?somearg=asdf",  # Test append
-            base_url + "?somearg=asdf&",  # Test append
-        }
-
-        for i in tests:
-            r = chefkoch_api.ExtendedRecipe(i, expected_num_servings)
-            self.assertEqual(r.num_servings, expected_num_servings, "url = " + r.url)
-
-    def test_parse_discrete_amount(self):
-        tests = {
-            "1 EL":         (1, "1 EL"),
-            "1 TL":         (1, "1 TL"),
-            "100g":         (1, "100g"),
-            "100 g":        (1, "100 g"),
-            "100 kg":       (1, "100 kg"),
-            "100 ml":       (1, "100 ml"),
-            "100 l":        (1, "100 l"),
-            "100 L":        (1, "100 L"),
-            "5,05 l":       (1, "5,05 l"),
-            "5,05asdf":     (1, "5,05asdf"),
-            "5  ,5":        (1, "5  ,5"),
-            "5  ,   5":     (1, "5  ,   5"),
-            "5,   5":       (1, "5,   5"),
-            "n. B.":        (1, "n. B."),
-            "etwas":        (1, "etwas"),
-            "":             (1, ""),
-            "  ":           (1, "  "),
-            "1 ½":          (1, "1 ½"),
-            "1 ½ kleine":   (1, "1 ½ kleine"),
-            "½":            (1, "½"),
-            "½ kleine":     (1, "½ kleine"),
-            "2 TL, gestr.": (1, "2 TL, gestr."),
-            "3 kleine":     (3, "kleine"),
-            "3":            (3, ""),
-            "3 ":           (3, ""),
-            "2 Prise(n)":   (2, "Prise(n)"),
-            "4 Stiel/e":    (4, "Stiel/e"),
-            "2, kleine":    (2, "kleine"),
-            "2 , kleine":   (2, "kleine"),
-            "2,kleine":     (2, "kleine"),
-        }
-
-        for input_str, expected in tests.items():
-            result = chefkoch_api.ExtendedRecipe._parse_discrete_amount(input_str)
-            self.assertTupleEqual(result, expected, f"for input '{input_str}'")
-
-    def test_ingredients(self):
-        url = "https://www.chefkoch.de/rezepte/1844061298739441/Mozzarella-Haehnchen-in-Basilikum-Sahnesauce.html"
-        r = chefkoch_api.ExtendedRecipe(url, 4)
-
-        self.assertEqual(r.title, "Mozzarella-Hähnchen in Basilikum-Sahnesauce")
-
-        expected_ingredients = [
-            ExtendedIngredient("Hühnerbrustfilet(s)", "", 4),
-            ExtendedIngredient("Salz und Pfeffer", ""),
-            ExtendedIngredient("Öl", "1 EL"),
-            ExtendedIngredient("Cocktailtomaten", "250 g"),
-            ExtendedIngredient("Basilikum", "½ Topf"),
-            ExtendedIngredient("Sahne", "200 g"),
-            ExtendedIngredient("Sahneschmelzkäse", "100 g"),
-            ExtendedIngredient("Fett für die Form", ""),
-            ExtendedIngredient("Mozzarella", "125 g"),
-            ExtendedIngredient("Parmesan, optional", "n. B."),
-            ExtendedIngredient("Kräuterbutter, optional", "1 EL"),
+class ChefkochTest(unittest.IsolatedAsyncioTestCase):
+    async def test_match_url(self):
+        urls = [
+            "https://www.chefkoch.de/rezepte/1844061298739441/Mozzarella-Haehnchen-in-Basilikum-Sahnesauce.html",
+            "https://www.chefkoch.de/rezepte/1844061298739441/Mozzarella-Haehnchen-in-Basilikum-Sahnesauce.html?portionen=4",
+            "https://www.chefkoch.de/rezepte/4331861726562757/Cremesuppe-von-der-Schwarzwurzel-mit-Brezel-Speck-Croutons.html?portionen=8.01",
         ]
 
-        self.assertListEqual(r.extended_ingredients, expected_ingredients)
+        for url in urls:
+            with self.subTest(url):
+                fetcher = chefkoch_api.ChefkochFetcher(url)
+                self.assertTrue(await fetcher.supports_url())
+
+    async def test_not_match_url(self):
+        urls = [
+            "https://google.de",
+            "https://www.gaumenfreundin.de/kartoffelsalat-mit-bruehe-schwaebisch/",
+        ]
+
+        for url in urls:
+            with self.subTest(url):
+                fetcher = chefkoch_api.ChefkochFetcher(url)
+                self.assertFalse(await fetcher.supports_url())
+
+    async def test_fetch_clean_url(self):
+        url = "https://www.chefkoch.de/rezepte/1844061298739441/Mozzarella-Haehnchen-in-Basilikum-Sahnesauce.html?portionen=8"
+        fetcher = chefkoch_api.ChefkochFetcher(url)
+        recipe = await fetcher.fetch_recipe()
+
+        self.assertEqual(recipe.num_servings, 4)  # Fetcher should ignore the URL parameter specifying 8 servings
+
+    async def test_fetch_recipe(self):
+        url = "https://www.chefkoch.de/rezepte/1844061298739441/Mozzarella-Haehnchen-in-Basilikum-Sahnesauce.html"
+
+        expected = datamodel.Recipe(
+            "Mozzarella-Hähnchen in Basilikum-Sahnesauce",
+            url,
+            4,  # 4 is the default
+            [
+                Ingredient("Hühnerbrustfilet(s)", 4, ""),
+                Ingredient("Salz und Pfeffer", 0, ""),
+                Ingredient("Öl", 1, "EL"),
+                Ingredient("Cocktailtomaten", 250, "g"),
+                Ingredient("Basilikum", 0.5, "Topf"),
+                Ingredient("Sahne", 200, "g"),
+                Ingredient("Sahneschmelzkäse", 100, "g"),
+                Ingredient("Fett für die Form", 0, ""),
+                Ingredient("Mozzarella", 125, "g"),
+                Ingredient("Parmesan, optional", 0, "n. B."),
+                Ingredient("Kräuterbutter, optional", 1, "EL"),
+            ],
+            [
+                "Fleisch waschen und trocken tupfen. Mit Salz und Pfeffer würzen. Öl in einer Pfanne erhitzen. Filets darin von allen Seiten ca. 5 Min. kräftig anbraten. "
+                "\n\nTomaten waschen und halbieren. Basilikumblätter abzupfen, waschen und fein hacken."
+                "\n\nSahne in einem Topf aufkochen lassen. Schmelzkäse hineinrühren und schmelzen lassen. Mit Salz und Pfeffer würzen. 2/3 vom Basilikum unterrühren. "
+                "\n\nFleisch und Tomaten in eine gefettete Auflaufform geben. Sauce darüber gießen. Mozzarella in kleine Stückchen schneiden und auf dem Fleisch verteilen. Wer mag, kann noch geriebenen Parmesan und 1 EL Kräuterbutter in kleinen Flöckchen darauf verteilen. "
+                "\n\nIm vorgeheizten Ofen bei 200 °C Ober-/Unterhitze bzw. 175 °C Umluft ca. 30 Min. backen. Herausnehmen und mit restlichem Basilikum bestreuen. "
+                "\n\nDazu schmecken Kroketten oder Reis.",
+            ]
+        )
+
+        fetcher = chefkoch_api.ChefkochFetcher(url)
+        recipe: datamodel.Recipe = await fetcher.fetch_recipe()
+
+        self.assertEqual(expected, recipe)
 
 
 if __name__ == "__main__":

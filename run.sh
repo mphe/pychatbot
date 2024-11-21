@@ -5,6 +5,8 @@ cd "$(dirname "$(readlink -f "$0")")" || exit 1
 RESTART_CODE=42
 GITPULL=50
 
+# TODO: venv support + update requirements on update code
+
 while true; do
     python3 -m chatbot.main "$@"
     code=$?

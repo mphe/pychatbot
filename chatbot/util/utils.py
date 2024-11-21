@@ -43,6 +43,11 @@ def string_prepend(prefix: str, string: str):
     return prefix + string.replace("\n", sub)
 
 
+def string_capitalize(text: str) -> str:
+    """Same as string.capitalize() but does not make other letters lowercase."""
+    return text[:1].upper() + text[1:]
+
+
 def list_shifted(l: List, num: int = 1) -> List:  # noqa
     """Shift all elements by a given amount (default: shift one to left)."""
     if num > 0:
