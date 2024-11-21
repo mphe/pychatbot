@@ -4,8 +4,8 @@ import logging
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
 from chatbot import api
-from typing import Callable, List, Optional
-from urllib import request
+from typing import Callable, List, Any
+import aiohttp
 
 
 def merge_dicts(srcdict: dict, mergedict: dict, overwrite=False):
@@ -80,12 +80,24 @@ async def run_in_thread(callback, *args):
         return await loop.run_in_executor(pool, callback, *args)
 
 
-async def async_urlopen(url, *args, encoding: Optional[str] = "utf-8", **kwargs):
-    def cb():
-        with request.urlopen(url, *args, **kwargs) as r:
-            data = r.read()
-            return data.decode(encoding) if encoding else data
-    return await run_in_thread(cb)
+async def async_http_get_str(url: str) -> str:
+    """Asynchronously creates a HTTP request using aiohttp and returns the response content as string.
+
+    When more than one request is made, aiohttp should be used directly for efficiency.
+    """
+    async with aiohttp.ClientSession() as sess:
+        async with sess.get(url) as r:
+            return await r.text()
+
+
+async def async_http_get_json(url: str) -> Any:
+    """Asynchronously creates a HTTP request using aiohttp and returns the response content as JSON dict.
+
+    When more than one request is made, aiohttp should be used directly for efficiency.
+    """
+    async with aiohttp.ClientSession() as sess:
+        async with sess.get(url) as r:
+            return await r.json()
 
 
 async def wait_until_true(callback: Callable, *args, **kwargs):

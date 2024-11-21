@@ -156,6 +156,6 @@ class GemPriceInfo(InfoProvider):
 
     @staticmethod
     async def get_coins_for_100_gems() -> int:
-        data: Dict = json.loads(await util.async_urlopen("https://api.guildwars2.com/v2/commerce/exchange/coins?quantity=1000000"))
+        data: Dict = await util.async_http_get_json("https://api.guildwars2.com/v2/commerce/exchange/coins?quantity=1000000")
         coins_per_gem = int(data["coins_per_gem"])
         return coins_per_gem * 100
