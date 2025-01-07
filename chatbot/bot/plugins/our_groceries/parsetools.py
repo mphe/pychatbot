@@ -172,3 +172,30 @@ def try_get_discrete_amount(amount: Union[str, float, int], unit: str) -> Option
             return None
 
     return int_amount
+
+
+def normalize_str_to_float(number: str, from_us_float_format: bool) -> float:
+    """Removes number separators, interprets unicode fractions and returns a corresponding float.
+
+    The number is assumed to be valid according to the given format, otherwise the result will be undefined behavior.
+    """
+    if not from_us_float_format:
+        number = non_us_to_us_number(number)
+
+    number = number.replace(",", "")  # Remove number separators
+    return unicode_fraction_to_float(number)
+
+
+def parse_amount_and_unit(amount_and_unit: str, source_uses_us_float_format: bool) -> Tuple[float, str]:
+    """Helper function that combines multiple processing steps for parsing combined amount+unit strings.
+
+    Calls split_amount_and_unit() and normalize_str_to_float() internally.
+    """
+    amount, unit = split_amount_and_unit(amount_and_unit, source_uses_us_float_format)
+
+    if amount:
+        amount_float = normalize_str_to_float(amount, source_uses_us_float_format)
+    else:
+        amount_float = 0.0
+
+    return amount_float, unit

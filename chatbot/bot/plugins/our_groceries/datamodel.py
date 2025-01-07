@@ -4,7 +4,8 @@ from typing import List, Optional
 from . import parsetools
 import math
 import locale
-
+from chatbot import util
+from bs4 import BeautifulSoup
 
 # Only includes sensible fractions, e.g. not 7/8, 3/8, 1/7, etc.
 REVERSE_FRACTION_TRANSLATION = (
@@ -103,3 +104,13 @@ class RecipeFetcher:
 
     async def supports_url(self) -> bool:
         raise NotImplementedError
+
+    def _url_match_domain(self, domain: str) -> bool:
+        """Helper for supports_url(). Performs a case-insensitive check if the given domain is used in the URL. domain must not include a trailing '/'."""
+        return (domain.lower() + "/") in self._url.lower()
+
+    async def _fetch_url_as_soup(self) -> BeautifulSoup:
+        """Asynchronously fetches the URL content and returns a corresponding BeautifulSoup object."""
+        content: str = await util.async_http_get_str(self._url)
+        soup = BeautifulSoup(content, "html.parser")
+        return soup

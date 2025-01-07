@@ -1,7 +1,6 @@
 import re
 from . import datamodel, parsetools
-from chatbot import util
-from bs4 import BeautifulSoup, Tag
+from bs4 import Tag
 from typing import Optional, List
 
 
@@ -63,8 +62,7 @@ class WPRMFetcher(datamodel.RecipeFetcher):
     async def _extract_tags(self) -> bool:
         """Serves as a kind of init function. Fetches the page content and extract relevant tags. Results are cached."""
         if not self._extracted:
-            content: str = await util.async_http_get_str(self._url)
-            soup = BeautifulSoup(content, "html.parser")
+            soup = await self._fetch_url_as_soup()
             self._wprm_recipe = soup.find(class_="wprm-recipe")
             self._extracted = True
 

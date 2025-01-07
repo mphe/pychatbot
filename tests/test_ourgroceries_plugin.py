@@ -44,7 +44,7 @@ class OurGroceriesTest(unittest.TestCase):
                 self.assertTupleEqual(result, expected)
 
     def test_split_amount_and_unit_country_formats(self):
-        # (input, expected de, expected us
+        # (input, expected de, expected us)
         tests = (
             ("5,05 l",           ("5,05", "l"),              ("5", ",05 l")),
             ("5,05asdf",         ("5,05", "asdf"),           ("5", ",05asdf")),
@@ -67,13 +67,33 @@ class OurGroceriesTest(unittest.TestCase):
         )
 
         for input_str, expected_de, expected_us in tests:
-            with self.subTest(input=input_str, format="US format"):
+            with self.subTest(input=input_str, format="non-US format"):
                 result = parsetools.split_amount_and_unit(input_str, use_us_float_format=False)
                 self.assertTupleEqual(result, expected_de)
 
-            with self.subTest(input=input_str, format="non-US format"):
+            with self.subTest(input=input_str, format="US format"):
                 result = parsetools.split_amount_and_unit(input_str, use_us_float_format=True)
                 self.assertTupleEqual(result, expected_us)
+
+    def test_normalize_str_to_float(self):
+        # (non-us input, expected)
+        tests = (
+            ("5",           5.5),
+            ("5½",          5.5),
+            ("5,05",        5.05),
+            (",05",         .05),
+            ("5,",          5.0),
+            ("1.000,05",    1000.05),
+            ("1.000.000",   1000000.0),
+            ("1.000.000,5", 1000000.5),
+            ("1.000.000 ½", 1000000.5),
+        )
+
+        for input_str, expected in tests:
+            us_input_str = parsetools.non_us_to_us_number(input_str)
+
+            self.assertEqual(parsetools.normalize_str_to_float(input_str, False), expected, "(non-US format)")
+            self.assertEqual(parsetools.normalize_str_to_float(us_input_str, True), expected, "(US format)")
 
     def test_reduce_excessive_whitespace(self):
         output = parsetools.reduce_excessive_whitespace("   a      b c \t   de\t ")

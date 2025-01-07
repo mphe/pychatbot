@@ -1,4 +1,3 @@
-import re
 import chefkoch
 from bs4 import BeautifulSoup, Tag
 from typing import List, Optional
@@ -6,12 +5,9 @@ from . import parsetools, datamodel
 from .datamodel import Ingredient
 
 
-MATCH_URL = re.compile(r".*chefkoch.de/.*", re.IGNORECASE)
-
-
 class ChefkochFetcher(datamodel.RecipeFetcher):
     async def supports_url(self) -> bool:
-        return MATCH_URL.match(self._url) is not None
+        return self._url_match_domain("chefkoch.de")
 
     async def fetch_recipe(self) -> Optional[datamodel.Recipe]:
         url = self._url.split("?", maxsplit=1)[0]  # Remove URL arguments, including amount of servings to get "clean" numbers.
@@ -31,19 +27,10 @@ def make_instructions_uniform(recipe: chefkoch.Recipe) -> List[str]:
 
 def parse_ingredients(recipe: chefkoch.Recipe) -> List[Ingredient]:
     entries = extract_ingredients_and_amounts(recipe)
-
     ingredients: List[Ingredient] = []
 
     for amount_unit, ingredient in zip(entries[::2], entries[1::2]):
-        amount, unit = parsetools.split_amount_and_unit(amount_unit, False)
-
-        if amount:
-            amount = amount.replace(".", "")  # Remove number separators
-            amount = parsetools.non_us_to_us_number(amount)
-            amount_float = parsetools.unicode_fraction_to_float(amount)
-        else:
-            amount_float = 0.0
-
+        amount_float, unit = parsetools.parse_amount_and_unit(amount_unit, False)
         ingredients.append(Ingredient(ingredient, amount_float, unit))
 
     return ingredients
