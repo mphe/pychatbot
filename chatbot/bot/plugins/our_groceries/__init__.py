@@ -36,6 +36,7 @@ class Plugin(bot.BotPlugin):
         Provides an interface to automatically add recipes to OurGroceries from a given URL.
         Supported web pages are:
             - chefkoch.de
+            - All WordPress pages making use of the WordPress Recipe Maker plugin
 
         If the given URL matches a supported page, it fetches the title, ingredients and instructions and creates a corresponding recipe in OurGroceries.
         If no amount of servings is specified, it defaults to 4.
