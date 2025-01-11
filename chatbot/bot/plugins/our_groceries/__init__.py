@@ -57,7 +57,7 @@ class Plugin(bot.BotPlugin):
             `!ourgroceries https://www.chefkoch.de/rezepte/1844061298739441/Mozzarella-Haehnchen-in-Basilikum-Sahnesauce.html 2`
                 Creates a new recipe for 2 servings from the web page.
         """
-        subcommand = bot.command.get_argument(argv, 1, "")
+        subcommand = bot.command.get_argument(argv, 1, "").lower()
 
         if subcommand == "login":
             await self._login(msg, argv)
