@@ -78,47 +78,43 @@ class OurGroceriesTest(unittest.TestCase):
     def test_normalize_str_to_float(self):
         # (non-us input, expected)
         tests = (
-            ("5",           5.5),
-            ("5½",          5.5),
+            ("5",           5),
             ("5,05",        5.05),
             (",05",         .05),
             ("5,",          5.0),
+
+            ("5½",          5.5),
+            ("5 ½",          5.5),
+            ("½",          0.5),
+
+            ("5 1/2",       5.5),
+            ("1 1 / 2", 1.5),
+            ("1 3/ 4",  1.75),
+            ("1/4",     0.25),
+            ("  1/4  ", 0.25),
+
             ("1.000,05",    1000.05),
             ("1.000.000",   1000000.0),
             ("1.000.000,5", 1000000.5),
             ("1.000.000 ½", 1000000.5),
+            ("1.000.000 1/2", 1000000.5),
         )
 
         for input_str, expected in tests:
-            us_input_str = parsetools.non_us_to_us_number(input_str)
+            with self.subTest(input=input_str):
+                us_input_str = parsetools.non_us_to_us_number(input_str)
+                self.assertEqual(parsetools.normalize_str_to_float(input_str, False), expected, "(non-US format)")
+                self.assertEqual(parsetools.normalize_str_to_float(us_input_str, True), expected, "(US format)")
 
-            self.assertEqual(parsetools.normalize_str_to_float(input_str, False), expected, "(non-US format)")
-            self.assertEqual(parsetools.normalize_str_to_float(us_input_str, True), expected, "(US format)")
+        # Test all available unicode fraction chars
+        for input_str, expected in parsetools.FRACTION_TRANSLATION.items():
+            with self.subTest(input=input_str, expected=expected):
+                result = parsetools.normalize_str_to_float(input_str, True)
+                self.assertAlmostEqual(result, expected)
 
     def test_reduce_excessive_whitespace(self):
-        output = parsetools.reduce_excessive_whitespace("   a      b c \t   de\t ")
-        self.assertEqual(output, " a b c de ")
-
-    def test_unicode_fraction_to_float(self):
-        tests = (
-            ("1", 1.0),
-            ("1.5", 1.5),
-            (".5", .5),
-            (".5", .5),
-            ("1.", 1.),
-            ("1 ½", 1.5),
-            ("1½", 1.5),
-        )
-
-        for input_str, expected in tests:
-            with self.subTest(input=input_str, expected=expected):
-                result: float = parsetools.unicode_fraction_to_float(input_str)
-                self.assertEqual(result, expected)
-
-        for input_str, expected_str in parsetools.FRACTION_TRANSLATION.items():
-            with self.subTest(input=input_str, expected=expected):
-                result = parsetools.unicode_fraction_to_float(input_str)
-                self.assertEqual(result, float(expected_str))
+        output = parsetools.reduce_excessive_whitespace("   a  .    b , c \t   de\t ?  ")
+        self.assertEqual(output, "a. b, c de?")
 
     def test_non_us_to_us_number(self):
         self.assertEqual(parsetools.non_us_to_us_number("1.000.000,5"), "1,000,000.5")

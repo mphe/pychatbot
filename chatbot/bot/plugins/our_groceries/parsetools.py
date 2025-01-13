@@ -3,29 +3,31 @@ from typing import Tuple, Optional, Union
 
 
 FRACTION_TRANSLATION = {
-    "½": ".5",
-    "⅓": ".3333333333333333",
-    "⅔": ".6666666666666666",
-    "⅕": ".2",
-    "⅖": ".4",
-    "⅗": ".6",
-    "⅘": ".8",
-    "¼": ".25",
-    "¾": ".75",
-    "⅚": ".8333333333333334",
-    "⅙": ".16666666666666666",
-    "⅐": ".14285714285714285",
-    "⅑": ".1111111111111111",
-    "⅒": ".1",
-    "⅛": ".125",
-    "⅜": ".375",
-    "⅝": ".625",
-    "⅞": ".875",
+    "½": .5,
+    "⅓": .3333333333333333,
+    "⅔": .6666666666666666,
+    "⅕": .2,
+    "⅖": .4,
+    "⅗": .6,
+    "⅘": .8,
+    "¼": .25,
+    "¾": .75,
+    "⅚": .8333333333333334,
+    "⅙": .16666666666666666,
+    "⅐": .14285714285714285,
+    "⅑": .1111111111111111,
+    "⅒": .1,
+    "⅛": .125,
+    "⅜": .375,
+    "⅝": .625,
+    "⅞": .875,
 }
 
 RE_UNICODE_FRACTIONS = "|".join(FRACTION_TRANSLATION)
 MATCH_NUMBER_WITH_UNICODE_FRACTIONS = re.compile(rf"(\d*)\s*({RE_UNICODE_FRACTIONS})")
+MATCH_NUMBER_WITH_TEXT_FRACTIONS = re.compile(r"(?:(\d+)\s+)?(\d+)\s*/\s*(\d+)")
 
+MATCH_WHITESPACE_WITH_PUNCTUATION = re.compile(r"\s+([,.;!?])")
 MATCH_EXCESSIVE_WHITESPACE = re.compile(r"\s+")
 
 NON_DISCRETE_UNITS = ("g", "kg", "ml", "l", "TL", "EL",)
@@ -66,14 +68,6 @@ MATCH_SPLIT_AMOUNT_AND_UNIT_DE = re_compile_match_split_amount_and_unit(False)
 MATCH_SPLIT_AMOUNT_AND_UNIT_US = re_compile_match_split_amount_and_unit(True)
 
 
-def unicode_fraction_to_float(text: str) -> float:
-    """Converts a number that might include unicode fractions to a float."""
-    def callback(m: re.Match[str]) -> str:
-        return m.group(1) + FRACTION_TRANSLATION[m.group(2)]
-
-    return float(re.sub(MATCH_NUMBER_WITH_UNICODE_FRACTIONS, callback, text))
-
-
 def non_us_to_us_number(text: str) -> str:
     """Translates numbers from non-US formats to US format, i.e. replaces commas with dots and vice-versa."""
     return text.translate({
@@ -83,8 +77,11 @@ def non_us_to_us_number(text: str) -> str:
 
 
 def reduce_excessive_whitespace(text: str) -> str:
-    """Reduces multiple consecutive whitespace characters to a single space character."""
-    return re.sub(MATCH_EXCESSIVE_WHITESPACE, " ", text)
+    """Strips whitespace from begin and end, reduces multiple consecutive whitespace characters to a single space and removes whitespace before punctuation."""
+    text = text.strip()
+    text = re.sub(MATCH_WHITESPACE_WITH_PUNCTUATION, r"\1", text)
+    text = re.sub(MATCH_EXCESSIVE_WHITESPACE, " ", text)
+    return text
 
 
 def split_amount_and_unit(unit_amount_str: str, use_us_float_format: bool) -> Tuple[str, str]:
@@ -175,15 +172,25 @@ def try_get_discrete_amount(amount: Union[str, float, int], unit: str) -> Option
 
 
 def normalize_str_to_float(number: str, from_us_float_format: bool) -> float:
-    """Removes number separators, interprets unicode fractions and returns a corresponding float.
+    """Removes number separators, interprets unicode/text fractions and returns a corresponding float.
 
-    The number is assumed to be valid according to the given format, otherwise the result will be undefined behavior.
+    The given number must be valid, otherwise it is undefined behavior.
     """
     if not from_us_float_format:
         number = non_us_to_us_number(number)
 
     number = number.replace(",", "")  # Remove number separators
-    return unicode_fraction_to_float(number)
+    number = number.strip()
+
+    if m := MATCH_NUMBER_WITH_UNICODE_FRACTIONS.match(number):
+        left = float(m.group(1)) if m.group(1) else 0.0
+        return left + FRACTION_TRANSLATION[m.group(2)]
+
+    if m := MATCH_NUMBER_WITH_TEXT_FRACTIONS.match(number):
+        left = float(m.group(1)) if m.group(1) else 0.0
+        return left + float(m.group(2)) / float(m.group(3))
+
+    return float(number)
 
 
 def parse_amount_and_unit(amount_and_unit: str, source_uses_us_float_format: bool) -> Tuple[float, str]:
