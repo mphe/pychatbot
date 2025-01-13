@@ -5,6 +5,7 @@ import unittest
 import context  # pylint: disable=unused-import
 from our_groceries import datamodel
 from typing import List, Callable
+from dataclasses import asdict
 
 
 # Wrapping APITestBase in another class implicitly skips test execution for the base class itself.
@@ -31,10 +32,13 @@ class CommonTestCases:
                     self.assertFalse(await fetcher.supports_url())
 
         async def test_fetch_recipe(self):
+            self.maxDiff = None
             for url, expected in zip(self.recipe_urls, self.expected_recipes):
                 with self.subTest(url):
                     fetcher = self.fetcher(url)
                     recipe: datamodel.Recipe = await fetcher.fetch_recipe()
 
                     expected.url = url
-                    self.assertEqual(expected, recipe)
+
+                    # Use dict comparison because it better displays the differences
+                    self.assertEqual(asdict(expected), asdict(recipe))
