@@ -35,13 +35,17 @@ class WPRMFetcher(datamodel.RecipeFetcher):
 
         ing: Tag
         for ing in ingredients_container.find_all(class_="wprm-recipe-ingredient"):
+            notes_tag: Optional[Tag] = ing.find(class_="wprm-recipe-ingredient-notes")
+            unit_tag: Optional[Tag] = ing.find(class_="wprm-recipe-ingredient-unit")
+            amount_tag: Optional[Tag] = ing.find(class_="wprm-recipe-ingredient-amount")
             name: str = ing.find(class_="wprm-recipe-ingredient-name").get_text()
 
-            unit_tag: Optional[Tag] = ing.find(class_="wprm-recipe-ingredient-unit")
+            notes: str = notes_tag.get_text() if notes_tag else ""
             unit: str = unit_tag.get_text() if unit_tag else ""
+            amount = parsetools.normalize_str_to_float(amount_tag.get_text(), True) if amount_tag else 0.0
 
-            amount_tag: Optional[Tag] = ing.find(class_="wprm-recipe-ingredient-amount")
-            amount = float(amount_tag.get_text()) if amount_tag else 0.0
+            if notes:
+                name = f"{name} ({notes})"
 
             ingredients.append(datamodel.Ingredient(name, amount, unit))
 
