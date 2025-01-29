@@ -16,11 +16,7 @@ class ChefkochTest(CommonTestCases.APITestBase):
             "https://www.chefkoch.de/rezepte/1844061298739441/Mozzarella-Haehnchen-in-Basilikum-Sahnesauce.html?portionen=4",
             "https://www.chefkoch.de/rezepte/4331861726562757/Cremesuppe-von-der-Schwarzwurzel-mit-Brezel-Speck-Croutons.html?portionen=8.01",
         ]
-
-        self.non_matching_urls = [
-            "https://google.de",
-            "https://www.gaumenfreundin.de/kartoffelsalat-mit-bruehe-schwaebisch/",
-        ]
+        self.non_matching_urls = []
         self.recipe_urls = [ "https://www.chefkoch.de/rezepte/1844061298739441/Mozzarella-Haehnchen-in-Basilikum-Sahnesauce.html", ]
         self.expected_recipes = [
             datamodel.Recipe(

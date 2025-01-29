@@ -37,10 +37,10 @@ class OurGroceriesTest(unittest.TestCase):
 
         for input_str, expected in tests:
             with self.subTest(input_str):
-                result = parsetools.split_amount_and_unit(input_str, use_us_float_format=True)
+                result = parsetools._split_amount_and_unit(input_str, use_us_float_format=True)
                 self.assertTupleEqual(result, expected)
 
-                result = parsetools.split_amount_and_unit(input_str, use_us_float_format=False)
+                result = parsetools._split_amount_and_unit(input_str, use_us_float_format=False)
                 self.assertTupleEqual(result, expected)
 
     def test_split_amount_and_unit_country_formats(self):
@@ -68,11 +68,11 @@ class OurGroceriesTest(unittest.TestCase):
 
         for input_str, expected_de, expected_us in tests:
             with self.subTest(input=input_str, format="non-US format"):
-                result = parsetools.split_amount_and_unit(input_str, use_us_float_format=False)
+                result = parsetools._split_amount_and_unit(input_str, use_us_float_format=False)
                 self.assertTupleEqual(result, expected_de)
 
             with self.subTest(input=input_str, format="US format"):
-                result = parsetools.split_amount_and_unit(input_str, use_us_float_format=True)
+                result = parsetools._split_amount_and_unit(input_str, use_us_float_format=True)
                 self.assertTupleEqual(result, expected_us)
 
     def test_normalize_str_to_float(self):

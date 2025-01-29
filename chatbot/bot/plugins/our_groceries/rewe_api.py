@@ -10,7 +10,6 @@ class ReweFetcher(datamodel.RecipeFetcher):
     async def fetch_recipe(self) -> Optional[datamodel.Recipe]:
         # NOTE: Many of these soup filters are prone to break, but there are no better hints to consistently find those items.
         soup = await self._fetch_url_as_soup()
-        print(soup.find_all(attrs={"x-text": "currentServings"}))
 
         title = soup.find("h1").get_text().strip()
         num_servings = int(soup.find("span", {"x-text": "currentServings"}).get_text())

@@ -8,6 +8,12 @@ from typing import List, Callable
 from dataclasses import asdict
 
 
+DEFAULT_NON_MATCHING_URLS = [
+    "https://google.de",
+    "https://www.asdfasdf.de/asfdjaksfj?ab=1234&asf=342da",
+]
+
+
 # Wrapping APITestBase in another class implicitly skips test execution for the base class itself.
 class CommonTestCases:
     class APITestBase(unittest.IsolatedAsyncioTestCase):
@@ -26,7 +32,7 @@ class CommonTestCases:
                     self.assertTrue(await fetcher.supports_url())
 
         async def test_not_match_url(self):
-            for url in self.non_matching_urls:
+            for url in self.non_matching_urls + DEFAULT_NON_MATCHING_URLS:
                 with self.subTest(url):
                     fetcher = self.fetcher(url)
                     self.assertFalse(await fetcher.supports_url())

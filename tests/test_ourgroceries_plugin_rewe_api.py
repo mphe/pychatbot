@@ -14,7 +14,6 @@ class ReweTest(CommonTestCases.APITestBase):
         self.fetcher = rewe_api.ReweFetcher
         self.matching_urls = [ "https://www.rewe.de/rezepte/maronen-pilz-ragout/", ]
         self.non_matching_urls = [
-            "https://google.de",
             "https://rewe.de/rezepte/maronen-pilz-ragout/",
         ]
         self.recipe_urls = [ "https://www.rewe.de/rezepte/maronen-pilz-ragout/", ]

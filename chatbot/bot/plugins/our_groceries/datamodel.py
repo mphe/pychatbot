@@ -106,7 +106,12 @@ class RecipeFetcher:
         raise NotImplementedError
 
     def _url_match_domain(self, domain: str) -> bool:
-        """Helper for supports_url(). Performs a case-insensitive check if the given domain is used in the URL. domain must not include a trailing '/'."""
+        """Helper for supports_url(). Performs a case-insensitive check if the given domain is used in the URL.
+
+        The given domain must not include a trailing '/'.
+        Example:
+            _url_match_domain("chefkoch.de")
+        """
         return (domain.lower() + "/") in self._url.lower()
 
     async def _fetch_url_as_soup(self) -> BeautifulSoup:

@@ -84,7 +84,7 @@ def reduce_excessive_whitespace(text: str) -> str:
     return text
 
 
-def split_amount_and_unit(unit_amount_str: str, use_us_float_format: bool) -> Tuple[str, str]:
+def _split_amount_and_unit(unit_amount_str: str, use_us_float_format: bool) -> Tuple[str, str]:
     """Splits the amount and unit part of a combined string and returns a tuple (amount, unit).
 
     The given string should be of the format "<number> <unit>".
@@ -146,13 +146,11 @@ def try_get_discrete_amount(amount: Union[str, float, int], unit: str) -> Option
 
     if isinstance(amount, int):
         int_amount = amount
-
     elif isinstance(amount, float):
         if amount.is_integer():
             int_amount = int(amount)
         else:
             return None
-
     elif isinstance(amount, str):
         try:
             int_amount = int(amount)
@@ -167,6 +165,11 @@ def try_get_discrete_amount(amount: Union[str, float, int], unit: str) -> Option
         # Ensure the unit is not a weight or volume unit
         if MATCH_UNIT_BLACKLIST.match(unit):
             return None
+
+    # It's unlikely we're actually dealing with such huge amounts.
+    # It's more likely someone forgot to add a unit like g or ml.
+    if int_amount >= 100:
+        return None
 
     return int_amount
 
@@ -196,9 +199,9 @@ def normalize_str_to_float(number: str, from_us_float_format: bool) -> float:
 def parse_amount_and_unit(amount_and_unit: str, source_uses_us_float_format: bool) -> Tuple[float, str]:
     """Helper function that combines multiple processing steps for parsing combined amount+unit strings.
 
-    Calls split_amount_and_unit() and normalize_str_to_float() internally.
+    Calls _split_amount_and_unit() and normalize_str_to_float() internally.
     """
-    amount, unit = split_amount_and_unit(amount_and_unit, source_uses_us_float_format)
+    amount, unit = _split_amount_and_unit(amount_and_unit, source_uses_us_float_format)
 
     if amount:
         amount_float = normalize_str_to_float(amount, source_uses_us_float_format)

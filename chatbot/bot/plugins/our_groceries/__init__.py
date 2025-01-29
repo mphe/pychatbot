@@ -3,7 +3,7 @@ from typing import List, Tuple, Callable, Awaitable, Optional
 from chatbot import api, bot, util
 from chatbot.bot.subsystem.command import CommandError, CommandSyntaxError
 from ourgroceries import OurGroceries, InvalidLoginException
-from . import chefkoch_api, wprm_api, datamodel
+from . import chefkoch_api, wprm_api, kptncook_api, datamodel
 
 import secrets
 from base64 import urlsafe_b64encode as b64e, urlsafe_b64decode as b64d
@@ -26,6 +26,7 @@ class Plugin(bot.BotPlugin):
         self.SUPPORTED_PAGES: List[Callable[[str], datamodel.RecipeFetcher]] = [
             chefkoch_api.ChefkochFetcher,
             wprm_api.WPRMFetcher,
+            kptncook_api.Fetcher,
         ]
 
     async def _ourgroceries(self, msg: api.ChatMessage, argv: List[str]) -> None:
@@ -36,6 +37,7 @@ class Plugin(bot.BotPlugin):
         Provides an interface to automatically add recipes to OurGroceries from a given URL.
         Supported web pages are:
             - chefkoch.de
+            - KptnCook
             - All WordPress pages making use of the WordPress Recipe Maker plugin
 
         If the given URL matches a supported page, it fetches the title, ingredients and instructions and creates a corresponding recipe in OurGroceries.
