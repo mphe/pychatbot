@@ -1,4 +1,3 @@
-import re
 from typing import List, Tuple, Callable, Awaitable, Optional
 from chatbot import api, bot, util
 from chatbot.bot.subsystem.command import CommandError, CommandSyntaxError
@@ -17,17 +16,17 @@ STORAGE_AUTH_KEY = "ourgroceries_login"
 MAX_RECIPE_NAME_RETRIES = 10
 
 
+SUPPORTED_PAGES: List[Callable[[str], datamodel.RecipeFetcher]] = [
+    chefkoch_api.ChefkochFetcher,
+    kptncook_api.Fetcher,
+    wprm_api.WPRMFetcher,  # Check last because it has the slowest URL checker
+]
+
+
 class Plugin(bot.BotPlugin):
     def __init__(self, bot_: bot.Bot):
         super().__init__(bot_)
-
         self.register_command("ourgroceries", self._ourgroceries, argc=1)
-
-        self.SUPPORTED_PAGES: List[Callable[[str], datamodel.RecipeFetcher]] = [
-            chefkoch_api.ChefkochFetcher,
-            wprm_api.WPRMFetcher,
-            kptncook_api.Fetcher,
-        ]
 
     async def _ourgroceries(self, msg: api.ChatMessage, argv: List[str]) -> None:
         """Syntax: ourgroceries login <username> <password>
@@ -38,26 +37,34 @@ class Plugin(bot.BotPlugin):
         Supported web pages are:
             - chefkoch.de
             - KptnCook
-            - All WordPress pages making use of the WordPress Recipe Maker plugin
+            - WordPress pages making use of the "WordPress Recipe Maker" plugin
 
-        If the given URL matches a supported page, it fetches the title, ingredients and instructions and creates a corresponding recipe in OurGroceries.
-        If no amount of servings is specified, it defaults to 4.
+        Subcommands
+        ===========
 
-        Before recipes can be added, login credentials to the OurGroceries account must be supplied using the "login" subcommand.
-        After successful login, access is allowed from all chats, not just the current one.
-        Other users do not have access, only yourself.
+        login
+            Used to supply login credentials for an OurGroceries account.
+            After successful login, access is allowed from all chats, not just the current one.
+            Other users do not have access, only the current user.
 
-        To remove the credentials, use the "logout" subcommand.
+        logout
+            Removes the login credentials.
 
-        Examples:
-            `!ourgroceries login myaccount 12345`
-                Provides the login credentials for OurGroceries.
+        default (no command)
+            Adds a recipe to OurGroceries if the given URL matches a supported page.
+            Fetches title, ingredients and instructions (if possible).
+            If no amount of servings is specified, it defaults to 4.
 
-            `!ourgroceries https://www.chefkoch.de/rezepte/1844061298739441/Mozzarella-Haehnchen-in-Basilikum-Sahnesauce.html`
-                Creates a new recipe for 4 servings from the web page.
+        Examples
+        ========
+        `!ourgroceries login myaccount 12345`
+            Provides the login credentials for OurGroceries.
 
-            `!ourgroceries https://www.chefkoch.de/rezepte/1844061298739441/Mozzarella-Haehnchen-in-Basilikum-Sahnesauce.html 2`
-                Creates a new recipe for 2 servings from the web page.
+        `!ourgroceries https://www.chefkoch.de/rezepte/1844061298739441/Mozzarella-Haehnchen-in-Basilikum-Sahnesauce.html`
+            Creates a new recipe for 4 servings from the web page.
+
+        `!ourgroceries https://www.chefkoch.de/rezepte/1844061298739441/Mozzarella-Haehnchen-in-Basilikum-Sahnesauce.html 2`
+            Creates a new recipe for 2 servings from the web page.
         """
         subcommand = bot.command.get_argument(argv, 1, "").lower()
 
@@ -96,7 +103,7 @@ class Plugin(bot.BotPlugin):
         url: str = bot.command.get_argument(argv, 1, "")
         num_servings: int = bot.command.get_argument(argv, 2, DEFAULT_NUM_SERVINGS, int)
 
-        for callback in self.SUPPORTED_PAGES:
+        for callback in SUPPORTED_PAGES:
             fetcher: datamodel.RecipeFetcher = callback(url)
 
             if await fetcher.supports_url():
