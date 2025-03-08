@@ -9,7 +9,8 @@ MATCH_NUM_SERVINGS = re.compile(r".*\s+(\d+)\s+.*", re.DOTALL)
 
 class Fetcher(datamodel.RecipeFetcher):
     async def supports_url(self) -> bool:
-        return self._url_match_domain("mobile.kptncook.com")
+        return self._url_match_domain("mobile.kptncook.com") \
+            or self._url_match_domain("share.kptncook.com")
 
     async def fetch_recipe(self) -> Optional[datamodel.Recipe]:
         soup = await self._fetch_url_as_soup()

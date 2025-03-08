@@ -22,8 +22,8 @@ class CommonTestCases:
             self.fetcher: Callable[[str], datamodel.RecipeFetcher]
             self.matching_urls: List[str] = []
             self.non_matching_urls: List[str] = []
-            self.recipe_urls: List[str]
-            self.expected_recipes: List[datamodel.Recipe]
+            self.recipe_urls: List[str] = []
+            self.expected_recipes: List[datamodel.Recipe] = []
 
         async def test_match_url(self):
             for url in self.matching_urls:
@@ -39,6 +39,8 @@ class CommonTestCases:
 
         async def test_fetch_recipe(self):
             self.maxDiff = None
+            self.assertEqual(len(self.recipe_urls), len(self.expected_recipes))
+
             for url, expected in zip(self.recipe_urls, self.expected_recipes):
                 with self.subTest(url):
                     fetcher = self.fetcher(url)
