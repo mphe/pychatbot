@@ -30,7 +30,7 @@ class Ingredient:
     amount: float
     unit: str
 
-    def ___post_init__(self):
+    def __post_init__(self):
         # Passing an int might happen accidentally, so we silently fix it.
         self.amount = float(self.amount)
 

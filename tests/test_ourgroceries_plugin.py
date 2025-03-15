@@ -119,7 +119,14 @@ class OurGroceriesTest(unittest.TestCase):
     def test_non_us_to_us_number(self):
         self.assertEqual(parsetools.non_us_to_us_number("1.000.000,5"), "1,000,000.5")
 
+    def test_amount_is_float(self):
+        self.assertTrue(isinstance(datamodel.Ingredient("", 1, "g").amount, float))
+        self.assertTrue(isinstance(datamodel.Ingredient("", 100, "g").amount, float))
+        self.assertTrue(isinstance(datamodel.Ingredient("", 1.1, "g").amount, float))
+        self.assertTrue(isinstance(datamodel.Ingredient("", 1.0, "g").amount, float))
+
     def test_pretty_amount(self):
+        self.assertEqual("1", datamodel.Ingredient("", 1, "g").format_amount())
         self.assertEqual("1", datamodel.Ingredient("", 1.0, "g").format_amount())
         self.assertEqual("1", datamodel.Ingredient("", 1.5, "g").format_amount())
         self.assertEqual("1", datamodel.Ingredient("", 1.5, "ml").format_amount())
