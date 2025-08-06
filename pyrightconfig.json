@@ -2,5 +2,5 @@
   "include": [
     "chatbot", "tests"
   ],
-  "reportGeneralTypeIssues": false,
+  "reportGeneralTypeIssues": false
 }

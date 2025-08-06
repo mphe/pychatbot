@@ -44,7 +44,7 @@ There is now a file `CoolAPI.py` in `chatbot.api.coolapi` that contains the main
 
 To do that, create another file `__init__.py` and add the following line:
 
-```
+```python
 from .CoolAPI import CoolAPI as API
 ```
 

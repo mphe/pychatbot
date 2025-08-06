@@ -88,8 +88,7 @@ class Bot:
         return self._profile
 
     # Wrappers
-    # TODO: Consider using some hacks to set the docstrings to the wrapped
-    #       functions' docstring.
+    # TODO: Consider using some hacks to set the docstrings to the wrapped functions' docstring.
 
     def register_event_handler(self, event: str, callback, nice=0):
         """Register an event handler and return a handle to it.

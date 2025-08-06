@@ -144,7 +144,7 @@ class CommandHandler:
     def admins(self) -> Iterable[str]:
         return self._admins
 
-    def register(self, name: str, callback: Callable, argc=1, flags=0, types=()):
+    def register(self, name: str, callback: Callable, argc=1, flags=0, types=()):  # pylint: disable=too-many-positional-arguments
         """Register a chat command.
 
         Args:

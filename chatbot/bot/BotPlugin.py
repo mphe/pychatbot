@@ -68,16 +68,16 @@ class BotPlugin(BasePlugin):
     def storage(self) -> Storage:
         return self.__storage
 
-    def register_command(self, name, callback, argc=1, flags=0, types=()):
+    def register_command(self, name, callback, argc=1, flags=0, types=()):  # pylint: disable=too-many-positional-arguments
         """Wrapper around Bot.register_command"""
         self.bot.register_command(name, callback, argc, flags, types)
         self.__commands.append(name)
 
-    def register_command_expand(self, name, callback, argc=1, flags=0, types=()):
+    def register_command_expand(self, name, callback, argc=1, flags=0, types=()):  # pylint: disable=too-many-positional-arguments
         """Wrapper around Bot.register_command with CommandFlag.Expand flag set"""
         self.register_command(name, callback, argc, flags | command.CommandFlag.Expand, types)
 
-    def register_admin_command(self, name, callback, argc=1, flags=0, types=()):
+    def register_admin_command(self, name, callback, argc=1, flags=0, types=()):  # pylint: disable=too-many-positional-arguments
         """Same as register_command() but with CMDFLAG_ADMIN flag set."""
         self.register_command(name, callback, argc, flags | command.CommandFlag.Admin, types)
 

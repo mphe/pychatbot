@@ -1,10 +1,7 @@
 # -*- coding: utf-8 -*-
 
-import json
 from datetime import datetime
-from typing import List, Dict, Any
-import logging
-from gw2api import GuildWars2Client
+from typing import List, Dict
 from chatbot.bot import BotPlugin
 from chatbot import api, util
 
@@ -122,6 +119,7 @@ class InfoProvider:
 #         DAILY_MYSTIC_FORGER_ID = 500
 #
 #         def check_daily_coin() -> bool:
+#             from gw2api import GuildWars2Client
 #             client = GuildWars2Client()
 #             assert client.achievements.get(id=DAILY_MYSTIC_FORGER_ID)["name"] == "Daily Mystic Forger"  # type: ignore # pylint: disable=no-member
 #
