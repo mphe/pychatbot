@@ -114,8 +114,12 @@ class RecipeFetcher:
         """
         return (domain.lower() + "/") in self._url.lower()
 
-    async def _fetch_url_as_soup(self) -> BeautifulSoup:
-        """Asynchronously fetches the URL content and returns a corresponding BeautifulSoup object."""
-        content: str = await util.async_http_get_str(self._url)
+    async def _fetch_url_as_soup(self, url: str = "") -> BeautifulSoup:
+        """Asynchronously fetches the URL content and returns a corresponding BeautifulSoup object.
+
+        Uses the given URL if not empty, otherwise the constructor URL.
+        """
+        url = url if url else self._url
+        content: str = await util.async_http_get_str(url)
         soup = BeautifulSoup(content, "html.parser")
         return soup

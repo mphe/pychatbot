@@ -1,7 +1,6 @@
-import chefkoch
 from bs4 import BeautifulSoup, Tag
 from typing import List, Optional
-from . import parsetools, datamodel
+from . import parsetools, datamodel, chefkoch
 from .datamodel import Ingredient
 
 
@@ -11,8 +10,9 @@ class ChefkochFetcher(datamodel.RecipeFetcher):
 
     async def fetch_recipe(self) -> Optional[datamodel.Recipe]:
         url = self._url.split("?", maxsplit=1)[0]  # Remove URL arguments, including amount of servings to get "clean" numbers.
-        recipe = chefkoch.Recipe(url)
-        num_servings = int(recipe._Recipe__info_dict["recipeYield"])  # pylint: disable=no-member
+        soup = await self._fetch_url_as_soup(url)
+        recipe = chefkoch.Recipe(url, bs=soup)
+        num_servings = int(recipe.info_dict["recipeYield"])
 
         return datamodel.Recipe(recipe.title, url, num_servings, parse_ingredients(recipe), make_instructions_uniform(recipe))
 
@@ -37,7 +37,7 @@ def parse_ingredients(recipe: chefkoch.Recipe) -> List[Ingredient]:
 
 
 def extract_ingredients_and_amounts(recipe: chefkoch.Recipe) -> List[str]:
-    soup: BeautifulSoup = recipe._Recipe__soup  # pylint: disable=no-member
+    soup: BeautifulSoup = recipe.soup
     ingredients_table: Tag = soup.find(attrs={ "class": "ingredients" })
     entries: List[str] = []
 

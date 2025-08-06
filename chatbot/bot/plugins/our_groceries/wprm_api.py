@@ -24,7 +24,7 @@ class WPRMFetcher(datamodel.RecipeFetcher):
             return True
         return await self._extract_tags()
 
-    async def fetch_recipe(self) -> Optional[datamodel.Recipe]:
+    async def fetch_recipe(self) -> Optional[datamodel.Recipe]:  # pylint: disable=too-many-locals
         if not await self._extract_tags():
             return None
 
@@ -54,7 +54,7 @@ class WPRMFetcher(datamodel.RecipeFetcher):
 
         if instructions_container:
             instr: Tag
-            for instr in instructions_container.find_all(class_="wprm-recipe-instruction"):
+            for instr in instructions_container.find_all(class_="wprm-recipe-instruction-text"):
                 text = instr.get_text(separator=" ", strip=True)
                 text = parsetools.reduce_excessive_whitespace(text)
                 instructions.append(text)

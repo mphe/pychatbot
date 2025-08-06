@@ -28,7 +28,7 @@ class WPRMTest(CommonTestCases.APITestBase):
         ]
 
         recipe = datamodel.Recipe(
-            "Kartoffelsalat mit Brühe und Senf",
+            "Kartoffelsalat mit Brühe, Omas bestes Rezept!",
             "PLACEHOLDER",
             4,
             [
@@ -38,14 +38,15 @@ class WPRMTest(CommonTestCases.APITestBase):
                 Ingredient("Weißweinessig", 4, "EL"),
                 Ingredient("Senf", 1, "EL"),
                 Ingredient("Zucker", 1, "TL"),
-                Ingredient("Rapsöl", 4, "EL"),
+                Ingredient("Rapsöl (oder Sonnenblumenöl)", 4, "EL"),
                 Ingredient("Schnittlauch", 1, "Bund"),
+                Ingredient("Salz und Pfeffer", 0.0, ""),
             ],
             [
-                "Kartoffeln mit der Schale in reichlich Salzwasser für ca. 20 Minuten gar kochen. Abgießen und ausdampfen lassen. Dann noch warm pellen und in dünne Scheiben schneiden.",
-                "Zwiebeln fein würfeln. Dann etwas Öl in einem Topf erhitzen und die Zwiebeln andünsten. Fleischbrühe zugeben und aufkochen. Dann vom Herd nehmen und Essig, Senf, Salz, Pfeffer und Zucker einrühren.",
-                "Die Kartoffeln mit der heißen Brühe mischen. Zugedeckt für mindestens 1 Stunde ziehen lassen, dann das Öl unterheben.",
-                "Den Salat mit Salz und Pfeffer abschmecken und mit gehacktem Schnittlauch garnieren.",
+                "Kartoffeln mit der Schale in reichlich Salzwasser für 20 Minuten gar kochen. Dann abgießen und ausdampfen lassen. Kartoffeln noch warm pellen und in dünne Scheiben schneiden.",
+                "Zwiebeln fein würfeln. Dann etwas Öl in einem Topf erhitzen und die Zwiebeln andünsten. Fleischbrühe zugeben und aufkochen. Den Topf vom Herd nehmen und Weißweinessig, Senf, Salz, Pfeffer und Zucker einrühren.",
+                "Die Kartoffeln mit der heißen Brühe mischen. Den Salat zugedeckt für mindestens 1 Stunde ziehen lassen und zwischendurch ab und zu umrühren. Nach der Ziehzeit das Öl unterheben. Das macht den Kartoffelsalat schön schlonzig.",
+                "Kartoffelsalat mit gehacktem Schnittlauch garnieren.",
             ]
         )
 

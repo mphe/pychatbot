@@ -14,7 +14,7 @@ class Test(CommonTestCases.APITestBase):
         self.matching_urls = [
             "https://mobile.kptncook.com/recipe/pinterest/Kartoffel-Pilz-Eintopf/78245a13?lang=de",
             "https://mobile.kptncook.com/recipe/pinterest/Kartoffel-Pilz-Eintopf/78245a13?lang=en",
-            "https://share.kptncook.com/Dh4a/0ys4xf65",
+            "https://share.kptncook.com/Dh4a/op9wujtl",
         ]
         self.non_matching_urls = []
 
@@ -31,18 +31,18 @@ class Test(CommonTestCases.APITestBase):
                 Ingredient("Petersilie, frisch", 10, "g"),
                 Ingredient("Pfeffer", 0, ""),
                 Ingredient("Lorbeerblätter", 0, ""),
-                Ingredient("Butter", 0, ""),
                 Ingredient("Weizenmehl, Typ 405", 0, ""),
                 Ingredient("Gemüsebrühe", 0, ""),
                 Ingredient("Salz", 0, ""),
                 Ingredient("Knoblauch", 0, ""),
+                Ingredient("Butter", 0, ""),
             ],
             []
         )
 
         self.recipe_urls = [
             "https://mobile.kptncook.com/recipe/pinterest/Kartoffel-Pilz-Eintopf/78245a13?lang=de",
-            "https://share.kptncook.com/Dh4a/0ys4xf65",
+            "https://share.kptncook.com/Dh4a/op9wujtl",
         ]
         self.expected_recipes = [
             recipe,
