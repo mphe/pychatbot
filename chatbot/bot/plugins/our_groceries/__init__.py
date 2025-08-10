@@ -152,14 +152,15 @@ class Plugin(bot.BotPlugin):
         items = [ ingredient_to_og_item(i, self.cfg["output_locale"]) for i in recipe.ingredients ]
         await og.add_items_to_list(list_id, items)
 
-        instructions = "\n\n".join(recipe.instructions)
-        servings = self.cfg["num_servings_text"].format(num_servings)
-        await og.set_list_notes(list_id, f"{recipe.url}\n\n{servings}\n\n{instructions}")
+        notes = generate_og_notes(recipe, self.cfg["num_servings_text"], self.cfg["instructions_text"], self.cfg["notes_text"])
+        await og.set_list_notes(list_id, notes)
 
     @staticmethod
     def get_default_config():
         return {
             "num_servings_text": "Serves {}.",
+            "notes_text": "Notes",
+            "instructions_text": "Instructions",
             "output_locale": "en_US.utf8",
         }
 
@@ -228,3 +229,26 @@ def ingredient_to_og_item(ingredient: datamodel.Ingredient, locale: str = "") ->
 
     # Discrete amounts are handled simply by appending them in braces to the ingredient name
     return (f"{unit}{unit_pad}{name} ({discrete_amount})", "", "")
+
+
+def generate_og_notes(recipe: datamodel.Recipe, num_servings_format_str: str, instructions_text: str, notes_text: str) -> str:
+    """Generates a string with recipe url, servings, instructions and notes"""
+    buffer: List[str] = [
+        recipe.url,
+        "",
+        num_servings_format_str.format(recipe.num_servings),
+    ]
+
+    if recipe.instructions:
+        buffer.append("")
+        buffer.append(f"{instructions_text}:\n")
+        for i, instr in enumerate(recipe.instructions, 1):
+            buffer.append(f"{i}) {instr}")
+
+    if recipe.notes:
+        buffer.append("")
+        buffer.append(f"{notes_text}:\n")
+        for i, note in enumerate(recipe.notes):
+            buffer.append(f"- {note}")
+
+    return "\n".join(buffer)

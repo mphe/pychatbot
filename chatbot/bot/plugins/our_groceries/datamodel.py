@@ -1,5 +1,5 @@
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import List, Optional
 from . import parsetools
 import math
@@ -82,6 +82,7 @@ class Recipe:
     num_servings: int
     ingredients: List[Ingredient]
     instructions: List[str]
+    notes: List[str] = field(default_factory=lambda: [])
 
     def set_num_servings(self, num_servings: int) -> None:
         if num_servings == self.num_servings:

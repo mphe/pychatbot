@@ -3,7 +3,7 @@
 
 import unittest
 import context  # pylint: disable=unused-import
-from our_groceries import datamodel, parsetools, ingredient_to_og_item
+from our_groceries import datamodel, parsetools, ingredient_to_og_item, generate_og_notes
 from our_groceries.datamodel import Ingredient
 
 
@@ -221,6 +221,38 @@ class OurGroceriesTest(unittest.TestCase):
 
         for ingr, expected in tests:
             self.assertEqual(ingredient_to_og_item(ingr), expected)
+
+    def test_generate_og_notes(self):
+        ingredients = [
+            Ingredient("Ingredient A", 1, "kg"),
+            Ingredient("Ingredient B", 300, "ml"),
+            Ingredient("Salt", 0, ""),
+        ]
+
+        instructions = [
+            "instruction1",
+            "instruction2",
+            "instruction3",
+        ]
+
+        notes = [
+            "note1",
+            "note2",
+        ]
+
+        recipes = [
+            datamodel.Recipe("Recipe Title", "url", 4, ingredients, instructions, notes),
+            datamodel.Recipe("Recipe Title", "url", 4, ingredients, [], notes),
+            datamodel.Recipe("Recipe Title", "url", 4, ingredients, instructions),
+        ]
+        expected = [
+            "url\n\nServes 4.\n\nInstructions:\n\n1) instruction1\n2) instruction2\n3) instruction3\n\nNotes:\n\n- note1\n- note2",
+            "url\n\nServes 4.\n\nNotes:\n\n- note1\n- note2",
+            "url\n\nServes 4.\n\nInstructions:\n\n1) instruction1\n2) instruction2\n3) instruction3",
+        ]
+
+        for recipe, exp in zip(recipes, expected):
+            self.assertEqual(generate_og_notes(recipe, "Serves {}.", "Instructions", "Notes"), exp)
 
 
 if __name__ == "__main__":
