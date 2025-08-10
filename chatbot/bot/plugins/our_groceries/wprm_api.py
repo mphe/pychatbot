@@ -40,12 +40,12 @@ class WPRMFetcher(datamodel.RecipeFetcher):
             amount_tag: Optional[Tag] = ing.find(class_="wprm-recipe-ingredient-amount")
             name: str = ing.find(class_="wprm-recipe-ingredient-name").get_text()
 
-            notes: str = notes_tag.get_text() if notes_tag else ""
+            ingredient_notes: str = notes_tag.get_text() if notes_tag else ""
             unit: str = unit_tag.get_text() if unit_tag else ""
             amount = parsetools.normalize_str_to_float(amount_tag.get_text(), True) if amount_tag else 0.0
 
-            if notes:
-                name = f"{name} ({notes})"
+            if ingredient_notes:
+                name = f"{name} ({ingredient_notes})"
 
             ingredients.append(datamodel.Ingredient(name, amount, unit))
 
@@ -59,15 +59,24 @@ class WPRMFetcher(datamodel.RecipeFetcher):
                 text = parsetools.reduce_excessive_whitespace(text)
                 instructions.append(text)
 
+        recipe_notes: List[str] = []
+        note: Tag
+        for note in self._wprm_recipe.find_all(class_="wprm-recipe-notes"):
+            recipe_notes.append(note.get_text().strip())
+
         title: str = self._wprm_recipe.find(class_="wprm-recipe-name").get_text()
 
-        return datamodel.Recipe(title, self._url, num_servings, ingredients, instructions)
+        return datamodel.Recipe(title, self._url, num_servings, ingredients, instructions, recipe_notes)
 
     async def _extract_tags(self) -> bool:
         """Serves as a kind of init function. Fetches the page content and extract relevant tags. Results are cached."""
         if not self._extracted:
             soup = await self._fetch_url_as_soup()
-            self._wprm_recipe = soup.find(class_="wprm-recipe")
+            self._wprm_recipe = soup.find(class_="wprm-recipe-container")
+
+            if not self._wprm_recipe:
+                self._wprm_recipe = soup.find(class_="wprm-recipe")
+
             self._extracted = True
 
         return self._wprm_recipe is not None

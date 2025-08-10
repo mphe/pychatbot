@@ -16,6 +16,7 @@ class WPRMTest(CommonTestCases.APITestBase):
             "https://www.gaumenfreundin.de/wprm_print/29259",
             "https://veggie-einhorn.de/vegane-kaese-lauch-suppe-mit-kartoffeln/",
             "https://veggie-einhorn.de/wprm_print/vegane-kaese-lauch-suppe-mit-kartoffeln",
+            "https://www.malteskitchen.de/gnocchi-mit-crunchy-cashew-pesto/",
         ]
         self.non_matching_urls = [
             "https://google.de",
@@ -25,6 +26,7 @@ class WPRMTest(CommonTestCases.APITestBase):
             "https://www.gaumenfreundin.de/kartoffelsalat-mit-bruehe-schwaebisch/",
             "https://www.gaumenfreundin.de/wprm_print/29259",
             "https://emmikochteinfach.de/wprm_print/zucchini-pfanne-mit-hackfleisch",  # This one contains "1/2" as amount and ingredient notes
+            "https://www.malteskitchen.de/gnocchi-mit-crunchy-cashew-pesto/",  # Has slightly different html structure and additional notes
         ]
 
         recipe = datamodel.Recipe(
@@ -83,8 +85,40 @@ class WPRMTest(CommonTestCases.APITestBase):
                     "Zum Schluss hebst Du die Zucchini-Scheiben, 100 g gesalzene Erdnüsse und 2 TL Oregano unter und lässt es kurz heiß werden.",
                     "Die bunte Zucchini Pfanne mit Hackfleisch kann direkt serviert werden. Gekochter Reis, Nudeln oder Baguette passt prima dazu.",
                     "Ich wünsche Dir mit meinem Zucchini Pfanne Rezept viele Freude und einen guten Appetit.",
+                ],
+                [
+                    # Unsure how the special char got into the webpage text
+                    "Hast Du das Rezept einmal ausprobiert? Wie findest Du es? Ich freue mich immer über Lob, freundliche Kritik oder Deine Tipps und Erfahrungen. Lass uns sehr gerne über die untenstehende Kommentarfunktion im Austausch bleiben.\xa0Das würde mich sehr freuen.",
                 ]
-            )
+            ),
+            datamodel.Recipe(
+                "Gebratene Gnocchi mit Cashew-Pesto | knusprig & lecker",
+                "PLACEHOLDER",
+                4,
+                [
+                    Ingredient("getrocknete Tomaten", 150, "g"),
+                    Ingredient("Chiliflocken (oder frische Chili)", 0.5, "TL"),
+                    Ingredient("Knoblauchzehe", 1, ""),
+                    Ingredient("Parmesan", 60, "g"),
+                    Ingredient("Cashewskerne", 80, "g"),
+                    Ingredient("gutes Olivenöl (nach gewünschter Konsistenz)", 150, "ml"),
+                    Ingredient("Meersalz", 0, ""),
+                    Ingredient("Gnocchi", 500, "g"),
+                    Ingredient("Butter", 2, "EL"),
+                    Ingredient("Basilikumblätter (gehackt)", 0, ""),
+                ],
+                [
+                    "Die Zutaten für das Pesto in die Küchenmaschine geben und zu Pesto verarbeiten. Das fertige Pesto eventuell mit Salz abschmecken. Das hängt davon ab, wie salzig der Parmesan und die Nüsse sind.",
+                    "Die Gnocchi in reichlich Wasser gar kochen, mit der Schaumkelle rausnehmen und kurz beiseite stellen. Eine Pfanne auf mittlerer Hitze aufsetzen, die Butter hineingeben und schmelzen lassen.",
+                    "Die Gnocchi in die Pfanne geben und in der Butter braten, bis sie Farbe angenommen haben.",
+                    "Alternativ die Gnocchi direkt aus der Packung in die Pfanne geben und in Butter richtig knusprig braten.",
+                    "Vom Herd nehmen und 3-4 EL Pesto in die Pfanne geben und gut durchschwenken.",
+                    "Mit dem gehackten Basilikum bestreuen und servieren.",
+                ],
+                [
+                    "Vom Pesto wird wahrscheinlich noch etwas übrig bleiben. Es hält sich mit Öl bedeckt im Kühlschrank sicherlich 7 Tage.",
+                ]
+            ),
         ]
 
 

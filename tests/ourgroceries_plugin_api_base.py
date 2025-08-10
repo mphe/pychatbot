@@ -46,6 +46,8 @@ class CommonTestCases:
                     fetcher = self.fetcher(url)
                     recipe: datamodel.Recipe = await fetcher.fetch_recipe()
 
+                    self.assertIsNotNone(recipe)
+
                     expected.url = url
 
                     # Use dict comparison because it better displays the differences
