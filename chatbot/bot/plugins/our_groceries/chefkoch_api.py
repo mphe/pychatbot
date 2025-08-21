@@ -1,5 +1,5 @@
 from bs4 import BeautifulSoup, Tag
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from . import parsetools, datamodel, chefkoch
 from .datamodel import Ingredient
 
@@ -13,40 +13,52 @@ class ChefkochFetcher(datamodel.RecipeFetcher):
         soup = await self._fetch_url_as_soup(url)
         recipe = chefkoch.Recipe(url, bs=soup)
         num_servings = int(recipe.info_dict["recipeYield"])
+        # import json
+        # print(json.dumps(recipe.info_dict, indent=4))
 
-        return datamodel.Recipe(recipe.title, url, num_servings, parse_ingredients(recipe), make_instructions_uniform(recipe))
+        return datamodel.Recipe(recipe.title, url, num_servings, parse_ingredients(recipe), parse_instructions(recipe))
 
 
-def make_instructions_uniform(recipe: chefkoch.Recipe) -> List[str]:
-    if isinstance(recipe.instructions, str):
-        return [ recipe.instructions ]
-    if isinstance(recipe.instructions, list):
-        return recipe.instructions
-    return []
+def parse_instructions(recipe: chefkoch.Recipe) -> List[str]:
+    instructions = []
+
+    section: Dict[str, Any]
+    for section in recipe.instructions:
+        i: Dict[str, Any]
+        for i in section["itemListElement"]:
+            instructions.append(i.get("text").strip())
+
+    return instructions
 
 
 def parse_ingredients(recipe: chefkoch.Recipe) -> List[Ingredient]:
-    entries = extract_ingredients_and_amounts(recipe)
-    ingredients: List[Ingredient] = []
-
-    for amount_unit, ingredient in zip(entries[::2], entries[1::2]):
-        amount_float, unit = parsetools.parse_amount_and_unit(amount_unit, False)
-        ingredients.append(Ingredient(ingredient, amount_float, unit))
-
-    return ingredients
-
-
-def extract_ingredients_and_amounts(recipe: chefkoch.Recipe) -> List[str]:
     soup: BeautifulSoup = recipe.soup
-    ingredients_table: Tag = soup.find(attrs={ "class": "ingredients" })
-    entries: List[str] = []
+    ingredients: List[Ingredient] = []
 
     # Transform all HTML elements to text and strip excessive whitespace
     tag: Tag
-    for tag in ingredients_table.find_all("td"):
-        text: str = tag.get_text()
-        text = text.strip()
-        text = parsetools.reduce_excessive_whitespace(text)
-        entries.append(text)
+    for tag in soup.find_all(class_="ds-ingredients-table__tr"):
+        tds = tag.find_all(class_="ds-ingredients-table__td")
+        assert len(tds) >= 2, "Unexpected ingredient entry"
 
-    return entries
+        amount_unit_td = tds[0]
+        name_td = tds[1]
+
+        amount_float, unit = parsetools.parse_amount_and_unit(amount_unit_td.get_text(), True)
+
+        name_tag: Tag = name_td.find(class_="ds-ingredients-table__ingredient-name")
+        hint_tag: Tag = name_td.find(class_="ds-ingredients-table__ingredient-properties")
+
+        name_str = name_tag.get_text().strip()
+
+        if hint_tag is None:
+            text = name_str
+        else:
+            hint_str: str = hint_tag.get_text().strip()
+            text = f"{name_str}, {hint_str}"
+
+        text = parsetools.reduce_excessive_whitespace(text)
+
+        ingredients.append(Ingredient(text, amount_float, unit))
+
+    return ingredients

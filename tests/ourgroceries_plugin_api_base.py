@@ -48,7 +48,7 @@ class CommonTestCases:
 
                     self.assertIsNotNone(recipe)
 
-                    expected.url = url
+                    expected.url = recipe.url
 
                     # Use dict comparison because it better displays the differences
                     self.assertEqual(asdict(expected), asdict(recipe))
