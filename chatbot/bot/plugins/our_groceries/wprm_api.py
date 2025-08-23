@@ -1,6 +1,7 @@
 import re
 from . import datamodel, parsetools
-from bs4 import Tag
+from chatbot.util import utils
+from bs4 import Tag, BeautifulSoup
 from typing import Optional, List
 
 
@@ -18,6 +19,7 @@ class WPRMFetcher(datamodel.RecipeFetcher):
         super().__init__(url)
         self._wprm_recipe: Optional[Tag]
         self._extracted = False
+        self._soup: BeautifulSoup
 
     async def supports_url(self) -> bool:
         if MATCH_PRINT_URL.match(self._url):
@@ -27,6 +29,9 @@ class WPRMFetcher(datamodel.RecipeFetcher):
     async def fetch_recipe(self) -> Optional[datamodel.Recipe]:  # pylint: disable=too-many-locals
         if not await self._extract_tags():
             return None
+
+        # Since wordpress pages can have all sorts of languages, try to detect it
+        use_us_float_format = self._soup.html.get("lang", "").lower() == "en"
 
         num_servings = int(self._wprm_recipe.find(class_="wprm-recipe-servings").get_text())
 
@@ -38,11 +43,22 @@ class WPRMFetcher(datamodel.RecipeFetcher):
             notes_tag: Optional[Tag] = ing.find(class_="wprm-recipe-ingredient-notes")
             unit_tag: Optional[Tag] = ing.find(class_="wprm-recipe-ingredient-unit")
             amount_tag: Optional[Tag] = ing.find(class_="wprm-recipe-ingredient-amount")
-            name: str = ing.find(class_="wprm-recipe-ingredient-name").get_text()
+            name: str = ing.find(class_="wprm-recipe-ingredient-name").get_text().strip()
 
-            ingredient_notes: str = notes_tag.get_text() if notes_tag else ""
-            unit: str = unit_tag.get_text() if unit_tag else ""
-            amount = parsetools.normalize_str_to_float(amount_tag.get_text(), True) if amount_tag else 0.0
+            name = utils.string_capitalize(name)
+            ingredient_notes: str = notes_tag.get_text().strip() if notes_tag else ""
+            unit: str = unit_tag.get_text().strip() if unit_tag else ""
+
+            if amount_tag:
+                amount_text = amount_tag.get_text().strip()
+                try:
+                    amount = parsetools.normalize_str_to_float(amount_text, use_us_float_format)
+                except ValueError:
+                    # If the amount is not a valid number, e.g. "1 to 2", just use 1 and append the string to the unit
+                    amount = 1
+                    unit = utils.string_join_non_empty(" ", (amount_text, unit))
+            else:
+                amount = 0.0
 
             if ingredient_notes:
                 name = f"{name} ({ingredient_notes})"
@@ -64,18 +80,18 @@ class WPRMFetcher(datamodel.RecipeFetcher):
         for note in self._wprm_recipe.find_all(class_="wprm-recipe-notes"):
             recipe_notes.append(note.get_text().strip())
 
-        title: str = self._wprm_recipe.find(class_="wprm-recipe-name").get_text()
+        title: str = self._wprm_recipe.find(class_="wprm-recipe-name").get_text().strip()
 
         return datamodel.Recipe(title, self._url, num_servings, ingredients, instructions, recipe_notes)
 
     async def _extract_tags(self) -> bool:
         """Serves as a kind of init function. Fetches the page content and extract relevant tags. Results are cached."""
         if not self._extracted:
-            soup = await self._fetch_url_as_soup()
-            self._wprm_recipe = soup.find(class_="wprm-recipe-container")
+            self._soup = await self._fetch_url_as_soup()
+            self._wprm_recipe = self._soup.find(class_="wprm-recipe-container")
 
             if not self._wprm_recipe:
-                self._wprm_recipe = soup.find(class_="wprm-recipe")
+                self._wprm_recipe = self._soup.find(class_="wprm-recipe")
 
             self._extracted = True
 

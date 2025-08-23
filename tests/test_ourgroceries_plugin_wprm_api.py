@@ -27,6 +27,7 @@ class WPRMTest(CommonTestCases.APITestBase):
             "https://www.gaumenfreundin.de/wprm_print/29259",
             "https://emmikochteinfach.de/wprm_print/zucchini-pfanne-mit-hackfleisch",  # This one contains "1/2" as amount and ingredient notes
             "https://www.malteskitchen.de/gnocchi-mit-crunchy-cashew-pesto/",  # Has slightly different html structure and additional notes
+            "https://veggie-einhorn.de/wprm_print/vegane-kaese-lauch-suppe-mit-hack",  # "1 bis 2" as amount, many weird notes
         ]
 
         recipe = datamodel.Recipe(
@@ -72,7 +73,7 @@ class WPRMTest(CommonTestCases.APITestBase):
                     Ingredient("Olivenöl", 5, "EL"),
                     Ingredient("Oregano, getrocknet", 2, "TL"),
                     Ingredient("Zucker", 0.5, "TL"),
-                    Ingredient("schwarzer Pfeffer", 0, ""),
+                    Ingredient("Schwarzer Pfeffer", 0, ""),
                     Ingredient("Salz", 0, ""),
                 ],
                 [
@@ -96,12 +97,12 @@ class WPRMTest(CommonTestCases.APITestBase):
                 "",
                 4,
                 [
-                    Ingredient("getrocknete Tomaten", 150, "g"),
+                    Ingredient("Getrocknete Tomaten", 150, "g"),
                     Ingredient("Chiliflocken (oder frische Chili)", 0.5, "TL"),
                     Ingredient("Knoblauchzehe", 1, ""),
                     Ingredient("Parmesan", 60, "g"),
                     Ingredient("Cashewskerne", 80, "g"),
-                    Ingredient("gutes Olivenöl (nach gewünschter Konsistenz)", 150, "ml"),
+                    Ingredient("Gutes Olivenöl (nach gewünschter Konsistenz)", 150, "ml"),
                     Ingredient("Meersalz", 0, ""),
                     Ingredient("Gnocchi", 500, "g"),
                     Ingredient("Butter", 2, "EL"),
@@ -118,6 +119,46 @@ class WPRMTest(CommonTestCases.APITestBase):
                 [
                     "Vom Pesto wird wahrscheinlich noch etwas übrig bleiben. Es hält sich mit Öl bedeckt im Kühlschrank sicherlich 7 Tage.",
                 ]
+            ),
+            datamodel.Recipe(
+                "Vegane Käse-Lauch-Suppe mit Hack",
+                "",
+                4,
+                [
+                    Ingredient("Lauch (500 g bis 650 g)", 1, "1 bis 2 Stangen"),
+                    Ingredient("Knoblauch", 2, "Zehen"),
+                    Ingredient("Kartoffeln (Ungeschält gewogen. Festkochend oder vorwiegend festkochend.)", 400, "g"),
+                    Ingredient("Vegane Butter", 60, "g"),
+                    Ingredient("Veganes Hackfleisch (180 g bis 250 g)", 1, "Packung"),
+                    Ingredient("Speisestärke (10 g)", 1, "EL"),
+                    Ingredient("Vegane Kochsahne oder Cuisine (250 ml. Z.B. Soja Cuisine oder Hafer Cuisine.)", 250, "g"),
+                    Ingredient("Veganer Frischkäse (natur oder veganer Kräuterfrischkäse)", 100, "g"),
+                    Ingredient("Wasser (800 ml)", 800, "g"),
+                    Ingredient("Gemüsebrühe Pulver (22,5 g)", 1.5, "EL"),
+                    Ingredient("Mittelscharfer Senf (Mittelscharf. 15 g)", 1, "EL"),
+                    Ingredient("Hefeflocken", 40, "g"),
+                    Ingredient("Muskat (gemahlen)", 1, "kleine Prise"),
+                    Ingredient("Salz und Pfeffer", 0, ""),
+                ],
+                [
+                    "400 g Kartoffeln schälen. Du brauchst ca. 300 g bis 320 g geschälte Kartoffeln. Die Kartoffeln in kleine Würfelchen schneiden.",
+                    "1 bis 2 Stangen Lauch längs halbieren.",
+                    "Die Lauchhälften nochmal längs zwei oder dreimal einschneiden. Dann quer in feine Streifen schneiden. Du brauchst ca. 500 g bis 650 g Lauchstreifen.",
+                    "Die Lauchstreifen in einen Durchschlag (Seiher) geben. Unter fließendem Wasser sehr gut waschen. Dann abtropfen lassen.",
+                    "(Du kannst den Lauch auch erst waschen und dann klein schneiden.)",
+                    "2 Knoblauchzehen schälen und durch eine Knoblauchpresse pressen.",
+                    "60 g vegane Butter in einem Topf erhitzen.",
+                    "180 g bis 250 g veganes Hack darin 4 bis 5 Minuten anbraten.",
+                    "Zufügen: Die Lauchstreifen Den gepressten Knoblauch",
+                    "4 Minuten mit anbraten.",
+                    "1 EL Speisestärke ( 10 g) zufügen und alles gut verrühren.",
+                    "Zufügen: 800 g Wasser (= 800 ml) 1,5 EL Gemüsebrühe Pulver ( 22,5 g) Die Kartoffelwürfelchen",
+                    "Zum Kochen bringen. (Mit Deckel)",
+                    "Dann 20 Minuten bei kleiner bis mittlerer Hitze köcheln lassen. (Mit Deckel) Ab und zu umrühren.",
+                    "Zufügen: 250 g vegane Kochsahne (= 250 ml) 100 g veganer Frischkäse 40 g Hefeflocken 1 EL mittelscharfer Senf ( 15 g) 1 kleine Prise gemahlene Muskatnuss Schwarzer Pfeffer Bei Bedarf Salz",
+                    "Sehr gut umrühren, damit sich der vegane Frischkäse gut auflöst.",
+                    "Dazu passt Baguette.",
+                ],
             ),
         ]
 

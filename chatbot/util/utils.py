@@ -4,7 +4,7 @@ import logging
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
 from chatbot import api
-from typing import Callable, List, Any
+from typing import Callable, List, Any, Iterable
 import aiohttp
 
 
@@ -46,6 +46,11 @@ def string_prepend(prefix: str, string: str):
 def string_capitalize(text: str) -> str:
     """Same as string.capitalize() but does not make other letters lowercase."""
     return text[:1].upper() + text[1:]
+
+
+def string_join_non_empty(separator: str, items: Iterable[Any]) -> str:
+    """Same as string.join() but filters empty items."""
+    return separator.join((str(i) for i in items if i))
 
 
 def list_shifted(l: List, num: int = 1) -> List:  # noqa
