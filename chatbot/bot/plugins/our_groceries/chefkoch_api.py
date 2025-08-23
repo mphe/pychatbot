@@ -16,11 +16,14 @@ class ChefkochFetcher(datamodel.RecipeFetcher):
         # import json
         # print(json.dumps(recipe.info_dict, indent=4))
 
-        return datamodel.Recipe(recipe.title, url, num_servings, parse_ingredients(recipe), parse_instructions(recipe))
+        return datamodel.Recipe(recipe.title, url, num_servings, parse_ingredients(soup), parse_instructions(recipe))
 
 
 def parse_instructions(recipe: chefkoch.Recipe) -> List[str]:
     instructions = []
+
+    if isinstance(recipe.instructions, str):
+        return [ recipe.instructions ]
 
     section: Dict[str, Any]
     for section in recipe.instructions:
@@ -31,23 +34,51 @@ def parse_instructions(recipe: chefkoch.Recipe) -> List[str]:
     return instructions
 
 
-def parse_ingredients(recipe: chefkoch.Recipe) -> List[Ingredient]:
-    soup: BeautifulSoup = recipe.soup
+def parse_ingredients(soup: BeautifulSoup) -> List[Ingredient]:
+    # Extract ingredients from HTML because amount+unit and name are separated there, unlike in the JSON.
+    # Some pages are using a new HTML format, some still use the old format.
+    ingredients = parse_old_ingredient_format(soup)
+
+    if ingredients is None:
+        ingredients = parse_new_ingredient_format(soup)
+
+    return ingredients
+
+
+def parse_old_ingredient_format(soup: BeautifulSoup) -> Optional[List[Ingredient]]:
+    root: Optional[Tag] = soup.find(class_="ingredients")
+
+    if root is None:
+        return None
+
     ingredients: List[Ingredient] = []
 
-    # Transform all HTML elements to text and strip excessive whitespace
     tag: Tag
-    for tag in soup.find_all(class_="ds-ingredients-table__tr"):
-        tds = tag.find_all(class_="ds-ingredients-table__td")
+    for tag in root.find_all("tr"):
+        tds = tag.find_all("td")
         assert len(tds) >= 2, "Unexpected ingredient entry"
 
-        amount_unit_td = tds[0]
-        name_td = tds[1]
+        amount_float, unit = parsetools.parse_amount_and_unit(tds[0].get_text(), True)
+        name = tds[1].get_text().strip()
+        name = parsetools.reduce_excessive_whitespace(name)
 
-        amount_float, unit = parsetools.parse_amount_and_unit(amount_unit_td.get_text(), True)
+        ingredients.append(Ingredient(name, amount_float, unit))
 
-        name_tag: Tag = name_td.find(class_="ds-ingredients-table__ingredient-name")
-        hint_tag: Tag = name_td.find(class_="ds-ingredients-table__ingredient-properties")
+    return ingredients
+
+
+def parse_new_ingredient_format(soup: BeautifulSoup) -> List[Ingredient]:
+    ingredients: List[Ingredient] = []
+
+    tag: Tag
+    for tag in soup.find_all(class_="ds-ingredients-table__tr"):
+        tds = tag.find_all("td")
+        assert len(tds) >= 2, "Unexpected ingredient entry"
+
+        amount_float, unit = parsetools.parse_amount_and_unit(tds[0].get_text(), True)
+
+        name_tag: Tag = tds[1].find(class_="ds-ingredients-table__ingredient-name")
+        hint_tag: Tag = tds[1].find(class_="ds-ingredients-table__ingredient-properties")
 
         name_str = name_tag.get_text().strip()
 

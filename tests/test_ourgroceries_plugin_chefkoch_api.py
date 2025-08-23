@@ -18,13 +18,14 @@ class ChefkochTest(CommonTestCases.APITestBase):
         ]
         self.non_matching_urls = []
         self.recipe_urls = [
-            "https://www.chefkoch.de/rezepte/1844061298739441/Mozzarella-Haehnchen-in-Basilikum-Sahnesauce.html",
-            "https://www.chefkoch.de/rezepte/1171381223217983/Schupfnudel-Bohnen-Pfanne.html?portionen=5",
+            "https://www.chefkoch.de/rezepte/1844061298739441/Mozzarella-Haehnchen-in-Basilikum-Sahnesauce.html",  # Uses the new page style
+            "https://www.chefkoch.de/rezepte/1171381223217983/Schupfnudel-Bohnen-Pfanne.html?portionen=5",  # URL parameter
+            "https://www.chefkoch.de/rezepte/4356081737467911/Schneller-Maultaschenauflauf-mit-Schinken-Kaese-Sahnesauce.html",  # Uses the old page style
         ]
         self.expected_recipes = [
             datamodel.Recipe(
                 "Mozzarella-Hähnchen in Basilikum-Sahnesauce",
-                "placeholder",
+                "",
                 4,
                 [
                     Ingredient("Hühnerbrustfilet(s)", 4, ""),
@@ -49,7 +50,7 @@ class ChefkochTest(CommonTestCases.APITestBase):
             ),
             datamodel.Recipe(
                 "Schupfnudel-Bohnen-Pfanne",
-                "URL",
+                "https://www.chefkoch.de/rezepte/1171381223217983/Schupfnudel-Bohnen-Pfanne.html",  # Strip URL parameter
                 2,
                 [
                     Ingredient("Schupfnudeln, aus dem Kühlregal", 500, "g"),
@@ -67,6 +68,30 @@ class ChefkochTest(CommonTestCases.APITestBase):
                     "Als Abschluss die Schmelzkäsescheiben obendrauf legen. Warten, bis sie verlaufen, dann sofort servieren.",
                 ]
 
+            ),
+            datamodel.Recipe(
+                "Schneller Maultaschenauflauf mit Schinken-Käse-Sahnesauce",
+                "",
+                4,
+                [
+                    Ingredient("BÜRGER Maultaschen traditionell schwäbisch", 2, "Pck."),
+                    Ingredient("Schinkenwürfel", 200, "g"),
+                    Ingredient("Emmentaler, geriebener", 200, "g"),
+                    Ingredient("Ei(er)", 4, ""),
+                    Ingredient("Sahne", 200, "ml"),
+                    Ingredient("Salz und Pfeffer", 0, ""),
+                    Ingredient("Petersilie, frische, gehackt", 0, ""),
+                    Ingredient("Olivenöl", 0, "etwas"),
+                    Ingredient("Fett für die Form", 0, ""),
+                ],
+                [
+                    "1. Heize den Ofen auf 180 °C Ober-/Unterhitze vor und fette eine Auflaufform leicht ein. "
+                    "Schichte die Maultaschen in die vorbereitete Auflaufform. Verteile die Schinkenwürfel gleichmäßig über den Maultaschen in der Auflaufform.\n"
+                    "\n"
+                    "2. In einer Schüssel die Eier, Sahne, Salz und Pfeffer verquirlen, bis alles gut verrührt ist. "
+                    "Die Eier-Sahne-Mischung über die Maultaschen gießen. Anschließend den Auflauf großzügig mit Emmentaler bestreuen. "
+                    "Für etwa 20 - 25 Minuten in den Backofen geben. Vor dem Servieren mit gehackter Petersilie bestreuen.",
+                ]
             ),
         ]
 
