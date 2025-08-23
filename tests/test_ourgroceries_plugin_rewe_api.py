@@ -20,7 +20,7 @@ class ReweTest(CommonTestCases.APITestBase):
         self.expected_recipes = [
             datamodel.Recipe(
                 "Maronen-Pilz-Ragout",
-                "PLACEHOLDER",
+                "",
                 4,
                 [
                     Ingredient("Maronen (gekocht)", 400, "g"),

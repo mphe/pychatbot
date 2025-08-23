@@ -48,7 +48,14 @@ class CommonTestCases:
 
                     self.assertIsNotNone(recipe)
 
-                    expected.url = recipe.url
+                    backup_url = expected.url
+
+                    # If URL field is empty, just insert the input URL
+                    if not expected.url:
+                        expected.url = url
 
                     # Use dict comparison because it better displays the differences
                     self.assertEqual(asdict(expected), asdict(recipe))
+
+                    # Restore URL in case the same recipe object is used in multiple tests
+                    expected.url = backup_url

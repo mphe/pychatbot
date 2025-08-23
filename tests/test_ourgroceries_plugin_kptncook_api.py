@@ -20,7 +20,7 @@ class Test(CommonTestCases.APITestBase):
 
         recipe = datamodel.Recipe(
             "Kartoffel-Pilz-Eintopf",
-            "placeholder",
+            "",
             2,
             [
                 Ingredient("Schalotte", 1, ""),

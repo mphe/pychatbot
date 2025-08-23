@@ -31,7 +31,7 @@ class WPRMTest(CommonTestCases.APITestBase):
 
         recipe = datamodel.Recipe(
             "Kartoffelsalat mit Brühe, Omas bestes Rezept!",
-            "PLACEHOLDER",
+            "",
             4,
             [
                 Ingredient("Kartoffeln (festkochend)", 1, "kg"),
@@ -57,7 +57,7 @@ class WPRMTest(CommonTestCases.APITestBase):
             recipe,
             datamodel.Recipe(
                 "Zucchini Pfanne mit Hackfleisch",
-                "PLACEHOLDER",
+                "",
                 4,
                 [
                     Ingredient("Zucchini (mittelgroß)", 600, "g"),
@@ -93,7 +93,7 @@ class WPRMTest(CommonTestCases.APITestBase):
             ),
             datamodel.Recipe(
                 "Gebratene Gnocchi mit Cashew-Pesto | knusprig & lecker",
-                "PLACEHOLDER",
+                "",
                 4,
                 [
                     Ingredient("getrocknete Tomaten", 150, "g"),
