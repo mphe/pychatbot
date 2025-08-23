@@ -152,7 +152,7 @@ class Plugin(bot.BotPlugin):
         items = [ ingredient_to_og_item(i, self.cfg["output_locale"]) for i in recipe.ingredients ]
         await og.add_items_to_list(list_id, items)
 
-        notes = generate_og_notes(recipe, self.cfg["num_servings_text"], self.cfg["instructions_text"], self.cfg["notes_text"])
+        notes = generate_og_notes(recipe, self.cfg["num_servings_text"], self.cfg["notes_text"])
         await og.set_list_notes(list_id, notes)
 
     @staticmethod
@@ -160,7 +160,6 @@ class Plugin(bot.BotPlugin):
         return {
             "num_servings_text": "Serves {}.",
             "notes_text": "Notes",
-            "instructions_text": "Instructions",
             "output_locale": "en_US.utf8",
         }
 
@@ -236,7 +235,7 @@ def ingredient_to_og_item(ingredient: datamodel.Ingredient, locale: str = "") ->
     return (f"{item_text} ({discrete_amount})", "", notes)
 
 
-def generate_og_notes(recipe: datamodel.Recipe, num_servings_format_str: str, instructions_text: str, notes_text: str) -> str:
+def generate_og_notes(recipe: datamodel.Recipe, num_servings_format_str: str, notes_text: str) -> str:
     """Generates a string with recipe url, servings, instructions and notes"""
     buffer: List[str] = [
         recipe.url,
