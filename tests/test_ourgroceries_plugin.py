@@ -208,15 +208,18 @@ class OurGroceriesTest(unittest.TestCase):
     def test_ingredient_to_og_item(self):
         # NOTE: test_pretty_amount() covers more cases.
         tests = [
-            (Ingredient("Tomatoes", 1, ""), ("Tomatoes", "", "")),
-            (Ingredient("Tomatoes", 3, ""), ("Tomatoes (3)", "", "")),
-            (Ingredient("Tomatoes", 3, "small"), ("Small Tomatoes (3)", "", "")),
-            (Ingredient("Salt", 0, "some"), ("Some Salt", "", "")),
-            (Ingredient("Salt", 0, ""), ("Salt", "", "")),
-            (Ingredient("Butter", 500, "g"), ("Butter", "", "500 g")),
-            (Ingredient("Butter", 500.234, "g"), ("Butter", "", "500 g")),
-            (Ingredient("Butter", 500.234, "kg"), ("Butter", "", "500.23 kg")),
-            (Ingredient("Onions", 3.5, ""), ("Onions", "", "3 ½")),
+            (Ingredient("Tomatoes", 1, ""),                ("Tomatoes", "", "")),
+            (Ingredient("Tomatoes", 3, ""),                ("Tomatoes (3)", "", "")),
+            (Ingredient("Tomatoes", 3, "small"),           ("Small Tomatoes (3)", "", "")),
+            (Ingredient("Salt", 0, "some"),                ("Some Salt", "", "")),
+            (Ingredient("Salt", 0, ""),                    ("Salt", "", "")),
+            (Ingredient("Butter", 500, "g"),               ("Butter", "", "500 g")),
+            (Ingredient("Butter", 500.234, "g"),           ("Butter", "", "500 g")),
+            (Ingredient("Butter", 500.234, "kg"),          ("Butter", "", "500.23 kg")),
+            (Ingredient("Onions", 3.5, ""),                ("Onions", "", "3 ½")),
+            (Ingredient("Potatoes", 3, "", "with notes"),  ("Potatoes (3)", "", "With notes")),
+            (Ingredient("Potatoes", 1, "", "with notes"),  ("Potatoes", "", "With notes")),
+            (Ingredient("Butter", 500, "g", "with notes"), ("Butter", "", "500 g, with notes")),
         ]
 
         for ingr, expected in tests:

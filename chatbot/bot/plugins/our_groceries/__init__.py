@@ -213,23 +213,27 @@ def ingredient_to_og_item(ingredient: datamodel.Ingredient, locale: str = "") ->
     """Returns a 3-tuple (item name, category, note)."""
     discrete_amount = ingredient.get_discrete_amount()
     unit = ingredient.unit
-    unit_pad = " " if unit else ""
-    amount = ingredient.format_amount(locale)
     name = util.string_capitalize(ingredient.name)
+    notes = ingredient.notes
 
     if discrete_amount is None:
         # TODO: Consider whether ingredients like Ingredient("Onions", 3.5, "") should be formatted
         # differently, e.g. "3.5 Onions" rather than "Onions" and "3.5" as note.
-        return (name, "", f"{amount}{unit_pad}{unit}")
+        amount = ingredient.format_amount(locale)
+        amount_unit = util.string_join_non_empty(" ", (amount, unit))
+        return (name, "", util.string_join_non_empty(", ", (amount_unit, notes)))
 
     # Only capitalize if it is placed in the beginning
     unit = util.string_capitalize(unit)
+    notes = util.string_capitalize(ingredient.notes)
+
+    item_text = util.string_join_non_empty(" ", (unit, name))
 
     if discrete_amount <= 1:
-        return (f"{unit}{unit_pad}{name}", "", "")
+        return (item_text, "", notes)
 
     # Discrete amounts are handled simply by appending them in braces to the ingredient name
-    return (f"{unit}{unit_pad}{name} ({discrete_amount})", "", "")
+    return (f"{item_text} ({discrete_amount})", "", notes)
 
 
 def generate_og_notes(recipe: datamodel.Recipe, num_servings_format_str: str, instructions_text: str, notes_text: str) -> str:

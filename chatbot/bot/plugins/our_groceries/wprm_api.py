@@ -60,10 +60,7 @@ class WPRMFetcher(datamodel.RecipeFetcher):
             else:
                 amount = 0.0
 
-            if ingredient_notes:
-                name = f"{name} ({ingredient_notes})"
-
-            ingredients.append(datamodel.Ingredient(name, amount, unit))
+            ingredients.append(datamodel.Ingredient(name, amount, unit, ingredient_notes))
 
         instructions_container: Optional[Tag] = self._wprm_recipe.find(class_="wprm-recipe-instructions-container")
         instructions: List[str] = []

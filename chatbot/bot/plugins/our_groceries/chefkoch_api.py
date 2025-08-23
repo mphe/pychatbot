@@ -80,16 +80,9 @@ def parse_new_ingredient_format(soup: BeautifulSoup) -> List[Ingredient]:
         name_tag: Tag = tds[1].find(class_="ds-ingredients-table__ingredient-name")
         hint_tag: Tag = tds[1].find(class_="ds-ingredients-table__ingredient-properties")
 
-        name_str = name_tag.get_text().strip()
+        name_str: str = parsetools.reduce_excessive_whitespace(name_tag.get_text().strip())
+        hint_str: str = hint_tag.get_text().strip() if hint_tag else ""
 
-        if hint_tag is None:
-            text = name_str
-        else:
-            hint_str: str = hint_tag.get_text().strip()
-            text = f"{name_str}, {hint_str}"
-
-        text = parsetools.reduce_excessive_whitespace(text)
-
-        ingredients.append(Ingredient(text, amount_float, unit))
+        ingredients.append(Ingredient(name_str, amount_float, unit, hint_str))
 
     return ingredients

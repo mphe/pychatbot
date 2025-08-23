@@ -37,8 +37,8 @@ class ChefkochTest(CommonTestCases.APITestBase):
                     Ingredient("Sahneschmelzkäse", 100, "g"),
                     Ingredient("Fett für die Form", 0, ""),
                     Ingredient("Mozzarella", 125, "g"),
-                    Ingredient("Parmesan, optional", 0, "n. B."),
-                    Ingredient("Kräuterbutter, optional", 1, "EL"),
+                    Ingredient("Parmesan", 0, "n. B.", "optional"),
+                    Ingredient("Kräuterbutter", 1, "EL", "optional"),
                 ],
                 [
                     "Fleisch waschen und trocken tupfen. Mit Salz und Pfeffer würzen. Öl in einer Pfanne erhitzen. Filets darin von allen Seiten ca. 5 Min. kräftig anbraten.",
@@ -53,12 +53,12 @@ class ChefkochTest(CommonTestCases.APITestBase):
                 "https://www.chefkoch.de/rezepte/1171381223217983/Schupfnudel-Bohnen-Pfanne.html",  # Strip URL parameter
                 2,
                 [
-                    Ingredient("Schupfnudeln, aus dem Kühlregal", 500, "g"),
+                    Ingredient("Schupfnudeln", 500, "g", "aus dem Kühlregal"),
                     Ingredient("Kochschinken", 200, "g"),
-                    Ingredient("Prinzessbohnen, TK", 250, "g"),
+                    Ingredient("Prinzessbohnen", 250, "g", "TK"),
                     Ingredient("Fleischbrühe", 125, "ml"),
-                    Ingredient("Crème fraîche, ca. 150 g", 1, "Becher"),
-                    Ingredient("Schmelzkäse, z.B. Toast-Käse", 4, "Scheibe/n"),
+                    Ingredient("Crème fraîche", 1, "Becher", "ca. 150 g"),
+                    Ingredient("Schmelzkäse", 4, "Scheibe/n", "z.B. Toast-Käse"),
                     Ingredient("Salz und Pfeffer", 0, "n. B."),
                     Ingredient("Olivenöl zum Braten", 0, ""),
                 ],

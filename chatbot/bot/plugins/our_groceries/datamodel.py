@@ -29,6 +29,7 @@ class Ingredient:
     name: str
     amount: float
     unit: str
+    notes: str = field(default_factory=lambda: "")
 
     def __post_init__(self):
         # Passing an int might happen accidentally, so we silently fix it.
