@@ -210,6 +210,7 @@ async def create_og_recipe(og: OurGroceries, name: str) -> Optional[str]:
 
 
 def ingredient_to_og_item(ingredient: datamodel.Ingredient, locale: str = "") -> Tuple[str, str, str]:
+    """Returns a 3-tuple (item name, category, note)."""
     discrete_amount = ingredient.get_discrete_amount()
     unit = ingredient.unit
     unit_pad = " " if unit else ""
@@ -241,14 +242,21 @@ def generate_og_notes(recipe: datamodel.Recipe, num_servings_format_str: str, in
 
     if recipe.instructions:
         buffer.append("")
-        buffer.append(f"{instructions_text}:\n")
-        for i, instr in enumerate(recipe.instructions, 1):
-            buffer.append(f"{i}) {instr}")
+
+        if len(recipe.instructions) == 1:
+            buffer.append(recipe.instructions[0])
+        else:
+            for i, instr in enumerate(recipe.instructions, 1):
+                buffer.append(f"{i}) {instr}")
 
     if recipe.notes:
         buffer.append("")
         buffer.append(f"{notes_text}:\n")
-        for i, note in enumerate(recipe.notes):
-            buffer.append(f"- {note}")
+
+        if len(recipe.notes) == 1:
+            buffer.append(recipe.notes[0])
+        else:
+            for i, note in enumerate(recipe.notes):
+                buffer.append(f"- {note}")
 
     return "\n".join(buffer)

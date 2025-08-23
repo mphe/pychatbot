@@ -244,11 +244,14 @@ class OurGroceriesTest(unittest.TestCase):
             datamodel.Recipe("Recipe Title", "url", 4, ingredients, instructions, notes),
             datamodel.Recipe("Recipe Title", "url", 4, ingredients, [], notes),
             datamodel.Recipe("Recipe Title", "url", 4, ingredients, instructions),
+            datamodel.Recipe("Recipe Title", "url", 4, ingredients, [ "single instruction" ], [ "single note" ]),
         ]
+
         expected = [
-            "url\n\nServes 4.\n\nInstructions:\n\n1) instruction1\n2) instruction2\n3) instruction3\n\nNotes:\n\n- note1\n- note2",
+            "url\n\nServes 4.\n\n1) instruction1\n2) instruction2\n3) instruction3\n\nNotes:\n\n- note1\n- note2",
             "url\n\nServes 4.\n\nNotes:\n\n- note1\n- note2",
-            "url\n\nServes 4.\n\nInstructions:\n\n1) instruction1\n2) instruction2\n3) instruction3",
+            "url\n\nServes 4.\n\n1) instruction1\n2) instruction2\n3) instruction3",
+            "url\n\nServes 4.\n\nsingle instruction\n\nNotes:\n\nsingle note",
         ]
 
         for recipe, exp in zip(recipes, expected):
