@@ -30,7 +30,7 @@ MATCH_NUMBER_WITH_TEXT_FRACTIONS = re.compile(r"(?:(\d+)\s+)?(\d+)\s*/\s*(\d+)")
 MATCH_WHITESPACE_WITH_PUNCTUATION = re.compile(r"\s+([,.;!?])")
 MATCH_EXCESSIVE_WHITESPACE = re.compile(r"\s+")
 
-NON_DISCRETE_UNITS = ("g", "kg", "ml", "l", "TL", "EL", "Liter", "Milliliter", "Gramm", "Kilogramm")  # Case will be ignored
+NON_DISCRETE_UNITS = ("g", "kg", "ml", "l", "TL", "EL", "Liter", "Milliliter", "Gramm", "Kilogramm", "tbsp", "tsp", "cup", "cups")  # Case will be ignored
 RE_NON_DISCRETE_UNITS = "|".join(NON_DISCRETE_UNITS)
 MATCH_UNIT_BLACKLIST = re.compile(rf"\b({RE_NON_DISCRETE_UNITS})\b", re.IGNORECASE)
 

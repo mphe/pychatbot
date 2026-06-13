@@ -244,12 +244,12 @@ def generate_og_notes(recipe: datamodel.Recipe, num_servings_format_str: str, no
     ]
 
     if recipe.instructions:
-        buffer.append("")
-
         if len(recipe.instructions) == 1:
+            buffer.append("")
             buffer.append(recipe.instructions[0])
         else:
             for i, instr in enumerate(recipe.instructions, 1):
+                buffer.append("")
                 buffer.append(f"{i}) {instr}")
 
     if recipe.notes:
