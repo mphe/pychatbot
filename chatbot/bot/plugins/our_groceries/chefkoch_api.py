@@ -2,6 +2,10 @@ from bs4 import BeautifulSoup, Tag
 from typing import List, Optional, Dict, Any
 from . import parsetools, datamodel, chefkoch
 from .datamodel import Ingredient
+import re
+import logging
+
+RE_NUM_SERVINGS = re.compile(r".*(\d+).*")
 
 
 class ChefkochFetcher(datamodel.RecipeFetcher):
@@ -12,7 +16,13 @@ class ChefkochFetcher(datamodel.RecipeFetcher):
         url = self._url.split("?", maxsplit=1)[0]  # Remove URL arguments, including amount of servings to get "clean" numbers.
         soup = await self._fetch_url_as_soup(url)
         recipe = chefkoch.Recipe(url, bs=soup)
-        num_servings = int(recipe.info_dict["recipeYield"])
+
+        if m := RE_NUM_SERVINGS.match(recipe.info_dict["recipeYield"]):
+            num_servings = int(m.group(1))
+        else:
+            logging.error("Failed to retrieve number of servings")
+            return None
+
         # import json
         # print(json.dumps(recipe.info_dict, indent=4))
 
