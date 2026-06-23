@@ -76,19 +76,18 @@ class ChefkochTest(CommonTestCases.APITestBase):
                 [
                     Ingredient("BÜRGER Maultaschen traditionell schwäbisch", 2, "Pck."),
                     Ingredient("Schinkenwürfel", 200, "g"),
-                    Ingredient("Emmentaler, geriebener", 200, "g"),
+                    Ingredient("Emmentaler", 200, "g", "geriebener"),
                     Ingredient("Ei(er)", 4, ""),
                     Ingredient("Sahne", 200, "ml"),
                     Ingredient("Salz und Pfeffer", 0, ""),
-                    Ingredient("Petersilie, frische, gehackt", 0, ""),
+                    Ingredient("Petersilie", 0, "", "frische, gehackt"),
                     Ingredient("Olivenöl", 0, "etwas"),
                     Ingredient("Fett für die Form", 0, ""),
                 ],
                 [
-                    "1. Heize den Ofen auf 180 °C Ober-/Unterhitze vor und fette eine Auflaufform leicht ein. "
-                    "Schichte die Maultaschen in die vorbereitete Auflaufform. Verteile die Schinkenwürfel gleichmäßig über den Maultaschen in der Auflaufform.\n"
-                    "\n"
-                    "2. In einer Schüssel die Eier, Sahne, Salz und Pfeffer verquirlen, bis alles gut verrührt ist. "
+                    "Heize den Ofen auf 180 °C Ober-/Unterhitze vor und fette eine Auflaufform leicht ein. "
+                    "Schichte die Maultaschen in die vorbereitete Auflaufform. Verteile die Schinkenwürfel gleichmäßig über den Maultaschen in der Auflaufform.",
+                    "In einer Schüssel die Eier, Sahne, Salz und Pfeffer verquirlen, bis alles gut verrührt ist. "
                     "Die Eier-Sahne-Mischung über die Maultaschen gießen. Anschließend den Auflauf großzügig mit Emmentaler bestreuen. "
                     "Für etwa 20 - 25 Minuten in den Backofen geben. Vor dem Servieren mit gehackter Petersilie bestreuen.",
                 ]

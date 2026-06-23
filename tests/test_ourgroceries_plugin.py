@@ -251,14 +251,14 @@ class OurGroceriesTest(unittest.TestCase):
         ]
 
         expected = [
-            "url\n\nServes 4.\n\n1) instruction1\n2) instruction2\n3) instruction3\n\nNotes:\n\n- note1\n- note2",
+            "url\n\nServes 4.\n\n1) instruction1\n\n2) instruction2\n\n3) instruction3\n\nNotes:\n\n- note1\n- note2",
             "url\n\nServes 4.\n\nNotes:\n\n- note1\n- note2",
-            "url\n\nServes 4.\n\n1) instruction1\n2) instruction2\n3) instruction3",
+            "url\n\nServes 4.\n\n1) instruction1\n\n2) instruction2\n\n3) instruction3",
             "url\n\nServes 4.\n\nsingle instruction\n\nNotes:\n\nsingle note",
         ]
 
         for recipe, exp in zip(recipes, expected):
-            self.assertEqual(generate_og_notes(recipe, "Serves {}.", "Instructions", "Notes"), exp)
+            self.assertEqual(generate_og_notes(recipe, "Serves {}.", "Notes"), exp)
 
 
 if __name__ == "__main__":

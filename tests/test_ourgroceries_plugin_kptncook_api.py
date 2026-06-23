@@ -14,39 +14,57 @@ class Test(CommonTestCases.APITestBase):
         self.matching_urls = [
             "https://mobile.kptncook.com/recipe/pinterest/Kartoffel-Pilz-Eintopf/78245a13?lang=de",
             "https://mobile.kptncook.com/recipe/pinterest/Kartoffel-Pilz-Eintopf/78245a13?lang=en",
-            "https://share.kptncook.com/Dh4a/op9wujtl",
+            "https://share.kptncook.com/Dh4a/rjayfgrg",
         ]
         self.non_matching_urls = []
 
-        recipe = datamodel.Recipe(
-            "Kartoffel-Pilz-Eintopf",
-            "",
-            2,
-            [
-                Ingredient("Schalotte", 1, ""),
-                Ingredient("Thymian, frisch", 4, "Zweig(e)"),
-                Ingredient("Kartoffeln", 400, "g"),
-                Ingredient("braune Champignons", 400, "g"),
-                Ingredient("Schlagsahne", 100, "ml"),
-                Ingredient("Petersilie, frisch", 10, "g"),
-                Ingredient("Pfeffer", 0, ""),
-                Ingredient("Lorbeerblätter", 0, ""),
-                Ingredient("Weizenmehl, Typ 405", 0, ""),
-                Ingredient("Gemüsebrühe", 0, ""),
-                Ingredient("Salz", 0, ""),
-                Ingredient("Knoblauch", 0, ""),
-                Ingredient("Butter", 0, ""),
-            ],
-            []
-        )
-
         self.recipe_urls = [
             "https://mobile.kptncook.com/recipe/pinterest/Kartoffel-Pilz-Eintopf/78245a13?lang=de",
-            "https://share.kptncook.com/Dh4a/op9wujtl",
+            "https://share.kptncook.com/Dh4a/rjayfgrg",
         ]
+
         self.expected_recipes = [
-            recipe,
-            recipe,
+            datamodel.Recipe(
+                "Kartoffel-Pilz-Eintopf",
+                "",
+                2,
+                [
+                    Ingredient("Schalotte", 1, ""),
+                    Ingredient("Thymian, frisch", 4, "Zweig(e)"),
+                    Ingredient("Kartoffeln", 400, "g"),
+                    Ingredient("braune Champignons", 400, "g"),
+                    Ingredient("Schlagsahne", 100, "g"),
+                    Ingredient("Petersilie, frisch", 10, "g"),
+                    Ingredient("Pfeffer", 0, ""),
+                    Ingredient("Lorbeerblätter", 0, ""),
+                    Ingredient("Weizenmehl, Typ 405", 0, ""),
+                    Ingredient("Gemüsebrühe", 0, ""),
+                    Ingredient("Salz", 0, ""),
+                    Ingredient("Knoblauch", 0, ""),
+                    Ingredient("Butter", 0, ""),
+                ],
+                []
+            ),
+            datamodel.Recipe(
+                "Gefüllte Tomaten mit Orzo & knusprigem Topping",
+                "",
+                2,
+                [
+                    Ingredient("Tomaten", 400, "g"),
+                    Ingredient("Orzo (Nudelreis)", 60, "g"),
+                    Ingredient("vegane Schmand-Alternative", 48, "g"),
+                    Ingredient("Basilikum, frisch", 4, "g"),
+                    Ingredient("Hefeflocken", 30, "g"),
+                    Ingredient("Kürbiskerne", 30, "g"),
+                    Ingredient("Panko-Paniermehl", 30, "g"),
+
+                    Ingredient("Oregano, getrocknet", 0, ""),
+                    Ingredient("Olivenöl", 0, ""),
+                    Ingredient("Salz", 0, ""),
+                    Ingredient("Pfeffer", 0, ""),
+                ],
+                []
+            ),
         ]
 
 
